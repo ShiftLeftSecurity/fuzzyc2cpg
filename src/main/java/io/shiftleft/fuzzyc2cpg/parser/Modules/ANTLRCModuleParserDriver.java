@@ -1,13 +1,12 @@
 package io.shiftleft.fuzzyc2cpg.parser.Modules;
 
+import io.shiftleft.fuzzyc2cpg.ModuleLexer;
+import io.shiftleft.fuzzyc2cpg.ModuleParser;
+import io.shiftleft.fuzzyc2cpg.parser.ANTLRParserDriver;
+import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
-
-import antlr.ModuleLexer;
-import antlr.ModuleParser;
-import parsing.ANTLRParserDriver;
-import parsing.TokenSubStream;
 
 public class ANTLRCModuleParserDriver extends ANTLRParserDriver
 {

@@ -1,25 +1,24 @@
 package io.shiftleft.fuzzyc2cpg.parser.Modules;
 
+import io.shiftleft.fuzzyc2cpg.ModuleBaseListener;
+import io.shiftleft.fuzzyc2cpg.ModuleFunctionParserInterface;
+import io.shiftleft.fuzzyc2cpg.ModuleParser;
+import io.shiftleft.fuzzyc2cpg.ModuleParser.Class_defContext;
+import io.shiftleft.fuzzyc2cpg.ModuleParser.DeclByClassContext;
+import io.shiftleft.fuzzyc2cpg.ModuleParser.Init_declarator_listContext;
+import io.shiftleft.fuzzyc2cpg.ModuleParser.Type_nameContext;
+import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
+import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
+import io.shiftleft.fuzzyc2cpg.parser.ANTLRParserDriver;
+import io.shiftleft.fuzzyc2cpg.parser.CompoundItemAssembler;
+import io.shiftleft.fuzzyc2cpg.parser.Modules.builder.FunctionDefBuilder;
+import io.shiftleft.fuzzyc2cpg.parser.Shared.builders.ClassDefBuilder;
+import io.shiftleft.fuzzyc2cpg.parser.Shared.builders.IdentifierDeclBuilder;
 import java.util.Iterator;
 import java.util.List;
-
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import antlr.ModuleBaseListener;
-import antlr.ModuleParser;
-import antlr.ModuleParser.Class_defContext;
-import antlr.ModuleParser.DeclByClassContext;
-import antlr.ModuleParser.Init_declarator_listContext;
-import antlr.ModuleParser.Type_nameContext;
-import ast.declarations.IdentifierDecl;
-import ast.logical.statements.CompoundStatement;
-import ast.statements.IdentifierDeclStatement;
-import parsing.ANTLRParserDriver;
-import parsing.CompoundItemAssembler;
-import parsing.ModuleFunctionParserInterface;
-import parsing.Modules.builder.FunctionDefBuilder;
-import parsing.Shared.builders.ClassDefBuilder;
-import parsing.Shared.builders.IdentifierDeclBuilder;
 
 // Converts Parse Trees to ASTs for Modules
 

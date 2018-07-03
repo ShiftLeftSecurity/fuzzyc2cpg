@@ -1,7 +1,7 @@
 name := "fuzzyc2cpg"
 organization := "io.shiftleft"
 
-libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.7.1"
+libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.5.4"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 compile/javacOptions ++= Seq("-Xlint:all", "-Xlint:-cast", "-g")

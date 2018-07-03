@@ -1,6 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.parser.Shared.builders;
 
-import io.shiftleft.fuzzyc2cpg.CommonParser.Class_nameContext;
+import io.shiftleft.fuzzyc2cpg.ModuleParser.Class_nameContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser;
 import io.shiftleft.fuzzyc2cpg.ast.ASTNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;

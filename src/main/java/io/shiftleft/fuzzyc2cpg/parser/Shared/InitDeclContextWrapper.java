@@ -1,10 +1,9 @@
 package io.shiftleft.fuzzyc2cpg.parser.Shared;
 
+import io.shiftleft.fuzzyc2cpg.FunctionParser;
+import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
-
-import antlr.FunctionParser;
-import antlr.ModuleParser;
 
 public class InitDeclContextWrapper
 {
