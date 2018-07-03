@@ -18,10 +18,10 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import ast.ASTNode;
-import ast.ASTNodeBuilder;
-import ast.logical.statements.CompoundStatement;
-import ast.walking.ASTWalkerEvent;
+import io.shiftleft.fuzzyc2cpg.ast.ASTNode;
+import io.shiftleft.fuzzyc2cpg.ast.ASTNodeBuilder;
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTWalkerEvent;
 
 abstract public class ANTLRParserDriver extends Observable
 {
