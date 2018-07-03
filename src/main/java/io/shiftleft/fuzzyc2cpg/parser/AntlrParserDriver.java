@@ -42,9 +42,9 @@ abstract public class AntlrParserDriver extends Observable {
     super();
   }
 
-  abstract public ParseTree parseTokenStreamImpl(TokenSubStream tokens);
+  public abstract ParseTree parseTokenStreamImpl(TokenSubStream tokens);
 
-  abstract public Lexer createLexer(ANTLRInputStream input);
+  public abstract Lexer createLexer(ANTLRInputStream input);
 
   public void parseAndWalkFile(String filename) throws ParserException {
     TokenSubStream stream = createTokenStreamFromFile(filename);
@@ -93,7 +93,7 @@ abstract public class AntlrParserDriver extends Observable {
     ANTLRInputStream input;
     try {
       input = new ANTLRFileStream(filename);
-    } catch (IOException e) {
+    } catch (IOException exception) {
       throw new ParserException("");
     }
 

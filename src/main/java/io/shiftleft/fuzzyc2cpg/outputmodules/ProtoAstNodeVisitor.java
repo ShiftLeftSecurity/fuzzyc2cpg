@@ -10,7 +10,10 @@ import io.shiftleft.fuzzyc2cpg.outputmodules.common.OutModAstNodeVisitor;
 public class ProtoAstNodeVisitor extends OutModAstNodeVisitor {
 
   public void visit(FunctionDefBase node) {
-
+    System.out.println("FunctionDef");
+    System.out.println(node);
+    ProtoFunctionExporter exporter = new ProtoFunctionExporter();
+    exporter.addToDatabaseSafe(node);
   }
 
   public void visit(ClassDefStatement node) {

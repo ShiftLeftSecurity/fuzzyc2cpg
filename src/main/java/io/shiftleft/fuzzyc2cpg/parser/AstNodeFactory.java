@@ -6,12 +6,12 @@ import io.shiftleft.fuzzyc2cpg.ModuleParser.Parameter_declContext;
 import io.shiftleft.fuzzyc2cpg.ModuleParser.Parameter_idContext;
 import io.shiftleft.fuzzyc2cpg.ModuleParser.Parameter_nameContext;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
-import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter;
-import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.ParameterType;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.BinaryExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter;
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.ParameterType;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Statement;
 import org.antlr.v4.runtime.ParserRuleContext;
 
@@ -76,13 +76,13 @@ public class AstNodeFactory {
   }
 
   private static Parameter_nameContext getNameOfParameter(
-      Parameter_declContext param_ctx) {
-    Parameter_idContext parameter_id = param_ctx.parameter_id();
+      Parameter_declContext paramCtx) {
+    Parameter_idContext parameterId = paramCtx.parameter_id();
 
-    while (parameter_id.parameter_name() == null) {
-      parameter_id = parameter_id.parameter_id();
+    while (parameterId.parameter_name() == null) {
+      parameterId = parameterId.parameter_id();
     }
-    return parameter_id.parameter_name();
+    return parameterId.parameter_name();
   }
 
 }
