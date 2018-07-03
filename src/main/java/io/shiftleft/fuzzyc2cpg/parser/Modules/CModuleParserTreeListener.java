@@ -1,7 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.parser.Modules;
 
 import io.shiftleft.fuzzyc2cpg.ModuleBaseListener;
-import io.shiftleft.fuzzyc2cpg.ModuleFunctionParserInterface;
+import io.shiftleft.fuzzyc2cpg.parser.ModuleFunctionParserInterface;
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import io.shiftleft.fuzzyc2cpg.ModuleParser.Class_defContext;
 import io.shiftleft.fuzzyc2cpg.ModuleParser.DeclByClassContext;

@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg;
+package io.shiftleft.fuzzyc2cpg.parser;
 
 import io.shiftleft.fuzzyc2cpg.ModuleParser.Compound_statementContext;
 import io.shiftleft.fuzzyc2cpg.ModuleParser.Function_defContext;
@@ -41,7 +41,7 @@ public class ModuleFunctionParserInterface
 	}
 
 	private static String getCompoundStmtAsString(
-			ModuleParser.Function_defContext ctx)
+			Function_defContext ctx)
 	{
 		Compound_statementContext compound_statement = ctx.compound_statement();
 
