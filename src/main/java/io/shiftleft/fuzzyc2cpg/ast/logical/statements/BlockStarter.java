@@ -2,31 +2,27 @@ package io.shiftleft.fuzzyc2cpg.ast.logical.statements;
 
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 
-public class BlockStarter extends Statement
-{
-	protected Expression condition = null;
-	protected Statement statement = null;
+public class BlockStarter extends Statement {
 
-	public Expression getCondition()
-	{
-		return this.condition;
-	}
+  protected Expression condition = null;
+  protected Statement statement = null;
 
-	public void setCondition(Expression expression)
-	{
-		this.condition = expression;
-		super.addChild(expression);
-	}
+  public Expression getCondition() {
+    return this.condition;
+  }
 
-	public Statement getStatement()
-	{
-		return this.statement;
-	}
+  public void setCondition(Expression expression) {
+    this.condition = expression;
+    super.addChild(expression);
+  }
 
-	public void setStatement(Statement statement)
-	{
-		this.statement = statement;
-		super.addChild(statement);
-	}
+  public Statement getStatement() {
+    return this.statement;
+  }
+
+  public void setStatement(Statement statement) {
+    this.statement = statement;
+    super.addChild(statement);
+  }
 
 }

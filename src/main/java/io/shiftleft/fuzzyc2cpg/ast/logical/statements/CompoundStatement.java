@@ -1,52 +1,46 @@
 package io.shiftleft.fuzzyc2cpg.ast.logical.statements;
 
+import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import io.shiftleft.fuzzyc2cpg.ast.ASTNode;
-import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
+public class CompoundStatement extends Statement implements Iterable<AstNode> {
 
-public class CompoundStatement extends Statement implements Iterable<ASTNode>
-{
-	protected static final List<ASTNode> emptyList = new LinkedList<ASTNode>();
+  protected static final List<AstNode> emptyList = new LinkedList<AstNode>();
 
-	// TODO would it not be better to expose only the iterator instead?
-	public List<ASTNode> getStatements()
-	{
-		return null == children ? emptyList : children;
-	}
+  // TODO would it not be better to expose only the iterator instead?
+  public List<AstNode> getStatements() {
+    return null == children ? emptyList : children;
+  }
 
-	public int size()
-	{
-		return getStatements().size();
-	}
-	
-	public ASTNode getStatement(int i) {
-		return getStatements().get(i);
-	}
+  public int size() {
+    return getStatements().size();
+  }
 
-	// Note: These may be all kinds of AST nodes: instances of Statement, but also
-	// instances of Expression, FunctionDef, or even null nodes.
-	public void addStatement(ASTNode statement)
-	{
-		super.addChild(statement);
-	}
-	
-	
-	public String getEscapedCodeStr()
-	{
-		return "";
-	}
+  public AstNode getStatement(int i) {
+    return getStatements().get(i);
+  }
 
-	@Override
-	public void accept(ASTNodeVisitor visitor)
-	{
-		visitor.visit(this);
-	}
+  // Note: These may be all kinds of AST nodes: instances of Statement, but also
+  // instances of Expression, FunctionDef, or even null nodes.
+  public void addStatement(AstNode statement) {
+    super.addChild(statement);
+  }
 
-	@Override
-	public Iterator<ASTNode> iterator() {
-		return getStatements().iterator();
-	}
+
+  public String getEscapedCodeStr() {
+    return "";
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
+
+  @Override
+  public Iterator<AstNode> iterator() {
+    return getStatements().iterator();
+  }
 }

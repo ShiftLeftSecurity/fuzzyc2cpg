@@ -5,46 +5,39 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 
-public class FunctionParser
-{
-	ANTLRParserDriver driver;
+public class FunctionParser {
 
-	public FunctionParser(ANTLRParserDriver aDriver)
-	{
-		driver = aDriver;
-	}
+  AntlrParserDriver driver;
 
-	public void parseAndWalkString(String input)
-	{
-		driver.parseAndWalkString(input);
-	}
+  public FunctionParser(AntlrParserDriver aDriver) {
+    driver = aDriver;
+  }
 
-	public ParseTree parseString(String input) throws ParserException
-	{
-		return driver.parseString(input);
-	}
+  public void parseAndWalkString(String input) {
+    driver.parseAndWalkString(input);
+  }
 
-	public void parseAndWalkTokenStream(TokenSubStream tokens)
-			throws ParserException
-	{
-		driver.parseAndWalkTokenStream(tokens);
-	}
+  public ParseTree parseString(String input) throws ParserException {
+    return driver.parseString(input);
+  }
 
-	public Parser getAntlrParser()
-	{
-		return driver.getAntlrParser();
-	}
+  public void parseAndWalkTokenStream(TokenSubStream tokens)
+      throws ParserException {
+    driver.parseAndWalkTokenStream(tokens);
+  }
 
-	public ANTLRParserDriver getParser()
-	{
-		return driver;
-	}
+  public Parser getAntlrParser() {
+    return driver.getAntlrParser();
+  }
 
-	public CompoundStatement getResult()
-	{
-		// The result is what's left on the stack in the end,
-		// an AST rooted at a CompoundStatement node
-		return driver.getResult();
-	}
+  public AntlrParserDriver getParser() {
+    return driver;
+  }
+
+  public CompoundStatement getResult() {
+    // The result is what's left on the stack in the end,
+    // an AST rooted at a CompoundStatement node
+    return driver.getResult();
+  }
 
 }

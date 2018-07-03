@@ -3,39 +3,33 @@ package io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 
 // dummy container for the three elements of a PHP foreach "condition"
-public class ForEachCondition extends Expression
-{
-	private Expression iteratedObject = null;
-	private Expression key = null;
-	private Expression value = null;
+public class ForEachCondition extends Expression {
 
-	public Expression getIteratedObject()
-	{
-		return this.iteratedObject;
-	}
+  private Expression iteratedObject = null;
+  private Expression key = null;
+  private Expression value = null;
 
-	public void setIteratedObject(Expression expression)
-	{
-		this.iteratedObject = expression;
-	}
+  public Expression getIteratedObject() {
+    return this.iteratedObject;
+  }
 
-	public Expression getValueExpression()
-	{
-		return this.value;
-	}
+  public void setIteratedObject(Expression expression) {
+    this.iteratedObject = expression;
+  }
 
-	public void setValueExpression(Expression value)
-	{
-		this.value = value;
-	}
+  public Expression getValueExpression() {
+    return this.value;
+  }
 
-	public Expression getKeyExpression()
-	{
-		return this.key;
-	}
+  public void setValueExpression(Expression value) {
+    this.value = value;
+  }
 
-	public void setKeyExpression(Expression key)
-	{
-		this.key = key;
-	}
+  public Expression getKeyExpression() {
+    return this.key;
+  }
+
+  public void setKeyExpression(Expression key) {
+    this.key = key;
+  }
 }

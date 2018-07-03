@@ -1,43 +1,38 @@
 package io.shiftleft.fuzzyc2cpg.ast.functionDef;
 
-import io.shiftleft.fuzzyc2cpg.ast.ASTNode;
+import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 
-public abstract class FunctionDefBase extends ASTNode
-{
-	protected ParameterList parameterList = null;
-	protected CompoundStatement content = null;
+public abstract class FunctionDefBase extends AstNode {
 
-	public abstract String getName();
-	
-	public abstract String getFunctionSignature();
-	
-	public ParameterList getParameterList()
-	{
-		return this.parameterList;
-	}
+  protected ParameterList parameterList = null;
+  protected CompoundStatement content = null;
 
-	public void setParameterList(ParameterList parameterList)
-	{
-		this.parameterList = parameterList;
-		super.addChild(parameterList);
-	}
-	
-	public CompoundStatement getContent()
-	{
-		return this.content;
-	}
-	
-	@Override
-	public String getEscapedCodeStr()
-	{
-		setCodeStr(getFunctionSignature());
-		return getCodeStr();
-	}
-	
-	public void setContent(CompoundStatement content)
-	{
-		this.content = content;
-		super.addChild(content);
-	}
+  public abstract String getName();
+
+  public abstract String getFunctionSignature();
+
+  public ParameterList getParameterList() {
+    return this.parameterList;
+  }
+
+  public void setParameterList(ParameterList parameterList) {
+    this.parameterList = parameterList;
+    super.addChild(parameterList);
+  }
+
+  public CompoundStatement getContent() {
+    return this.content;
+  }
+
+  public void setContent(CompoundStatement content) {
+    this.content = content;
+    super.addChild(content);
+  }
+
+  @Override
+  public String getEscapedCodeStr() {
+    setCodeStr(getFunctionSignature());
+    return getCodeStr();
+  }
 }

@@ -11,7 +11,7 @@ testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-v")
 
 checkstyleConfigLocation := CheckstyleConfigLocation.File("config/checkstyle/google_checks.xml")
 checkstyleSeverityLevel := Some(CheckstyleSeverityLevel.Info)
-checkstyle := checkstyle.triggeredBy(Compile / compile).value
+// checkstyle := checkstyle.triggeredBy(Compile / compile).value
 
 enablePlugins(Antlr4Plugin)
 Antlr4 / antlr4PackageName := Some("io.shiftleft.fuzzyc2cpg")

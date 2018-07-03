@@ -6,24 +6,24 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 // child are replaced by their child during
 // consolidation. ExpressionHolders are never removed.
 
-public class ExpressionHolder extends Expression
-{
-	@Override
-	public String getEscapedCodeStr()
-	{
-		Expression expr = getExpression();
-		if (expr == null)
-			return "";
+public class ExpressionHolder extends Expression {
 
-		setCodeStr(expr.getEscapedCodeStr());
-		return getCodeStr();
-	}
+  @Override
+  public String getEscapedCodeStr() {
+    Expression expr = getExpression();
+    if (expr == null) {
+      return "";
+    }
 
-	public Expression getExpression()
-	{
-		if (children == null)
-			return null;
-		return (Expression) children.get(0);
-	}
+    setCodeStr(expr.getEscapedCodeStr());
+    return getCodeStr();
+  }
+
+  public Expression getExpression() {
+    if (children == null) {
+      return null;
+    }
+    return (Expression) children.get(0);
+  }
 
 }

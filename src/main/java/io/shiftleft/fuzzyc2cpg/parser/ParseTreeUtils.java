@@ -2,39 +2,37 @@ package io.shiftleft.fuzzyc2cpg.parser;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class ParseTreeUtils
-{
-	public static String childTokenString(ParseTree ctx)
-	{
+public class ParseTreeUtils {
 
-		// The reason we don't just call ctx.getText()
-		// here is because it removes whitespace, making
-		// 'inti' from 'int i'.
+  public static String childTokenString(ParseTree ctx) {
 
-		if (ctx == null)
-			return "";
+    // The reason we don't just call ctx.getText()
+    // here is because it removes whitespace, making
+    // 'inti' from 'int i'.
 
-		int nChildren = ctx.getChildCount();
+    if (ctx == null) {
+      return "";
+    }
 
-		if (nChildren == 0)
-		{
-			return ctx.getText();
-		}
+    int numChildren = ctx.getChildCount();
 
-		StringBuilder retval = new StringBuilder();
+    if (numChildren == 0) {
+      return ctx.getText();
+    }
 
-		for (int i = 0; i < nChildren; i++)
-		{
-			ParseTree child = ctx.getChild(i);
-			String childText = childTokenString(child);
-			if (!childText.equals(""))
-			{
-				retval.append(childText).append(" ");
-			}
-		}
+    StringBuilder retval = new StringBuilder();
 
-		if (retval.length() > 0)
-			return retval.substring(0, retval.length() - 1);
-		return retval.toString();
-	}
+    for (int i = 0; i < numChildren; i++) {
+      ParseTree child = ctx.getChild(i);
+      String childText = childTokenString(child);
+      if (!childText.equals("")) {
+        retval.append(childText).append(" ");
+      }
+    }
+
+    if (retval.length() > 0) {
+      return retval.substring(0, retval.length() - 1);
+    }
+    return retval.toString();
+  }
 }

@@ -1,35 +1,30 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
-import io.shiftleft.fuzzyc2cpg.ast.ASTNode;
+import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 
-public class Expression extends ASTNode
-{
-	private String operator = "";
+public class Expression extends AstNode {
 
-	public Expression()
-	{
-	}
+  private String operator = "";
 
-	public Expression(Expression other)
-	{
-		super(other);
-		setOperator(other.operator);
-	}
+  public Expression() {
+  }
 
-	public void replaceFirstChild(ASTNode node)
-	{
-		children.removeFirst();
-		children.addFirst(node);
-	}
+  public Expression(Expression other) {
+    super(other);
+    setOperator(other.operator);
+  }
 
-	public void setOperator(String text)
-	{
-		operator = text;
-	}
+  public void replaceFirstChild(AstNode node) {
+    children.removeFirst();
+    children.addFirst(node);
+  }
 
-	public String getOperator()
-	{
-		return operator;
-	}
+  public String getOperator() {
+    return operator;
+  }
+
+  public void setOperator(String text) {
+    operator = text;
+  }
 
 }

@@ -3,6 +3,6 @@ package io.shiftleft.fuzzyc2cpg.ast.expressions;
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionHolder;
 
 // Pseudo node
-public class Callee extends ExpressionHolder
-{
+public class Callee extends ExpressionHolder {
+
 }

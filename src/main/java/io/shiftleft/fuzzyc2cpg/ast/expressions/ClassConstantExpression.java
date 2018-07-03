@@ -1,29 +1,25 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
-public class ClassConstantExpression extends MemberAccess
-{
-	private Expression classExpression = null;
-	private StringExpression constantName = null;
+public class ClassConstantExpression extends MemberAccess {
 
-	public Expression getClassExpression()
-	{
-		return this.classExpression;
-	}
+  private Expression classExpression = null;
+  private StringExpression constantName = null;
 
-	public void setClassExpression(Expression classExpression)
-	{
-		this.classExpression = classExpression;
-		super.addChild(classExpression);
-	}
-	
-	public StringExpression getConstantName()
-	{
-		return this.constantName;
-	}
+  public Expression getClassExpression() {
+    return this.classExpression;
+  }
 
-	public void setConstantName(StringExpression constantName)
-	{
-		this.constantName = constantName;
-		super.addChild(constantName);
-	}
+  public void setClassExpression(Expression classExpression) {
+    this.classExpression = classExpression;
+    super.addChild(classExpression);
+  }
+
+  public StringExpression getConstantName() {
+    return this.constantName;
+  }
+
+  public void setConstantName(StringExpression constantName) {
+    this.constantName = constantName;
+    super.addChild(constantName);
+  }
 }

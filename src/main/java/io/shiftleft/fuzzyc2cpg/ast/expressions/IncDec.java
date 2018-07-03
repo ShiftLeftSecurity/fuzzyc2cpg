@@ -4,6 +4,6 @@ package io.shiftleft.fuzzyc2cpg.ast.expressions;
 // not a standalone expression and can't
 // be evaluated.
 
-public class IncDec extends Expression
-{
+public class IncDec extends Expression {
+
 }

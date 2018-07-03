@@ -6,48 +6,41 @@ import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockStarterWithStmtAndCnd
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
-public class CatchStatement extends BlockStarterWithStmtAndCnd
-{
-	private Identifier exceptionIdentifier = null;
-	private Variable variable = null;
-	private CompoundStatement content = null;
+public class CatchStatement extends BlockStarterWithStmtAndCnd {
 
-	public Identifier getExceptionIdentifier()
-	{
-		return this.exceptionIdentifier;
-	}
+  private Identifier exceptionIdentifier = null;
+  private Variable variable = null;
+  private CompoundStatement content = null;
 
-	public void setExceptionIdentifier(Identifier exceptionIdentifier)
-	{
-		this.exceptionIdentifier = exceptionIdentifier;
-		super.addChild(exceptionIdentifier);
-	}
+  public Identifier getExceptionIdentifier() {
+    return this.exceptionIdentifier;
+  }
 
-	public Variable getVariable()
-	{
-		return this.variable;
-	}
+  public void setExceptionIdentifier(Identifier exceptionIdentifier) {
+    this.exceptionIdentifier = exceptionIdentifier;
+    super.addChild(exceptionIdentifier);
+  }
 
-	public void setVariable(Variable variable)
-	{
-		this.variable = variable;
-		super.addChild(variable);
-	}
+  public Variable getVariable() {
+    return this.variable;
+  }
 
-	public CompoundStatement getContent()
-	{
-		return this.content;
-	}
+  public void setVariable(Variable variable) {
+    this.variable = variable;
+    super.addChild(variable);
+  }
 
-	public void setContent(CompoundStatement content)
-	{
-		this.content = content;
-		super.addChild(content);
-	}
+  public CompoundStatement getContent() {
+    return this.content;
+  }
 
-	public void accept(ASTNodeVisitor visitor)
-	{
-		visitor.visit(this);
-	}
+  public void setContent(CompoundStatement content) {
+    this.content = content;
+    super.addChild(content);
+  }
+
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 
 }

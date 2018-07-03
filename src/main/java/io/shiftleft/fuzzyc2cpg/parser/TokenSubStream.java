@@ -1,65 +1,60 @@
 package io.shiftleft.fuzzyc2cpg.parser;
 
 import java.util.Stack;
-
 import org.antlr.v4.runtime.BufferedTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenSource;
 
-public class TokenSubStream extends BufferedTokenStream
-{
-	protected int stopIndex = -1;
-	protected int startIndex = 0;
+public class TokenSubStream extends BufferedTokenStream {
 
-	protected Stack<Integer> stopIndexStack = new Stack<Integer>();
-	protected Stack<Integer> startIndexStack = new Stack<Integer>();
+  protected int stopIndex = -1;
+  protected int startIndex = 0;
 
-	public TokenSubStream(TokenSource tokenSource)
-	{
-		super(tokenSource);
-	}
+  protected Stack<Integer> stopIndexStack = new Stack<Integer>();
+  protected Stack<Integer> startIndexStack = new Stack<Integer>();
 
-	public void restrict(int aStartIndex, int aStopIndex)
-	{
-		startIndexStack.push(index());
-		stopIndexStack.push(stopIndex);
+  public TokenSubStream(TokenSource tokenSource) {
+    super(tokenSource);
+  }
 
-		startIndex = aStartIndex;
-		stopIndex = aStopIndex;
-		seek(aStartIndex);
-	}
+  public void restrict(int aStartIndex, int aStopIndex) {
+    startIndexStack.push(index());
+    stopIndexStack.push(stopIndex);
 
-	public void resetRestriction()
-	{
-		stopIndex = stopIndexStack.pop();
-		startIndex = startIndexStack.pop();
-		seek(startIndex);
-	}
+    startIndex = aStartIndex;
+    stopIndex = aStopIndex;
+    seek(aStartIndex);
+  }
 
-	@Override
-	public void reset()
-	{
-		seek(startIndex);
-	}
+  public void resetRestriction() {
+    stopIndex = stopIndexStack.pop();
+    startIndex = startIndexStack.pop();
+    seek(startIndex);
+  }
 
-	@Override
-	public Token LT(int k)
-	{
-		lazyInit();
-		if (k == 0)
-			return null;
-		if (k < 0)
-			return LB(-k);
+  @Override
+  public void reset() {
+    seek(startIndex);
+  }
 
-		int i = p + k - 1;
-		sync(i);
+  @Override
+  public Token LT(int k) {
+    lazyInit();
+    if (k == 0) {
+      return null;
+    }
+    if (k < 0) {
+      return LB(-k);
+    }
 
-		if (i >= tokens.size() || (stopIndex != -1 && i >= stopIndex))
-		{ // return EOF token
-			// EOF must be last token
-			return (Token) tokens.get(tokens.size() - 1);
-		}
-		return (Token) tokens.get(i);
-	}
+    int i = p + k - 1;
+    sync(i);
+
+    if (i >= tokens.size() || (stopIndex != -1 && i >= stopIndex)) { // return EOF token
+      // EOF must be last token
+      return (Token) tokens.get(tokens.size() - 1);
+    }
+    return (Token) tokens.get(i);
+  }
 
 }

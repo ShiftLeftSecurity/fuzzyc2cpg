@@ -1,27 +1,23 @@
 package io.shiftleft.fuzzyc2cpg.ast.walking;
 
+import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import java.util.Stack;
-
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import io.shiftleft.fuzzyc2cpg.ast.ASTNode;
-import io.shiftleft.fuzzyc2cpg.ast.ASTNodeBuilder;
+public class ASTWalkerEvent {
 
-public class ASTWalkerEvent
-{
+  public eventID id;
 
-	public enum eventID {
-		BEGIN, START_OF_UNIT, END_OF_UNIT, PROCESS_ITEM, END
-	};
-
-	public ASTWalkerEvent(eventID aId)
-	{
-		id = aId;
-	}
-
-	public eventID id;
-	public ParserRuleContext ctx;
-	public String filename;
-	public Stack<ASTNodeBuilder> itemStack;
-	public ASTNode item;
+  ;
+  public ParserRuleContext ctx;
+  public String filename;
+  public Stack<AstNodeBuilder> itemStack;
+  public AstNode item;
+  public ASTWalkerEvent(eventID aId) {
+    id = aId;
+  }
+  public enum eventID {
+    BEGIN, START_OF_UNIT, END_OF_UNIT, PROCESS_ITEM, END
+  }
 }

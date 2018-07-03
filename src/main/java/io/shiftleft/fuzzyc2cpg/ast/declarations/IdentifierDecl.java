@@ -1,41 +1,37 @@
 package io.shiftleft.fuzzyc2cpg.ast.declarations;
 
-import io.shiftleft.fuzzyc2cpg.ast.ASTNode;
+import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
 
-public class IdentifierDecl extends ASTNode
-{
-	private IdentifierDeclType type;
-	private Identifier name;
+public class IdentifierDecl extends AstNode {
 
-	public void addChild(ASTNode node)
-	{
-		if (node instanceof Identifier)
-			setName((Identifier) node);
-		else if (node instanceof IdentifierDeclType)
-			setType((IdentifierDeclType) node);
+  private IdentifierDeclType type;
+  private Identifier name;
 
-		super.addChild(node);
-	}
+  public void addChild(AstNode node) {
+    if (node instanceof Identifier) {
+      setName((Identifier) node);
+    } else if (node instanceof IdentifierDeclType) {
+      setType((IdentifierDeclType) node);
+    }
 
-	private void setName(Identifier name)
-	{
-		this.name = name;
-	}
+    super.addChild(node);
+  }
 
-	private void setType(IdentifierDeclType type)
-	{
-		this.type = type;
-	}
+  public Identifier getName() {
+    return name;
+  }
 
-	public Identifier getName()
-	{
-		return name;
-	}
+  private void setName(Identifier name) {
+    this.name = name;
+  }
 
-	public IdentifierDeclType getType()
-	{
-		return type;
-	}
+  public IdentifierDeclType getType() {
+    return type;
+  }
+
+  private void setType(IdentifierDeclType type) {
+    this.type = type;
+  }
 
 }

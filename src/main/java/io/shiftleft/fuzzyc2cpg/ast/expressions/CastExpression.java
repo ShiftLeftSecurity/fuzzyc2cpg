@@ -1,41 +1,36 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
-import io.shiftleft.fuzzyc2cpg.ast.ASTNode;
+import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 
-public class CastExpression extends Expression
-{
+public class CastExpression extends Expression {
 
-	Expression castTarget = null;
-	Expression castExpression = null;
+  Expression castTarget = null;
+  Expression castExpression = null;
 
-	@Override
-	public void addChild(ASTNode expression)
-	{
-		if (castTarget == null)
-			setCastTarget( (Expression)expression);
-		else
-			setCastExpression( (Expression)expression);
-	}
-	
-	public Expression getCastTarget()
-	{
-		return this.castTarget;
-	}
-	
-	public void setCastTarget(Expression castTarget)
-	{
-		this.castTarget = castTarget;
-		super.addChild(castTarget);
-	}
-	
-	public Expression getCastExpression()
-	{
-		return this.castExpression;
-	}
+  @Override
+  public void addChild(AstNode expression) {
+    if (castTarget == null) {
+      setCastTarget((Expression) expression);
+    } else {
+      setCastExpression((Expression) expression);
+    }
+  }
 
-	public void setCastExpression(Expression castExpression)
-	{
-		this.castExpression = castExpression;
-		super.addChild(castExpression);
-	}
+  public Expression getCastTarget() {
+    return this.castTarget;
+  }
+
+  public void setCastTarget(Expression castTarget) {
+    this.castTarget = castTarget;
+    super.addChild(castTarget);
+  }
+
+  public Expression getCastExpression() {
+    return this.castExpression;
+  }
+
+  public void setCastExpression(Expression castExpression) {
+    this.castExpression = castExpression;
+    super.addChild(castExpression);
+  }
 }

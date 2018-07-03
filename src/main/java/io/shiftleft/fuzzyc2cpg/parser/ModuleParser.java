@@ -4,9 +4,9 @@ import java.util.Observer;
 
 public class ModuleParser {
 
-  ANTLRParserDriver parserDriver;
+  AntlrParserDriver parserDriver;
 
-  public ModuleParser(ANTLRParserDriver driver) {
+  public ModuleParser(AntlrParserDriver driver) {
     parserDriver = driver;
   }
 

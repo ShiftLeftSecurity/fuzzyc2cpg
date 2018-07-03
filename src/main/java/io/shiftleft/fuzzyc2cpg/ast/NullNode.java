@@ -8,6 +8,6 @@ package io.shiftleft.fuzzyc2cpg.ast;
  * (e.g., a function node that does not specify its return type in
  * its declaration; see TestPHPCSVASTBuilderMinimal for more examples.)
  */
-public class NullNode extends ASTNode
-{
+public class NullNode extends AstNode {
+
 }

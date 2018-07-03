@@ -1,70 +1,63 @@
 package io.shiftleft.fuzzyc2cpg.ast.functionDef;
 
+import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import io.shiftleft.fuzzyc2cpg.ast.ASTNode;
-import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
+public class ParameterList extends AstNode implements Iterable<ParameterBase> {
 
-public class ParameterList extends ASTNode implements Iterable<ParameterBase>
-{
-	private LinkedList<ParameterBase> parameters = new LinkedList<ParameterBase>();
+  private LinkedList<ParameterBase> parameters = new LinkedList<ParameterBase>();
 
-	public void addChild(ASTNode node)
-	{
-		if (node instanceof ParameterBase)
-			addParameter((ParameterBase) node);
-		else
-			super.addChild(node);
-	}
+  public void addChild(AstNode node) {
+    if (node instanceof ParameterBase) {
+      addParameter((ParameterBase) node);
+    } else {
+      super.addChild(node);
+    }
+  }
 
-	public int size()
-	{
-		return this.parameters.size();
-	}
-	
-	public ParameterBase getParameter(int i) {
-		return this.parameters.get(i);
-	}
+  public int size() {
+    return this.parameters.size();
+  }
 
-	public void addParameter(ParameterBase parameter)
-	{
-		this.parameters.add(parameter);
-		super.addChild(parameter);
-	}
+  public ParameterBase getParameter(int i) {
+    return this.parameters.get(i);
+  }
 
-	@Override
-	public String getEscapedCodeStr()
-	{
+  public void addParameter(ParameterBase parameter) {
+    this.parameters.add(parameter);
+    super.addChild(parameter);
+  }
 
-		if (parameters.size() == 0)
-		{
-			setCodeStr("");
-			return getCodeStr();
-		}
+  @Override
+  public String getEscapedCodeStr() {
 
-		Iterator<ParameterBase> i = parameters.iterator();
-		StringBuilder s = new StringBuilder();
-		for (; i.hasNext();)
-		{
-			ParameterBase param = i.next();
-			s.append(param.getEscapedCodeStr() + " , ");
-		}
+    if (parameters.size() == 0) {
+      setCodeStr("");
+      return getCodeStr();
+    }
 
-		setCodeStr(s.toString());
-		setCodeStr(getCodeStr().substring(0, s.length() - 3));
+    Iterator<ParameterBase> i = parameters.iterator();
+    StringBuilder s = new StringBuilder();
+    for (; i.hasNext(); ) {
+      ParameterBase param = i.next();
+      s.append(param.getEscapedCodeStr() + " , ");
+    }
 
-		return getCodeStr();
-	}
+    setCodeStr(s.toString());
+    setCodeStr(getCodeStr().substring(0, s.length() - 3));
 
-	@Override
-	public void accept(ASTNodeVisitor visitor)
-	{
-		visitor.visit(this);
-	}
+    return getCodeStr();
+  }
 
-	@Override
-	public Iterator<ParameterBase> iterator() {
-		return this.parameters.iterator();
-	}
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
+
+  @Override
+  public Iterator<ParameterBase> iterator() {
+    return this.parameters.iterator();
+  }
 }

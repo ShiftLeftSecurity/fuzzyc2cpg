@@ -4,65 +4,56 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockStarterWithStmtAndCnd;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
-public class ForEachStatement extends BlockStarterWithStmtAndCnd
-{
-	// a ForEachStatement has four children: three in its predicate, and a statement list
-	// the three children in its predicate are saved in a ForEachCondition container for technical reasons
-	// (for CFG generation, such that we can treat ForEachStatement's exactly as we treat WhileStatement's)
-	private ForEachCondition condition = new ForEachCondition();
+public class ForEachStatement extends BlockStarterWithStmtAndCnd {
 
-	@Override
-	public ForEachCondition getCondition()
-	{
-		return this.condition;
-	}
+  // a ForEachStatement has four children: three in its predicate, and a statement list
+  // the three children in its predicate are saved in a ForEachCondition container for technical reasons
+  // (for CFG generation, such that we can treat ForEachStatement's exactly as we treat WhileStatement's)
+  private ForEachCondition condition = new ForEachCondition();
 
-	@Override
-	public void setCondition(Expression expression)
-	{
-		if( ! (expression instanceof ForEachCondition))
-			throw new RuntimeException("The condition of a ForEachStatement must be a ForEachCondition!");
-		else {
-			this.condition = (ForEachCondition)expression;
-		}
-	}
+  @Override
+  public ForEachCondition getCondition() {
+    return this.condition;
+  }
 
-	public Expression getIteratedObject()
-	{
-		return this.condition.getIteratedObject();
-	}
+  @Override
+  public void setCondition(Expression expression) {
+    if (!(expression instanceof ForEachCondition)) {
+      throw new RuntimeException("The condition of a ForEachStatement must be a ForEachCondition!");
+    } else {
+      this.condition = (ForEachCondition) expression;
+    }
+  }
 
-	public void setIteratedObject(Expression expression)
-	{
-		this.condition.setIteratedObject(expression);
-		super.addChild(expression);
-	}
+  public Expression getIteratedObject() {
+    return this.condition.getIteratedObject();
+  }
 
-	public Expression getValueExpression()
-	{
-		return this.condition.getValueExpression();
-	}
+  public void setIteratedObject(Expression expression) {
+    this.condition.setIteratedObject(expression);
+    super.addChild(expression);
+  }
 
-	public void setValueExpression(Expression value)
-	{
-		this.condition.setValueExpression(value);
-		super.addChild(value);
-	}
+  public Expression getValueExpression() {
+    return this.condition.getValueExpression();
+  }
 
-	public Expression getKeyExpression()
-	{
-		return this.condition.getKeyExpression();
-	}
+  public void setValueExpression(Expression value) {
+    this.condition.setValueExpression(value);
+    super.addChild(value);
+  }
 
-	public void setKeyExpression(Expression key)
-	{
-		this.condition.setKeyExpression(key);
-		super.addChild(key);
-	}
+  public Expression getKeyExpression() {
+    return this.condition.getKeyExpression();
+  }
 
-	@Override
-	public void accept(ASTNodeVisitor visitor)
-	{
-		visitor.visit(this);
-	}
+  public void setKeyExpression(Expression key) {
+    this.condition.setKeyExpression(key);
+    super.addChild(key);
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 }

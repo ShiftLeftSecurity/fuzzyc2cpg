@@ -1,15 +1,14 @@
 package io.shiftleft.fuzzyc2cpg.ast.declarations;
 
-import io.shiftleft.fuzzyc2cpg.ast.ASTNode;
+import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 
-public class IdentifierDeclType extends ASTNode
-{
-	public String baseType;
-	public String completeType;
+public class IdentifierDeclType extends AstNode {
 
-	public String getEscapedCodeStr()
-	{
-		return completeType;
-	}
+  public String baseType;
+  public String completeType;
+
+  public String getEscapedCodeStr() {
+    return completeType;
+  }
 
 }

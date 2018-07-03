@@ -1,5 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
-public class PreIncOperationExpression extends PreIncDecOperationExpression
-{
+public class PreIncOperationExpression extends PreIncDecOperationExpression {
+
 }
