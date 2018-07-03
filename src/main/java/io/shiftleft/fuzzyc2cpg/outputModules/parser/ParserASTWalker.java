@@ -15,6 +15,7 @@ public abstract class ParserASTWalker extends ASTWalker
 	@Override
 	public void startOfUnit(ParserRuleContext ctx, String filename)
 	{
+	  astVisitor.handleStartOfUnit();
 	}
 
 	@Override

@@ -30,9 +30,17 @@ import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ThrowStatement;
 
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
+import java.util.Stack;
 
 public abstract class ASTNodeVisitor
 {
+
+	protected Stack<Long> contextStack;
+
+	public void handleStartOfUnit()
+	{
+		contextStack = new Stack<Long>();
+	}
 
 	public void visit(ASTNode item)
 	{
