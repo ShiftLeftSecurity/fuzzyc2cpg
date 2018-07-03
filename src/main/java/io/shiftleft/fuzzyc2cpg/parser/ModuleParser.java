@@ -1,7 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.parser;
 
 import java.util.Observer;
-import jdk.nashorn.internal.runtime.ParserException;
 
 public class ModuleParser {
 
