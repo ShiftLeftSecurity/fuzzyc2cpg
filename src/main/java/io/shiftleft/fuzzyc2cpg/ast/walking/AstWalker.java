@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.ast.walking;
 
+import io.shiftleft.fuzzyc2cpg.ParserCallbacks;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import java.util.Observable;
@@ -7,7 +8,24 @@ import java.util.Observer;
 import java.util.Stack;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public abstract class AstWalker implements Observer {
+public class AstWalker implements Observer {
+
+  protected ASTNodeVisitor astVisitor;
+
+  public AstWalker() {
+    astVisitor = new ParserCallbacks();
+  }
+
+  public void startOfUnit(ParserRuleContext ctx, String filename) {
+    astVisitor.handleStartOfUnit();
+  }
+
+  public void endOfUnit(ParserRuleContext ctx, String filename) {
+  }
+
+  public void processItem(AstNode node, Stack<AstNodeBuilder> nodeStack) {
+    node.accept(astVisitor);
+  }
 
   public void update(Observable obj, Object arg) {
     ASTWalkerEvent event = (ASTWalkerEvent) arg;
@@ -28,15 +46,7 @@ public abstract class AstWalker implements Observer {
         end();
         break;
     }
-    ;
   }
-
-  public abstract void startOfUnit(ParserRuleContext ctx, String filename);
-
-  public abstract void endOfUnit(ParserRuleContext ctx, String filename);
-
-  public abstract void processItem(AstNode node,
-      Stack<AstNodeBuilder> nodeStack);
 
   public void begin() {
   }

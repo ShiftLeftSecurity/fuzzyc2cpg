@@ -1,7 +1,7 @@
 package io.shiftleft.fuzzyc2cpg;
 
-import io.shiftleft.fuzzyc2cpg.outputmodules.ProtoAstWalker;
-import io.shiftleft.fuzzyc2cpg.parser.Parser;
+import io.shiftleft.fuzzyc2cpg.ast.walking.AstWalker;
+import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener;
 import io.shiftleft.fuzzyc2cpg.parser.ModuleParser;
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
@@ -13,26 +13,14 @@ import io.shiftleft.proto.cpg.Cpg.NodePropertyName;
 import io.shiftleft.proto.cpg.Cpg.PropertyValue;
 import java.nio.file.Path;
 
-class CParserProtoOutput extends Parser {
+class FileWalkerCallbacks extends SourceFileListener {
 
   AntlrCModuleParserDriver driver = new AntlrCModuleParserDriver();
   ModuleParser parser = new ModuleParser(driver);
   CpgStruct.Builder structureCpg = CpgStruct.newBuilder();
 
-  @Override
-  protected void initializeWalker() {
-    astWalker = new ProtoAstWalker();
-  }
-
-  @Override
-  public void initialize() {
-    super.initialize();
-    parser.addObserver(astWalker);
-  }
-
-  @Override protected void initializeDatabase() { }
-
-  @Override protected void initializeDirectoryImporter() { }
+  protected AstWalker astWalker;
+  protected String outputDir;
 
   /**
    * Callback invoked for each file
@@ -43,6 +31,33 @@ class CParserProtoOutput extends Parser {
     addFileNode(pathToFile);
     parser.parseFile(pathToFile.toString());
   }
+
+  @Override
+  public void initialize() {
+    initializeDirectoryImporter();
+    initializeWalker();
+    initializeDatabase();
+    parser.addObserver(astWalker);
+  }
+
+  public void setOutputDir(String anOutputDir) {
+    outputDir = anOutputDir;
+  }
+
+  @Override
+  public void shutdown() {
+    shutdownDatabase();
+  }
+
+  protected void initializeWalker() {
+    astWalker = new AstWalker();
+  }
+
+
+  protected void initializeDatabase() { }
+
+  protected void initializeDirectoryImporter() { }
+
 
   private void addFileNode(Path pathToFile) {
     Builder nodeBuilder = Node.newBuilder();
@@ -74,9 +89,9 @@ class CParserProtoOutput extends Parser {
 
   }
 
-  @Override
   protected void shutdownDatabase() {
     System.out.println(structureCpg);
   }
 
 }
+

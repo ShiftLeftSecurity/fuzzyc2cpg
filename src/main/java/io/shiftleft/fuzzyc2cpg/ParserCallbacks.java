@@ -1,8 +1,5 @@
-package io.shiftleft.fuzzyc2cpg.outputmodules;
+package io.shiftleft.fuzzyc2cpg;
 
-// Stays alive during the lifetime of the program
-
-import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
@@ -12,7 +9,7 @@ import io.shiftleft.fuzzyc2cpg.cfg.CCFGFactory;
 import io.shiftleft.fuzzyc2cpg.cfg.CFG;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGNode;
 
-public class ProtoAstNodeVisitor extends ASTNodeVisitor {
+public class ParserCallbacks extends ASTNodeVisitor {
 
   /**
    * Callback triggered for each function definition

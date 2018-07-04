@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class Main {
 
-  private static CParserProtoOutput parser;
+  private static FileWalkerCallbacks parser;
   private static SourceFileWalker sourceFileWalker = new OrderedWalker();
 
   public static void main(String[] args) {
@@ -22,7 +22,7 @@ public class Main {
    * called for each source file.
    * */
   private static void setupParser() {
-    parser = new CParserProtoOutput();
+    parser = new FileWalkerCallbacks();
     String outputDir = "out";
     parser.setOutputDir(outputDir);
     parser.initialize();
