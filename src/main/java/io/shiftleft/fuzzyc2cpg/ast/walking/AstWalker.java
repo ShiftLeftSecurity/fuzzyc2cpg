@@ -7,7 +7,7 @@ import java.util.Observer;
 import java.util.Stack;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public abstract class ASTWalker implements Observer {
+public abstract class AstWalker implements Observer {
 
   public void update(Observable obj, Object arg) {
     ASTWalkerEvent event = (ASTWalkerEvent) arg;

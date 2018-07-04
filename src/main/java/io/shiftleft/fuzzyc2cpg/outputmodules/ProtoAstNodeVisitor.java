@@ -5,15 +5,16 @@ package io.shiftleft.fuzzyc2cpg.outputmodules;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
-import io.shiftleft.fuzzyc2cpg.outputmodules.common.OutModAstNodeVisitor;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
-public class ProtoAstNodeVisitor extends OutModAstNodeVisitor {
+public class ProtoAstNodeVisitor extends ASTNodeVisitor {
+
+  /**
+   * Callback triggered for each function definition
+   * */
 
   public void visit(FunctionDefBase node) {
-    System.out.println("FunctionDef");
-    System.out.println(node);
-    ProtoFunctionExporter exporter = new ProtoFunctionExporter();
-    exporter.addToDatabaseSafe(node);
+
   }
 
   public void visit(ClassDefStatement node) {
@@ -21,11 +22,6 @@ public class ProtoAstNodeVisitor extends OutModAstNodeVisitor {
   }
 
   public void visit(IdentifierDeclStatement node) {
-
-  }
-
-  @Override
-  protected void addEdgeFromClassToFunc(long dstNodeId, Long classId) {
 
   }
 

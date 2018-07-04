@@ -6,18 +6,23 @@ import java.io.IOException;
 
 public class Main {
 
-  private static CParserProtoOuput parser;
+  private static CParserProtoOutput parser;
   private static SourceFileWalker sourceFileWalker = new OrderedWalker();
 
   public static void main(String[] args) {
-    setupIndexer();
+    setupParser();
 
     String[] fileAndDirNames = {"input"};
     walkCodebase(fileAndDirNames);
   }
 
-  private static void setupIndexer() {
-    parser = new CParserProtoOuput();
+  /**
+   * Create a new parser and register it as a listener
+   * for the source file walker, such that it can be
+   * called for each source file.
+   * */
+  private static void setupParser() {
+    parser = new CParserProtoOutput();
     String outputDir = "out";
     parser.setOutputDir(outputDir);
     parser.initialize();

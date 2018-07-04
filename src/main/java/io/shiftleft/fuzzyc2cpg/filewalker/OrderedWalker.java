@@ -1,7 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.filewalker;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -27,8 +26,7 @@ public class OrderedWalker extends SourceFileWalker {
   }
 
   @Override
-  protected void walkExistingFileOrDirectory(String dirOrFileName)
-      throws IOException {
+  protected void walkExistingFileOrDirectory(String dirOrFileName) {
     walk(dirOrFileName);
   }
 

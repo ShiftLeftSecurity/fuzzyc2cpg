@@ -3,11 +3,11 @@ package io.shiftleft.fuzzyc2cpg.parser;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
-import io.shiftleft.fuzzyc2cpg.ast.walking.ASTWalker;
+import io.shiftleft.fuzzyc2cpg.ast.walking.AstWalker;
 import java.util.Stack;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public class CompoundItemAssembler extends ASTWalker {
+public class CompoundItemAssembler extends AstWalker {
 
   private CompoundStatement compoundItem;
 

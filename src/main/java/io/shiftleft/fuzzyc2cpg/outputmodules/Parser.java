@@ -1,10 +1,11 @@
-package io.shiftleft.fuzzyc2cpg.outputmodules.parser;
+package io.shiftleft.fuzzyc2cpg.outputmodules;
 
-import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener;
+import io.shiftleft.fuzzyc2cpg.ast.walking.AstWalker;
+import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener;;
 
 public abstract class Parser extends SourceFileListener {
 
-  protected ParserAstWalker astWalker;
+  protected AstWalker astWalker;
 
   protected String outputDir;
 
