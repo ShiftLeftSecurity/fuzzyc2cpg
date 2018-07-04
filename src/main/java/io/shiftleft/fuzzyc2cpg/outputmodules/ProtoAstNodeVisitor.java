@@ -16,10 +16,11 @@ public class ProtoAstNodeVisitor extends ASTNodeVisitor {
    * Callback triggered for each function definition
    * */
 
-  public void visit(FunctionDefBase node) {
+  public void visit(FunctionDefBase ast) {
     ASTToCFGConverter converter = new ASTToCFGConverter();
     converter.setFactory(new CCFGFactory());
-    CFG cfg = converter.convert(node);
+    CFG cfg = converter.convert(ast);
+    System.out.println(cfg);
   }
 
   public void visit(ClassDefStatement node) {

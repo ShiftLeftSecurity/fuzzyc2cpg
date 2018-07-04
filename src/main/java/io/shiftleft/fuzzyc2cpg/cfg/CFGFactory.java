@@ -1,7 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.cfg;
 
-
-
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterBase;

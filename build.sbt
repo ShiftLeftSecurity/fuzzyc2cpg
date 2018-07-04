@@ -1,7 +1,17 @@
 name := "fuzzyc2cpg"
 organization := "io.shiftleft"
 
+val cpgVersion = "0.0.0-SNAPSHOT"
+
+// TODO: Remove this upon open-sourcing of the CPG
+
+resolvers ++= Seq(
+  "Artifactory snapshot local" at "https://shiftleft.jfrog.io/shiftleft/libs-snapshot-local",
+  "Artifactory release local" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local"
+)
+
 libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.5.4"
+libraryDependencies += "io.shiftleft" % "codepropertygraph" % cpgVersion
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 compile / javacOptions ++= Seq("-Xlint:all", "-Xlint:-cast", "-g")
