@@ -12,6 +12,7 @@ resolvers ++= Seq(
 
 libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.5.4"
 libraryDependencies += "io.shiftleft" % "codepropertygraph" % cpgVersion
+libraryDependencies += "io.shiftleft" % "proto" % cpgVersion
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 compile / javacOptions ++= Seq("-Xlint:all", "-Xlint:-cast", "-g")
