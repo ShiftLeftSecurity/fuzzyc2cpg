@@ -2,6 +2,7 @@ package io.shiftleft.fuzzyc2cpg;
 
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterBase;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 import io.shiftleft.fuzzyc2cpg.cfg.ASTToCFGConverter;
@@ -26,11 +27,87 @@ public class ParserCallbacks extends ASTNodeVisitor {
     ASTToCFGConverter converter = new ASTToCFGConverter();
     converter.setFactory(new CCFGFactory());
     CFG cfg = converter.convert(ast);
+
+    addMethodStub(ast);
+
+
     for (CFGNode cfgNode : cfg.getVertices()) {
       // We can check for instanceof AstNodeContainer here
       // and have .astNode.fullName to get the type.
     }
 
+  }
+
+  private void addMethodStub(FunctionDefBase functionDef) {
+
+    String name = functionDef.getName();
+
+    Property nameProperty = Node.Property.newBuilder()
+        .setName(NodePropertyName.NAME)
+        .setValue(PropertyValue.newBuilder().setStringValue(name).build())
+        .build();
+
+    Node methodNode = Node.newBuilder()
+        .setKey(IdPool.getNextId())
+        .setType(NodeType.METHOD)
+        .addProperty(nameProperty).build();
+
+    structureCpg.addNode(methodNode);
+    connectMethodToNamespaceAndType(methodNode);
+
+    for (ParameterBase parameter : functionDef.getParameterList()) {
+      CpgStruct.Node paramNode = createNodeForParameter(parameter);
+      structureCpg.addNode(paramNode);
+    }
+
+  }
+
+  private Node createNodeForParameter(ParameterBase parameter) {
+
+    Property codeProperty = Property
+        .newBuilder()
+        .setName(NodePropertyName.CODE)
+        .setValue(PropertyValue.newBuilder().setStringValue(parameter.getEscapedCodeStr()).build())
+        .build();
+
+    Property nameProperty = Property
+        .newBuilder()
+        .setName(NodePropertyName.NAME)
+        .setValue(PropertyValue.newBuilder().setStringValue(parameter.getName()).build())
+        .build();
+
+    Property orderProperty = Property
+        .newBuilder()
+        .setName(NodePropertyName.ORDER)
+        .setValue(PropertyValue.newBuilder().setIntValue(parameter.getChildNumber()))
+        .build();
+
+    Property argIndexProperty = Property
+        .newBuilder()
+        .setName(NodePropertyName.ARGUMENT_INDEX)
+        .setValue(PropertyValue.newBuilder().setIntValue(parameter.getChildNumber()))
+        .build();
+
+    return CpgStruct.Node.newBuilder()
+        .setType(NodeType.METHOD_PARAMETER_IN)
+        .addProperty(codeProperty)
+        .addProperty(nameProperty)
+        .addProperty(orderProperty)
+        .addProperty(argIndexProperty)
+        .build();
+  }
+
+  private void connectMethodToNamespaceAndType(Node methodNode) {
+    // TODO: attach to correct namespace, once we handle
+    // namespaces. Also attach to type, if this is defined
+    // inside a class.
+
+    structureCpg.addEdge(
+        CpgStruct.Edge.newBuilder().setType(EdgeType.AST)
+        .setSrc(structureCpg.getNamespaceBlockNode().getKey())
+            .setDst(methodNode.getKey())
+            .build()
+    );
   }
 
   public void visit(ClassDefStatement node) {
@@ -65,12 +142,7 @@ public class ParserCallbacks extends ASTNodeVisitor {
 
     structureCpg.addNode(typeDeclNode);
 
-    structureCpg.addEdge(CpgStruct.Edge.newBuilder()
-        .setType(EdgeType.AST)
-        .setSrc(structureCpg.getNamespaceBlockNode().getKey())
-        .setDst(typeDeclNode.getKey())
-        .build()
-    );
+    connectMethodToNamespaceAndType(typeDeclNode);
 
   }
 
