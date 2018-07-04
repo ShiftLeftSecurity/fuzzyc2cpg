@@ -11,7 +11,6 @@ public class ProtoAstWalker extends AstWalker {
 
   protected ASTNodeVisitor astVisitor;
 
-
   public ProtoAstWalker() {
     astVisitor = new ProtoAstNodeVisitor();
   }

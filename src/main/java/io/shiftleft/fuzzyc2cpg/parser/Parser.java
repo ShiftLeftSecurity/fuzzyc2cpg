@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.outputmodules;
+package io.shiftleft.fuzzyc2cpg.parser;
 
 import io.shiftleft.fuzzyc2cpg.ast.walking.AstWalker;
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener;;
