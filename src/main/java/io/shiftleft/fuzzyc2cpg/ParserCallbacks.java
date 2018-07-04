@@ -56,13 +56,12 @@ public class ParserCallbacks extends ASTNodeVisitor {
     connectMethodToNamespaceAndType(methodNode);
 
     for (ParameterBase parameter : functionDef.getParameterList()) {
-      CpgStruct.Node paramNode = createNodeForParameter(parameter);
-      structureCpg.addNode(paramNode);
+      addParameterCpg(parameter);
     }
 
   }
 
-  private Node createNodeForParameter(ParameterBase parameter) {
+  private void addParameterCpg(ParameterBase parameter) {
 
     Property codeProperty = Property
         .newBuilder()
@@ -88,13 +87,27 @@ public class ParserCallbacks extends ASTNodeVisitor {
         .setValue(PropertyValue.newBuilder().setIntValue(parameter.getChildNumber()))
         .build();
 
-    return CpgStruct.Node.newBuilder()
-        .setType(NodeType.METHOD_PARAMETER_IN)
-        .addProperty(codeProperty)
-        .addProperty(nameProperty)
-        .addProperty(orderProperty)
-        .addProperty(argIndexProperty)
+    structureCpg.addNode(
+        Node.newBuilder()
+            .setType(NodeType.METHOD_PARAMETER_IN)
+            .addProperty(codeProperty)
+            .addProperty(nameProperty)
+            .addProperty(orderProperty)
+            .addProperty(argIndexProperty)
+            .build()
+    );
+
+    Node evalNode = Node.newBuilder()
+        .setType(NodeType.TYPE)
+        .addProperty(Property.newBuilder()
+            .setName(NodePropertyName.NAME)
+            .setValue(PropertyValue.newBuilder().setStringValue(parameter.getType().getEscapedCodeStr())))
+        .addProperty(Property.newBuilder().setName(NodePropertyName.FULL_NAME).setValue(
+            PropertyValue.newBuilder().setStringValue(parameter.getType().getEscapedCodeStr())))
         .build();
+
+    structureCpg.addNode(evalNode);
+
   }
 
   private void connectMethodToNamespaceAndType(Node methodNode) {
