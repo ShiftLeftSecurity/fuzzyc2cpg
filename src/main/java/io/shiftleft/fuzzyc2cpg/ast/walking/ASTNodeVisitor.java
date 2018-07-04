@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.ast.walking;
 
+import io.shiftleft.fuzzyc2cpg.StructureCpg;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Argument;
@@ -29,11 +30,13 @@ import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ContinueStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.GotoStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ThrowStatement;
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Builder;
 import java.util.Stack;
 
 public abstract class ASTNodeVisitor {
 
   protected Stack<Long> contextStack;
+  protected StructureCpg structureCpg;
 
   public void handleStartOfUnit() {
     contextStack = new Stack<Long>();
@@ -170,4 +173,7 @@ public abstract class ASTNodeVisitor {
 
   }
 
+  public void setStructureCpg(StructureCpg structureCpg) {
+    this.structureCpg = structureCpg;
+  }
 }

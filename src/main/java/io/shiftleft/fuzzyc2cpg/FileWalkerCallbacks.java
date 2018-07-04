@@ -4,7 +4,6 @@ import io.shiftleft.fuzzyc2cpg.ast.walking.AstWalker;
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener;
 import io.shiftleft.fuzzyc2cpg.parser.ModuleParser;
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver;
-import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node;
@@ -20,8 +19,7 @@ class FileWalkerCallbacks extends SourceFileListener {
   AntlrCModuleParserDriver driver = new AntlrCModuleParserDriver();
   ModuleParser parser = new ModuleParser(driver);
 
-  CpgStruct.Builder structureCpg;
-  CpgStruct.Node namespaceBlockNode;
+  StructureCpg structureCpg;
 
 
   AstWalker astWalker;
@@ -29,13 +27,13 @@ class FileWalkerCallbacks extends SourceFileListener {
 
   @Override
   public void initialize() {
+    initializeStructureCpg();
     initializeWalker();
     parser.addObserver(astWalker);
-    initializeStructureCpg();
   }
 
   private void initializeStructureCpg() {
-    structureCpg = CpgStruct.newBuilder();
+    structureCpg = new StructureCpg();
     initializeGlobalNamespaceBlock();
   }
 
@@ -44,16 +42,19 @@ class FileWalkerCallbacks extends SourceFileListener {
         .setName(NodePropertyName.NAME)
         .setValue(PropertyValue.newBuilder().setStringValue("<global>").build());
 
-    namespaceBlockNode = Node.newBuilder()
-        .setKey(IdPool.getNextId())
-        .setType(NodeType.NAMESPACE_BLOCK)
-        .addProperty(nameProperty)
-        .build();
-    structureCpg.addNode(namespaceBlockNode);
+    structureCpg.setNamespaceBlockNode(
+        Node.newBuilder()
+            .setKey(IdPool.getNextId())
+            .setType(NodeType.NAMESPACE_BLOCK)
+            .addProperty(nameProperty)
+            .build()
+    );
+
   }
 
   private void initializeWalker() {
     astWalker = new AstWalker();
+    astWalker.setStructureCpg(structureCpg);
   }
 
   public void setOutputDir(String anOutputDir) {
@@ -74,9 +75,9 @@ class FileWalkerCallbacks extends SourceFileListener {
   private void connectFileNodeToNamespaceBlock(Node fileNode) {
     Edge.Builder edgeBuilder = Edge.newBuilder()
         .setType(EdgeType.AST)
-        .setSrc(namespaceBlockNode.getKey())
+        .setSrc(structureCpg.getNamespaceBlockNode().getKey())
         .setDst(fileNode.getKey());
-    structureCpg.addEdge(edgeBuilder);
+    structureCpg.addEdge(edgeBuilder.build());
   }
 
   /**
@@ -115,7 +116,7 @@ class FileWalkerCallbacks extends SourceFileListener {
 
   @Override
   public void shutdown() {
-    System.out.println(structureCpg);
+    System.out.println(structureCpg.getCpg());
   }
 
 }
