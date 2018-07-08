@@ -1,11 +1,11 @@
 package io.shiftleft.fuzzyc2cpg.cfg;
 
 
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGEntryNode;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGErrorNode;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGExceptionNode;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGExitNode;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgEntryNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgErrorNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExceptionNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExitNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgNode;
 import io.shiftleft.fuzzyc2cpg.graphutils.IncidenceListGraph;
 import java.util.HashMap;
 import java.util.List;
@@ -16,39 +16,39 @@ import java.util.LinkedList;
  * Please place language specific attributes of the CFG into a sub-class.
  */
 
-public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
+public class CFG extends IncidenceListGraph<CfgNode, CFGEdge>
 {
-	private CFGNode entry;
-	private CFGNode exit;
-	private CFGNode error;
-	private List<CFGNode> parameters;
+	private CfgNode entry;
+	private CfgNode exit;
+	private CfgNode error;
+	private List<CfgNode> parameters;
 
-	private List<CFGNode> breakStatements;
-	private List<CFGNode> continueStatements;
-	private List<CFGNode> returnStatements;
-	private HashMap<CFGNode, String> gotoStatements;
-	private HashMap<String, CFGNode> labels;
-	private CFGExceptionNode exceptionNode;
+	private List<CfgNode> breakStatements;
+	private List<CfgNode> continueStatements;
+	private List<CfgNode> returnStatements;
+	private HashMap<CfgNode, String> gotoStatements;
+	private HashMap<String, CfgNode> labels;
+	private CfgExceptionNode exceptionNode;
 
 	
 	public CFG()
 	{
-		this(new CFGEntryNode(), new CFGExitNode());
+		this(new CfgEntryNode(), new CfgExitNode());
 	
-		setBreakStatements(new LinkedList<CFGNode>());
-		setContinueStatements(new LinkedList<CFGNode>());
-		setReturnStatements(new LinkedList<CFGNode>());
-		setGotoStatements(new HashMap<CFGNode, String>());
-		setLabels(new HashMap<String, CFGNode>());
+		setBreakStatements(new LinkedList<CfgNode>());
+		setContinueStatements(new LinkedList<CfgNode>());
+		setReturnStatements(new LinkedList<CfgNode>());
+		setGotoStatements(new HashMap<CfgNode, String>());
+		setLabels(new HashMap<String, CfgNode>());
 	}
 
-	public CFG(CFGNode entry, CFGNode exit)
+	public CFG(CfgNode entry, CfgNode exit)
 	{
 		this.entry = entry;
 		this.exit = exit;
 		addVertex(this.entry);
 		addVertex(this.exit);
-		parameters = new LinkedList<CFGNode>();
+		parameters = new LinkedList<CfgNode>();
 	}
 
 	@Override
@@ -59,32 +59,32 @@ public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
 		return size() == 2;
 	}
 
-	public CFGNode getExitNode()
+	public CfgNode getExitNode()
 	{
 		return exit;
 	}
 
-	public CFGNode getEntryNode()
+	public CfgNode getEntryNode()
 	{
 		return entry;
 	}
 
-	public CFGNode getErrorNode()
+	public CfgNode getErrorNode()
 	{
 		if (error == null)
 		{
-			error = new CFGErrorNode();
+			error = new CfgErrorNode();
 			addVertex(error);
 		}
 		return error;
 	}
 
-	public void registerParameter(CFGNode parameter)
+	public void registerParameter(CfgNode parameter)
 	{
 		parameters.add(parameter);
 	}
 
-	public List<CFGNode> getParameters()
+	public List<CfgNode> getParameters()
 	{
 		return parameters;
 	}
@@ -102,8 +102,8 @@ public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
 		getLabels().putAll(otherCFG.getLabels());
 		if (this.hasExceptionNode() && otherCFG.hasExceptionNode())
 		{
-			CFGExceptionNode oldExceptionNode = getExceptionNode();
-			CFGExceptionNode newExceptionNode = new CFGExceptionNode();
+			CfgExceptionNode oldExceptionNode = getExceptionNode();
+			CfgExceptionNode newExceptionNode = new CfgExceptionNode();
 			setExceptionNode(newExceptionNode);
 			addEdge(oldExceptionNode, newExceptionNode,
 					CFGEdge.UNHANDLED_EXCEPT_LABEL);
@@ -138,7 +138,7 @@ public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
 		}
 	}
 
-	public void mountCFG(CFGNode branchNode, CFGNode mergeNode, CFG cfg,
+	public void mountCFG(CfgNode branchNode, CfgNode mergeNode, CFG cfg,
 			String label)
 	{
 		if (!cfg.isEmpty())
@@ -161,7 +161,7 @@ public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
 
 	private void addVertices(CFG cfg)
 	{
-		for (CFGNode vertex : cfg.getVertices())
+		for (CfgNode vertex : cfg.getVertices())
 		{
 			// do not add entry and exit node
 			if (!(vertex.equals(cfg.getEntryNode())
@@ -174,7 +174,7 @@ public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
 
 	private void addEdges(CFG cfg)
 	{
-		for (CFGNode vertex : cfg.getVertices())
+		for (CfgNode vertex : cfg.getVertices())
 		{
 			for (CFGEdge edge : cfg.outgoingEdges(vertex))
 			{
@@ -187,12 +187,12 @@ public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
 		}
 	}
 
-	public void addEdge(CFGNode srcBlock, CFGNode dstBlock)
+	public void addEdge(CfgNode srcBlock, CfgNode dstBlock)
 	{
 		addEdge(srcBlock, dstBlock, CFGEdge.EMPTY_LABEL);
 	}
 
-	public void addEdge(CFGNode srcBlock, CFGNode dstBlock, String label)
+	public void addEdge(CfgNode srcBlock, CfgNode dstBlock, String label)
 	{
 		CFGEdge edge = new CFGEdge(srcBlock, dstBlock, label);
 		addEdge(edge);
@@ -201,7 +201,7 @@ public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
 	public CFG reverse()
 	{
 		CFG reverseGraph = new CFG(getExitNode(), getEntryNode());
-		for (CFGNode node : getVertices())
+		for (CfgNode node : getVertices())
 		{
 			if (!node.equals(getEntryNode()) && !node.equals(getExitNode()))
 			{
@@ -216,90 +216,90 @@ public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
 		return reverseGraph;
 	}
 	
-	public void setExceptionNode(CFGExceptionNode node)
+	public void setExceptionNode(CfgExceptionNode node)
 	{
 		this.exceptionNode = node;
 		addVertex(node);
 	}
 
-	public List<CFGNode> getBreakStatements()
+	public List<CfgNode> getBreakStatements()
 	{
 		return breakStatements;
 	}
 
-	public void setBreakStatements(List<CFGNode> breakStatements)
+	public void setBreakStatements(List<CfgNode> breakStatements)
 	{
 		this.breakStatements = breakStatements;
 	}
 
-	public List<CFGNode> getContinueStatements()
+	public List<CfgNode> getContinueStatements()
 	{
 		return continueStatements;
 	}
 
-	public void setContinueStatements(List<CFGNode> continueStatements)
+	public void setContinueStatements(List<CfgNode> continueStatements)
 	{
 		this.continueStatements = continueStatements;
 	}
 
-	public HashMap<String, CFGNode> getLabels()
+	public HashMap<String, CfgNode> getLabels()
 	{
 		return labels;
 	}
 
-	public void setLabels(HashMap<String, CFGNode> labels)
+	public void setLabels(HashMap<String, CfgNode> labels)
 	{
 		this.labels = labels;
 	}
 
-	public HashMap<CFGNode, String> getGotoStatements()
+	public HashMap<CfgNode, String> getGotoStatements()
 	{
 		return gotoStatements;
 	}
 
-	public void setGotoStatements(HashMap<CFGNode, String> gotoStatements)
+	public void setGotoStatements(HashMap<CfgNode, String> gotoStatements)
 	{
 		this.gotoStatements = gotoStatements;
 	}
 
-	public List<CFGNode> getReturnStatements()
+	public List<CfgNode> getReturnStatements()
 	{
 		return returnStatements;
 	}
 
-	public void setReturnStatements(List<CFGNode> returnStatements)
+	public void setReturnStatements(List<CfgNode> returnStatements)
 	{
 		this.returnStatements = returnStatements;
 	}
 
-	public void addBlockLabel(String label, CFGNode block)
+	public void addBlockLabel(String label, CfgNode block)
 	{
 		getLabels().put(label, block);
 	}
 
-	public void addBreakStatement(CFGNode statement)
+	public void addBreakStatement(CfgNode statement)
 	{
 		getBreakStatements().add(statement);
 	}
 
-	public void addContinueStatement(CFGNode statement)
+	public void addContinueStatement(CfgNode statement)
 	{
 		getContinueStatements().add(statement);
 	}
 
-	public void addGotoStatement(CFGNode gotoStatement, String gotoTarget)
+	public void addGotoStatement(CfgNode gotoStatement, String gotoTarget)
 	{
 		getGotoStatements().put(gotoStatement, gotoTarget);
 	}
 
-	public void addReturnStatement(CFGNode returnStatement)
+	public void addReturnStatement(CfgNode returnStatement)
 	{
 		getReturnStatements().add(returnStatement);
 	}
 
-	public CFGNode getBlockByLabel(String label)
+	public CfgNode getBlockByLabel(String label)
 	{
-		CFGNode block = getLabels().get(label);
+		CfgNode block = getLabels().get(label);
 		if (block == null)
 		{
 			System.err
@@ -309,7 +309,7 @@ public class CFG extends IncidenceListGraph<CFGNode, CFGEdge>
 		return block;
 	}
 
-	public CFGExceptionNode getExceptionNode()
+	public CfgExceptionNode getExceptionNode()
 	{
 		return this.exceptionNode;
 	}

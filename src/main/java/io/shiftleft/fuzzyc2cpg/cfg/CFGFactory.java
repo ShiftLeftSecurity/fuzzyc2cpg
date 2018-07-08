@@ -19,11 +19,11 @@ import io.shiftleft.fuzzyc2cpg.ast.statements.jump.GotoStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ThrowStatement;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.ASTNodeContainer;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGEntryNode;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGErrorNode;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGExceptionNode;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGExitNode;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgEntryNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgErrorNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExceptionNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExitNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgNode;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.InfiniteForNode;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,10 +77,10 @@ public class CFGFactory
 		try
 		{
 			CFG block = new CFG();
-			CFGNode last = block.getEntryNode();
+			CfgNode last = block.getEntryNode();
 			for (AstNode node : nodes)
 			{
-				CFGNode container = new ASTNodeContainer(node);
+				CfgNode container = new ASTNodeContainer(node);
 				block.addVertex(container);
 				block.addEdge(last, container);
 				last = container;
@@ -98,7 +98,7 @@ public class CFGFactory
 	public static CFG newErrorInstance()
 	{
 		CFG errorBlock = new CFG();
-		CFGNode errorNode = new CFGErrorNode();
+		CfgNode errorNode = new CfgErrorNode();
 		errorBlock.addVertex(errorNode);
 		errorBlock.addEdge(errorBlock.getEntryNode(), errorNode);
 		errorBlock.addEdge(errorNode, errorBlock.getExitNode());
@@ -111,7 +111,7 @@ public class CFGFactory
 		try
 		{
 			CFG whileBlock = new CFG();
-			CFGNode conditionContainer = new ASTNodeContainer(
+			CfgNode conditionContainer = new ASTNodeContainer(
 					whileStatement.getCondition());
 			whileBlock.addVertex(conditionContainer);
 			whileBlock.addEdge(whileBlock.getEntryNode(), conditionContainer);
@@ -146,7 +146,7 @@ public class CFGFactory
 			AstNode expression = forStatement.getForLoopExpression();
 
 			CFG forBody = convert(forStatement.getStatement());
-			CFGNode conditionContainer;
+			CfgNode conditionContainer;
 
 			if (condition != null)
 			{
@@ -163,7 +163,7 @@ public class CFGFactory
 
 			if (initialization != null)
 			{
-				CFGNode initializationContainer = new ASTNodeContainer(
+				CfgNode initializationContainer = new ASTNodeContainer(
 						initialization);
 				forBlock.addVertex(initializationContainer);
 				forBlock.addEdge(forBlock.getEntryNode(),
@@ -177,7 +177,7 @@ public class CFGFactory
 
 			if (expression != null)
 			{
-				CFGNode expressionContainer = new ASTNodeContainer(expression);
+				CfgNode expressionContainer = new ASTNodeContainer(expression);
 				forBlock.addVertex(expressionContainer);
 				forBlock.addEdge(expressionContainer, conditionContainer);
 				forBlock.mountCFG(conditionContainer, expressionContainer,
@@ -207,7 +207,7 @@ public class CFGFactory
 		{
 			CFG doBlock = new CFG();
 
-			CFGNode conditionContainer = new ASTNodeContainer(
+			CfgNode conditionContainer = new ASTNodeContainer(
 					doStatement.getCondition());
 
 			doBlock.addVertex(conditionContainer);
@@ -250,19 +250,19 @@ public class CFGFactory
 		try
 		{
 			CFG tryCFG = convert(tryStatement.getStatement());
-			List<CFGNode> statements = new LinkedList<CFGNode>();
+			List<CfgNode> statements = new LinkedList<CfgNode>();
 
 			// Get all nodes within try not connected to an exception node.
-			for (CFGNode node : tryCFG.getVertices())
+			for (CfgNode node : tryCFG.getVertices())
 			{
-				if (!(node instanceof CFGEntryNode)
-						&& !(node instanceof CFGExitNode))
+				if (!(node instanceof CfgEntryNode)
+						&& !(node instanceof CfgExitNode))
 				{
 					boolean b = true;
 					for (CFGEdge edge : tryCFG.outgoingEdges(node))
 					{
-						CFGNode destination = edge.getDestination();
-						if (destination instanceof CFGExceptionNode)
+						CfgNode destination = edge.getDestination();
+						if (destination instanceof CfgExceptionNode)
 						{
 							b = false;
 							break;
@@ -276,9 +276,9 @@ public class CFGFactory
 			// Add exception node for current try block
 			if (!statements.isEmpty())
 			{
-				CFGExceptionNode exceptionNode = new CFGExceptionNode();
+				CfgExceptionNode exceptionNode = new CfgExceptionNode();
 				tryCFG.setExceptionNode(exceptionNode);
-				for (CFGNode node : statements)
+				for (CfgNode node : statements)
 				{
 					tryCFG.addEdge(node, exceptionNode, CFGEdge.EXCEPT_LABEL);
 				}
@@ -313,7 +313,7 @@ public class CFGFactory
 		try
 		{
 			CFG switchBlock = new CFG();
-			CFGNode conditionContainer = new ASTNodeContainer(
+			CfgNode conditionContainer = new ASTNodeContainer(
 					switchStatement.getCondition());
 			switchBlock.addVertex(conditionContainer);
 			switchBlock.addEdge(switchBlock.getEntryNode(), conditionContainer);
@@ -324,8 +324,8 @@ public class CFGFactory
 
 			boolean defaultLabel = false;
 
-			HashMap<String, CFGNode> nonCaseLabels = new HashMap<>();
-			for (Entry<String, CFGNode> block : switchBody.getLabels()
+			HashMap<String, CfgNode> nonCaseLabels = new HashMap<>();
+			for (Entry<String, CfgNode> block : switchBody.getLabels()
 					.entrySet())
 			{
 				// Skip labels that aren't for switch statements.
@@ -414,7 +414,7 @@ public class CFGFactory
 		try
 		{
 			CFG returnBlock = new CFG();
-			CFGNode returnContainer = new ASTNodeContainer(returnStatement);
+			CfgNode returnContainer = new ASTNodeContainer(returnStatement);
 			returnBlock.addVertex(returnContainer);
 			returnBlock.addEdge(returnBlock.getEntryNode(), returnContainer);
 			returnBlock.addEdge(returnContainer, returnBlock.getExitNode());
@@ -433,7 +433,7 @@ public class CFGFactory
 		try
 		{
 			CFG gotoBlock = new CFG();
-			CFGNode gotoContainer = new ASTNodeContainer(gotoStatement);
+			CfgNode gotoContainer = new ASTNodeContainer(gotoStatement);
 			gotoBlock.addVertex(gotoContainer);
 			gotoBlock.addEdge(gotoBlock.getEntryNode(), gotoContainer);
 			gotoBlock.addEdge(gotoContainer, gotoBlock.getExitNode());
@@ -453,7 +453,7 @@ public class CFGFactory
 		try
 		{
 			CFG continueBlock = new CFG();
-			CFGNode labelContainer = new ASTNodeContainer(labelStatement);
+			CfgNode labelContainer = new ASTNodeContainer(labelStatement);
 			continueBlock.addVertex(labelContainer);
 			continueBlock.addEdge(continueBlock.getEntryNode(), labelContainer);
 			continueBlock.addEdge(labelContainer, continueBlock.getExitNode());
@@ -473,7 +473,7 @@ public class CFGFactory
 		try
 		{
 			CFG continueBlock = new CFG();
-			CFGNode continueContainer = new ASTNodeContainer(continueStatement);
+			CfgNode continueContainer = new ASTNodeContainer(continueStatement);
 			continueBlock.addVertex(continueContainer);
 			continueBlock.addEdge(continueBlock.getEntryNode(),
 					continueContainer);
@@ -494,7 +494,7 @@ public class CFGFactory
 		try
 		{
 			CFG breakBlock = new CFG();
-			CFGNode breakContainer = new ASTNodeContainer(breakStatement);
+			CfgNode breakContainer = new ASTNodeContainer(breakStatement);
 			breakBlock.addVertex(breakContainer);
 			breakBlock.addEdge(breakBlock.getEntryNode(), breakContainer);
 			breakBlock.addEdge(breakContainer, breakBlock.getExitNode());
@@ -513,8 +513,8 @@ public class CFGFactory
 		try
 		{
 			CFG throwBlock = new CFG();
-			CFGNode throwContainer = new ASTNodeContainer(throwStatement);
-			CFGExceptionNode exceptionNode = new CFGExceptionNode();
+			CfgNode throwContainer = new ASTNodeContainer(throwStatement);
+			CfgExceptionNode exceptionNode = new CfgExceptionNode();
 			throwBlock.addVertex(throwContainer);
 			throwBlock.setExceptionNode(exceptionNode);
 			throwBlock.addEdge(throwBlock.getEntryNode(), throwContainer);
@@ -539,27 +539,27 @@ public class CFGFactory
 		return structuredFlowVisitior.getCFG();
 	}
 
-	public static void fixBreakStatements(CFG thisCFG, CFGNode target)
+	public static void fixBreakStatements(CFG thisCFG, CfgNode target)
 	{
-		List<CFGNode> breakStatements = thisCFG.getBreakStatements();
-		Iterator<CFGNode> it = breakStatements.iterator();
+		List<CfgNode> breakStatements = thisCFG.getBreakStatements();
+		Iterator<CfgNode> it = breakStatements.iterator();
 
 		fixBreakOrContinueStatements(thisCFG, target, it);
 	}
 
-	public static void fixContinueStatement(CFG thisCFG, CFGNode target)
+	public static void fixContinueStatement(CFG thisCFG, CfgNode target)
 	{
-		List<CFGNode> continueStatements = thisCFG.getContinueStatements();
-		Iterator<CFGNode> it = continueStatements.iterator();
+		List<CfgNode> continueStatements = thisCFG.getContinueStatements();
+		Iterator<CfgNode> it = continueStatements.iterator();
 
 		fixBreakOrContinueStatements(thisCFG, target, it);
 	}
 
-	private static void fixBreakOrContinueStatements(CFG thisCFG, CFGNode target, Iterator<CFGNode> it)
+	private static void fixBreakOrContinueStatements(CFG thisCFG, CfgNode target, Iterator<CfgNode> it)
 	{
 		while(it.hasNext())
 		{
-			CFGNode breakOrContinueNode = it.next();
+			CfgNode breakOrContinueNode = it.next();
 
 			ASTNodeContainer nodeContainer = (ASTNodeContainer) breakOrContinueNode;
 			BreakOrContinueStatement statement = (BreakOrContinueStatement) nodeContainer.getASTNode();
@@ -578,10 +578,10 @@ public class CFGFactory
 
 	public static void fixGotoStatements(CFG thisCFG)
 	{
-		for (Entry<CFGNode, String> entry : thisCFG.getGotoStatements()
+		for (Entry<CfgNode, String> entry : thisCFG.getGotoStatements()
 				.entrySet())
 		{
-			CFGNode gotoStatement = entry.getKey();
+			CfgNode gotoStatement = entry.getKey();
 			String label = entry.getValue();
 			thisCFG.removeEdgesFrom(gotoStatement);
 			thisCFG.addEdge(gotoStatement, thisCFG.getBlockByLabel(label));
@@ -591,7 +591,7 @@ public class CFGFactory
 
 	public static void fixReturnStatements(CFG thisCFG)
 	{
-		for (CFGNode returnStatement : thisCFG.getReturnStatements())
+		for (CfgNode returnStatement : thisCFG.getReturnStatements())
 		{
 			thisCFG.removeEdgesFrom(returnStatement);
 			thisCFG.addEdge(returnStatement, thisCFG.getExitNode());

@@ -13,6 +13,8 @@ resolvers ++= Seq(
 libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.5.4"
 libraryDependencies += "io.shiftleft" % "codepropertygraph" % cpgVersion
 libraryDependencies += "io.shiftleft" % "codepropertygraph-protos" % cpgVersion
+libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
+libraryDependencies += "junit" % "junit" % "4.12" % Test
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 compile / javacOptions ++= Seq("-Xlint:all", "-Xlint:-cast", "-g")

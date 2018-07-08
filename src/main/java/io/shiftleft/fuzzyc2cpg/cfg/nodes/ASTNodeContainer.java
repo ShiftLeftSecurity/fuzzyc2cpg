@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg.cfg.nodes;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 
-public class ASTNodeContainer extends AbstractCFGNode
+public class ASTNodeContainer extends AbstractCfgNode
 {
 
 	private AstNode astNode;

@@ -16,7 +16,7 @@ import io.shiftleft.fuzzyc2cpg.ast.statements.jump.GotoStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ThrowStatement;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.ASTNodeContainer;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgNode;
 
 public class CStructuredFlowVisitor extends StructuredFlowVisitor {
 
@@ -29,7 +29,7 @@ public class CStructuredFlowVisitor extends StructuredFlowVisitor {
 	{
 		returnCFG = CCFGFactory.newInstance(param);
 
-		for (CFGNode node : returnCFG.getVertices())
+		for (CfgNode node : returnCFG.getVertices())
 		{
 			if (!(node instanceof ASTNodeContainer))
 				continue;

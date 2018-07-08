@@ -3,20 +3,20 @@ package io.shiftleft.fuzzyc2cpg.cfg.nodes;
 import io.shiftleft.fuzzyc2cpg.NodeKeys;
 import java.util.Map;
 
-public class CFGErrorNode extends AbstractCFGNode
+public class CfgExitNode extends AbstractCfgNode
 {
 
 	@Override
 	public String toString()
 	{
-		return "[ERROR]";
+		return -1 != getNodeId() ? "[(" + getNodeId() + ") EXIT]" : "[EXIT]";
 	}
 
 	@Override
 	public Map<String, Object> getProperties()
 	{
 		Map<String, Object> properties = super.getProperties();
-		properties.put(NodeKeys.CODE, "ERROR");
+		properties.put(NodeKeys.CODE, "EXIT");
 		return properties;
 	}
 

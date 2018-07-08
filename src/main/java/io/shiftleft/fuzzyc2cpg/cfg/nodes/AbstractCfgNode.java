@@ -4,7 +4,7 @@ import io.shiftleft.fuzzyc2cpg.NodeKeys;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractCFGNode implements CFGNode
+public abstract class AbstractCfgNode implements CfgNode
 {
 	private Long id = -1l;
 

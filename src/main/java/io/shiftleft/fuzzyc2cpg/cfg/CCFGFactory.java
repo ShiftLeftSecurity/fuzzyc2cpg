@@ -3,7 +3,7 @@ package io.shiftleft.fuzzyc2cpg.cfg;
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.IfStatementBase;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.ASTNodeContainer;
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgNode;
 
 public class CCFGFactory extends CFGFactory
 {
@@ -24,7 +24,7 @@ public class CCFGFactory extends CFGFactory
 			IfStatement ifStatement = (IfStatement)ifStmt;
 
 			CFG block = new CFG();
-			CFGNode conditionContainer = new ASTNodeContainer(
+			CfgNode conditionContainer = new ASTNodeContainer(
 					ifStatement.getCondition());
 			block.addVertex(conditionContainer);
 			block.addEdge(block.getEntryNode(), conditionContainer);

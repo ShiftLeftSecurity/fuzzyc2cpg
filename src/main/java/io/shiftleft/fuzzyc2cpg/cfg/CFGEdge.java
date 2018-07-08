@@ -1,11 +1,11 @@
 package io.shiftleft.fuzzyc2cpg.cfg;
 
-import io.shiftleft.fuzzyc2cpg.cfg.nodes.CFGNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgNode;
 import io.shiftleft.fuzzyc2cpg.graphutils.Edge;
 import java.util.HashMap;
 import java.util.Map;
 
-	public class CFGEdge extends Edge<CFGNode>
+	public class CFGEdge extends Edge<CfgNode>
 {
 	// standard edges
 	public static final String EMPTY_LABEL = "";
@@ -23,7 +23,7 @@ import java.util.Map;
 	private String label;
 	private Map<String, Object> properties;
 
-	public CFGEdge(CFGNode source, CFGNode destination, String label)
+	public CFGEdge(CfgNode source, CfgNode destination, String label)
 	{
 		super(source, destination);
 		this.label = label;
