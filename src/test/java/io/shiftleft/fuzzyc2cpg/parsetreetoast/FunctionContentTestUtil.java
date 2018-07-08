@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.parseTreeToAST;
+package io.shiftleft.fuzzyc2cpg.parsetreetoast;
 
 import io.shiftleft.fuzzyc2cpg.FunctionLexer;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;

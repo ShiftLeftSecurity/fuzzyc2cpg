@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.cfgCreation;
+package io.shiftleft.fuzzyc2cpg.cfgcreation;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -9,7 +9,6 @@ import io.shiftleft.fuzzyc2cpg.cfg.nodes.InfiniteForNode;
 
 import java.util.stream.Stream;
 import org.junit.Test;
-import scala.collection.concurrent.CNode;
 
 public class OtherTests extends CCFGCreatorTest
 {

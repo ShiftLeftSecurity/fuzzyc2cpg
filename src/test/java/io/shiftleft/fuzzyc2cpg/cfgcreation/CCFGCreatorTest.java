@@ -1,10 +1,10 @@
-package io.shiftleft.fuzzyc2cpg.cfgCreation;
+package io.shiftleft.fuzzyc2cpg.cfgcreation;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.cfg.CCFGFactory;
 import io.shiftleft.fuzzyc2cpg.cfg.CFG;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgNode;
-import io.shiftleft.fuzzyc2cpg.parseTreeToAST.FunctionContentTestUtil;
+import io.shiftleft.fuzzyc2cpg.parsetreetoast.FunctionContentTestUtil;
 
 public class CCFGCreatorTest
 {

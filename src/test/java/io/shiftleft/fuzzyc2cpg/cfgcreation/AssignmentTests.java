@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.cfgCreation;
+package io.shiftleft.fuzzyc2cpg.cfgcreation;
 
 import static org.junit.Assert.assertTrue;
 

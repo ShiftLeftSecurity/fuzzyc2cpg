@@ -1,5 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.antlrParsers.functionParser;
-
+package io.shiftleft.fuzzyc2cpg.antlrparsers.functionparser;
 
 import static org.junit.Assert.assertTrue;
 
@@ -7,40 +6,37 @@ import io.shiftleft.fuzzyc2cpg.parser.FunctionParser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
-public class AssignmentTests extends FunctionParserTestBase
+public class FunctionParserTest extends FunctionParserTestBase
 {
 
 	@Test
-	public void testAssignmentExpr()
+	public void testIf()
 	{
-		String input = "x = y + 1;";
+		String input = "if(foo){}";
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		System.out.println(output);
-		assertTrue(output.contains("assign_expr"));
+		assertTrue(output.contains("(selection_or_iteration if"));
 	}
 
 	@Test
-	public void testComplexAssignment()
+	public void testStructInFunc()
 	{
-		String input = "k += ((c = text[k]) >= sBMHCharSetSize) ? patlen : skip[c];";
+		String input = "class foo{ int x; };";
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		System.out.println(output);
-		assertTrue(output.contains("assign_expr"));
+		assertTrue(output.contains("class_def"));
 	}
 
 	@Test
-	public void testPrivateInName()
+	public void testSizeofStruct()
 	{
-		String input = "struct acpi_battery *battery = m->private;";
+		String input = "while((buffer + len) > (tmp + sizeof(struct stun_attrib))) {}";
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		System.out.println(output);
-		assertTrue(output.contains("simple_decl"));
+		assertTrue(output.contains("selection_or_iteration while"));
 	}
 
 }

@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.antlrParsers.functionParser;
+package io.shiftleft.fuzzyc2cpg.antlrparsers.functionparser;
 
 
 import io.shiftleft.fuzzyc2cpg.parser.FunctionParser;

@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.antlrParsers.functionParser;
+package io.shiftleft.fuzzyc2cpg.antlrparsers.functionparser;
 
 import static org.junit.Assert.assertTrue;
 
@@ -6,37 +6,40 @@ import io.shiftleft.fuzzyc2cpg.parser.FunctionParser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
-public class FunctionParserTest extends FunctionParserTestBase
+public class ForLoopTests extends FunctionParserTestBase
 {
 
 	@Test
-	public void testIf()
+	public void testEmptyFor()
 	{
-		String input = "if(foo){}";
+		String input = "for(; ;){}";
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		assertTrue(output.contains("(selection_or_iteration if"));
+		System.out.println(output);
+		assertTrue(output.contains("selection_or_iteration"));
 	}
 
 	@Test
-	public void testStructInFunc()
+	public void testDeclInFor()
 	{
-		String input = "class foo{ int x; };";
+		String input = "for(int k = 0; k < 10; k++ ){}";
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		assertTrue(output.contains("class_def"));
+		System.out.println(output);
+		assertTrue(output.contains(
+				"for ( (for_init_statement (simple_decl (var_decl (type_name (base_type int))"));
 	}
 
 	@Test
-	public void testSizeofStruct()
+	public void testComplexFor()
 	{
-		String input = "while((buffer + len) > (tmp + sizeof(struct stun_attrib))) {}";
+		String input = "for(int k = 0; k < 10; ( k += ((c = text[k]) >= sBMHCharSetSize) ? patlen : skip[c]) ){}";
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		assertTrue(output.contains("selection_or_iteration while"));
+		System.out.println(output);
+		assertTrue(output.contains("assign_expr"));
 	}
-
 }

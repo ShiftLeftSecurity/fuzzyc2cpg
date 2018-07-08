@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.antlrParsers.moduleParser;
+package io.shiftleft.fuzzyc2cpg.antlrparsers.moduleparser;
 
 import io.shiftleft.fuzzyc2cpg.ModuleLexer;
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
