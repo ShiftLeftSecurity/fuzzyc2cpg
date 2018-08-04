@@ -1,53 +1,70 @@
 package io.shiftleft.fuzzyc2cpg;
 
+import com.google.protobuf.Value;
+import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Callee;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterBase;
+import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression;
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter;
+import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement;
 import io.shiftleft.fuzzyc2cpg.cfg.ASTToCFGConverter;
 import io.shiftleft.fuzzyc2cpg.cfg.CCFGFactory;
 import io.shiftleft.fuzzyc2cpg.cfg.CFG;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.ASTNodeContainer;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgEntryNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgErrorNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExceptionNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExitNode;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgNode;
+import io.shiftleft.fuzzyc2cpg.cfg.nodes.InfiniteForNode;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node;
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.Builder;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.Property;
 import io.shiftleft.proto.cpg.Cpg.NodePropertyName;
 import io.shiftleft.proto.cpg.Cpg.PropertyValue;
 import java.util.HashMap;
+import org.apache.tinkerpop.shaded.jackson.databind.ser.PropertyBuilder;
 
 public class FunctionDefHandler {
 
   private final StructureCpg structureCpg;
   HashMap<CfgNode, Node> nodetoProtoNode = new HashMap<>();
+  private CFG cfg;
+  Node methodNode;
+  CpgStruct.Builder bodyCpg;
 
   public FunctionDefHandler(
       StructureCpg structureCpg) {
     this.structureCpg = structureCpg;
+    this.bodyCpg = CpgStruct.newBuilder();
   }
-
 
   public void handle(FunctionDefBase ast) {
-    ASTToCFGConverter converter = new ASTToCFGConverter();
-    converter.setFactory(new CCFGFactory());
-    CFG cfg = converter.convert(ast);
-
-    addMethodStub(ast);
-    addMethodBody(cfg);
+    initializeCfg(ast);
+    addMethodStubToStructureCpg(ast);
+    addMethodBodyCpg(cfg);
   }
 
-  private void addMethodStub(FunctionDefBase functionDef) {
+  private void initializeCfg(FunctionDefBase ast) {
+    ASTToCFGConverter converter = new ASTToCFGConverter();
+    converter.setFactory(new CCFGFactory());
+    cfg = converter.convert(ast);
+  }
+
+
+  private void addMethodStubToStructureCpg(FunctionDefBase functionDef) {
 
     String name = functionDef.getName();
 
-    Property nameProperty = Node.Property.newBuilder()
-        .setName(NodePropertyName.NAME)
-        .setValue(PropertyValue.newBuilder().setStringValue(name).build())
-        .build();
-
-    Node methodNode = Node.newBuilder()
+    methodNode = Node.newBuilder()
         .setKey(IdPool.getNextId())
         .setType(NodeType.METHOD)
-        .addProperty(nameProperty).build();
+        .addProperty(newStringProperty(NodePropertyName.NAME, name)).build();
 
     structureCpg.addNode(methodNode);
     connectMethodToNamespaceAndType(methodNode);
@@ -74,27 +91,14 @@ public class FunctionDefHandler {
 
   private void addParameterCpg(ParameterBase parameter) {
 
-    Property codeProperty = Property
-        .newBuilder()
-        .setName(NodePropertyName.CODE)
-        .setValue(PropertyValue.newBuilder().setStringValue(parameter.getEscapedCodeStr()).build())
-        .build();
+    Property.Builder codeProperty =
+        newStringProperty(NodePropertyName.CODE, parameter.getEscapedCodeStr());
 
-    Property nameProperty = Property
-        .newBuilder()
-        .setName(NodePropertyName.NAME)
-        .setValue(PropertyValue.newBuilder().setStringValue(parameter.getName()).build())
-        .build();
+    Property.Builder nameProperty = newStringProperty(NodePropertyName.NAME, parameter.getName());
 
     Property orderProperty = Property
         .newBuilder()
         .setName(NodePropertyName.ORDER)
-        .setValue(PropertyValue.newBuilder().setIntValue(parameter.getChildNumber()))
-        .build();
-
-    Property argIndexProperty = Property
-        .newBuilder()
-        .setName(NodePropertyName.ARGUMENT_INDEX)
         .setValue(PropertyValue.newBuilder().setIntValue(parameter.getChildNumber()))
         .build();
 
@@ -104,7 +108,6 @@ public class FunctionDefHandler {
             .addProperty(codeProperty)
             .addProperty(nameProperty)
             .addProperty(orderProperty)
-            .addProperty(argIndexProperty)
             .build()
     );
 
@@ -121,9 +124,98 @@ public class FunctionDefHandler {
 
   }
 
-  private void addMethodBody(CFG cfg) {
+  private void addMethodBodyCpg(CFG cfg) {
+    addNodes(cfg);
+    addEdges(cfg);
+    System.out.println("Body CPG");
+    System.out.println(bodyCpg);
+    System.out.println("=========");
+  }
+
+  private void addNodes(CFG cfg) {
+    for (CfgNode cfgNode : cfg.getVertices()) {
+      if (cfgNode instanceof CfgEntryNode) {
+        // No need to add the start node. The start nodes
+        // corresponds to the method node in the CPG, and
+        // that's already present in the structureCpg.
+        // However, we do need to add it to the `nodeToProtoNode`
+        // map so that the node is present when creating edges
+        nodetoProtoNode.put(cfg.getEntryNode(), methodNode);
+      } else if (
+          cfgNode instanceof CfgErrorNode ||
+          cfgNode instanceof CfgExceptionNode ||
+          cfgNode instanceof CfgExitNode ||
+          cfgNode instanceof InfiniteForNode) {
+        addNewTrueLiteralNode(cfgNode);
+      } else if (cfgNode instanceof ASTNodeContainer) {
+        addStatementNodes(cfgNode);
+      }
+    }
+  }
+
+  private void addNewTrueLiteralNode(CfgNode cfgNode) {
+    Property codeProperty = Node.Property.newBuilder()
+        .setName(NodePropertyName.NAME)
+        .setValue(PropertyValue.newBuilder().setStringValue("<true>").build())
+        .build();
+
+    Builder nodeBuilder = Node.newBuilder()
+        .setType(NodeType.LITERAL)
+        .addProperty(codeProperty);
+    nodetoProtoNode.put(cfgNode, nodeBuilder.build());
+    bodyCpg.addNode(nodeBuilder);
+  }
+
+  private void addStatementNodes(CfgNode cfgNode) {
+    assert(cfgNode instanceof ASTNodeContainer);
+    ASTNodeContainer container = (ASTNodeContainer) cfgNode;
+    AstNode astNode = container.getASTNode();
+
+    // TODO: handle all node types
+
+    if (astNode instanceof Parameter) {
+      return;
+    } else if ( astNode instanceof ExpressionStatement) {
+      ExpressionStatement stmt = (ExpressionStatement) astNode;
+      Expression expression = stmt.getExpression();
+      addAllNodesOfExpression(expression);
+    }
+  }
+
+  private void addAllNodesOfExpression(Expression expression) {
+    addNodeForExpressionRoot(expression);
+
+    int childCount = expression.getChildCount();
+    for (int i = 0; i < childCount; i++) {
+      addAllNodesOfExpression((Expression) expression.getChild(i));
+    }
+  }
+
+  private void addNodeForExpressionRoot(Expression expression) {
+
+    Node.Builder nodeBuilder = Node.newBuilder();
+
+    if (expression instanceof CallExpression) {
+      CallExpression callExpression = (CallExpression) expression;
+      Expression targetFunc = callExpression.getTargetFunc();
+      String operator = targetFunc.getEscapedCodeStr();
+      nodeBuilder.addProperty(newStringProperty(NodePropertyName.NAME, operator));
+    }
+
+    bodyCpg.addNode(nodeBuilder);
+  }
+
+  Property.Builder newStringProperty(NodePropertyName name, String value) {
+    return Property.newBuilder()
+        .setName(name)
+        .setValue(PropertyValue.newBuilder().setStringValue(value).build());
+  }
+
+
+  private void addEdges(CFG cfg) {
 
   }
+
 
 
 }

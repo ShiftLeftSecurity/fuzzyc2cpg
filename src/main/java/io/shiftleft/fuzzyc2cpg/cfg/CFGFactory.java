@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 
 public class CFGFactory
 {
-	protected static StructuredFlowVisitor structuredFlowVisitior;
+	protected static StructuredFlowVisitor structuredFlowVisitor;
 
 	public CFG newInstance(FunctionDefBase functionDefinition)
 	{
@@ -535,8 +535,8 @@ public class CFGFactory
 		if (node == null)
 			return newInstance();
 
-		node.accept(structuredFlowVisitior);
-		return structuredFlowVisitior.getCFG();
+		node.accept(structuredFlowVisitor);
+		return structuredFlowVisitor.getCFG();
 	}
 
 	public static void fixBreakStatements(CFG thisCFG, CfgNode target)

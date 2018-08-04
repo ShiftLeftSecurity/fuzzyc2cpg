@@ -9,12 +9,12 @@ public class CCFGFactory extends CFGFactory
 {
 
 	static{
-		structuredFlowVisitior = new CStructuredFlowVisitor();
+		structuredFlowVisitor = new CStructuredFlowVisitor();
 	}
 
 	public CCFGFactory()
 	{
-		structuredFlowVisitior = new CStructuredFlowVisitor();
+		structuredFlowVisitor = new CStructuredFlowVisitor();
 	}
 
 	public static CFG newInstance(IfStatementBase ifStmt)
