@@ -1,7 +1,7 @@
 name := "fuzzyc2cpg"
 organization := "io.shiftleft"
 
-val cpgVersion = "0.9.15+5"
+val cpgVersion = "0.9.24"
 
 libraryDependencies ++= Seq(
   "org.antlr" % "antlr4-runtime" % "4.5.4",

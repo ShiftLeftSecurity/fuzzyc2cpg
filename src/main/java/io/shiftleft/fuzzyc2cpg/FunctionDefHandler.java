@@ -1,14 +1,16 @@
 package io.shiftleft.fuzzyc2cpg;
 
-import com.google.protobuf.Value;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Callee;
+import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterBase;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter;
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Condition;
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement;
+import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
 import io.shiftleft.fuzzyc2cpg.cfg.ASTToCFGConverter;
 import io.shiftleft.fuzzyc2cpg.cfg.CCFGFactory;
 import io.shiftleft.fuzzyc2cpg.cfg.CFG;
@@ -28,7 +30,6 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.Property;
 import io.shiftleft.proto.cpg.Cpg.NodePropertyName;
 import io.shiftleft.proto.cpg.Cpg.PropertyValue;
 import java.util.HashMap;
-import org.apache.tinkerpop.shaded.jackson.databind.ser.PropertyBuilder;
 
 public class FunctionDefHandler {
 
@@ -171,14 +172,28 @@ public class FunctionDefHandler {
     ASTNodeContainer container = (ASTNodeContainer) cfgNode;
     AstNode astNode = container.getASTNode();
 
-    // TODO: handle all node types
-
     if (astNode instanceof Parameter) {
       return;
     } else if ( astNode instanceof ExpressionStatement) {
       ExpressionStatement stmt = (ExpressionStatement) astNode;
       Expression expression = stmt.getExpression();
       addAllNodesOfExpression(expression);
+    } else if (astNode instanceof Condition) {
+      Condition condition = (Condition) astNode;
+      addAllNodesOfExpression(condition.getExpression());
+    } else if (astNode instanceof IdentifierDeclStatement) {
+      IdentifierDeclStatement stmt = (IdentifierDeclStatement) astNode;
+      for (AstNode node : stmt.getIdentifierDeclList()) {
+        for (int i = 0; i < node.getChildCount(); i++) {
+          AstNode child = node.getChild(i);
+          if (child instanceof AssignmentExpression) {
+            addAllNodesOfExpression((Expression) child);
+          }
+        }
+      }
+
+    } else {
+      System.out.println("Unhandled node type: " + astNode.getClass().getSimpleName());
     }
   }
 
