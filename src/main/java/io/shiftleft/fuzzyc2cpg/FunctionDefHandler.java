@@ -20,6 +20,7 @@ import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExceptionNode;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExitNode;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgNode;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.InfiniteForNode;
+import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node;
@@ -39,10 +40,12 @@ public class FunctionDefHandler {
   private CFG cfg;
   Node methodNode;
   CpgStruct.Builder bodyCpg;
+  private final OutputModule outputModule;
 
-  public FunctionDefHandler(StructureCpg structureCpg) {
+  public FunctionDefHandler(StructureCpg structureCpg, OutputModule outputModule) {
     this.structureCpg = structureCpg;
     this.bodyCpg = CpgStruct.newBuilder();
+    this.outputModule = outputModule;
   }
 
   public void handle(FunctionDefBase ast) {
@@ -50,7 +53,7 @@ public class FunctionDefHandler {
     addMethodStubToStructureCpg(ast);
     addMethodBodyCpg(cfg);
     String outputFilename = generateOutputFilename(ast);
-    new ProtoOutputModule().output(bodyCpg, outputFilename);
+    outputModule.output(bodyCpg, outputFilename);
   }
 
   private String generateOutputFilename(FunctionDefBase ast) {

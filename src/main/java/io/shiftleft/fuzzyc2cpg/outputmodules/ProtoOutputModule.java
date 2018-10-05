@@ -1,12 +1,11 @@
-package io.shiftleft.fuzzyc2cpg;
+package io.shiftleft.fuzzyc2cpg.outputmodules;
 
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Builder;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class ProtoOutputModule {
-
+public class ProtoOutputModule implements OutputModule {
 
   public void output(Builder cpgBuilder, String outputFilename) {
     CpgStruct cpgStruct = cpgBuilder.build();
