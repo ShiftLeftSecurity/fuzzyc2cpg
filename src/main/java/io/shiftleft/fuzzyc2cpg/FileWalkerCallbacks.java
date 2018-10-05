@@ -2,6 +2,7 @@ package io.shiftleft.fuzzyc2cpg;
 
 import io.shiftleft.fuzzyc2cpg.ast.walking.AstWalker;
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener;
+import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule;
 import io.shiftleft.fuzzyc2cpg.parser.ModuleParser;
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge;
@@ -22,6 +23,11 @@ class FileWalkerCallbacks extends SourceFileListener {
 
   StructureCpg structureCpg;
   AstWalker astWalker;
+  OutputModule outputModule;
+
+  public FileWalkerCallbacks(OutputModule outputModule) {
+    this.outputModule = outputModule;
+  }
 
   @Override
   public void initialize() {
@@ -52,6 +58,7 @@ class FileWalkerCallbacks extends SourceFileListener {
 
   private void initializeWalker() {
     astWalker = new AstWalker();
+    astWalker.setOutputModule(outputModule);
     astWalker.setStructureCpg(structureCpg);
   }
 
@@ -113,7 +120,7 @@ class FileWalkerCallbacks extends SourceFileListener {
     String outputFilename = Paths
         .get(Config.outputDirectory, "structural-cpg.proto")
         .toString();
-    new ProtoOutputModule().output(structureCpg.getCpg(), outputFilename);
+    outputModule.output(structureCpg.getCpg(), outputFilename);
   }
 
 }

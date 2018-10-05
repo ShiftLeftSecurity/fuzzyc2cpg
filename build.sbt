@@ -7,8 +7,10 @@ libraryDependencies ++= Seq(
   "org.antlr" % "antlr4-runtime" % "4.5.4",
   "io.shiftleft" % "codepropertygraph" % cpgVersion,
   "io.shiftleft" % "codepropertygraph-protos" % cpgVersion,
+  "io.shiftleft" % "cpgloader-tinkergraph" % cpgVersion,
   "com.novocode" % "junit-interface" % "0.11" % Test,
-  "junit" % "junit" % "4.12" % Test
+  "junit" % "junit" % "4.12" % Test,
+   "org.scalatest" %% "scalatest" % "3.0.3" % Test
 )
 
 // uncomment if you want to use a cpg version that has *just* been released

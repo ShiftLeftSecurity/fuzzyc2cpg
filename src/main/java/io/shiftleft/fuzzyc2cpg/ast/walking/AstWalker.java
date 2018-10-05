@@ -4,6 +4,8 @@ import io.shiftleft.fuzzyc2cpg.ParserCallbacks;
 import io.shiftleft.fuzzyc2cpg.StructureCpg;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
+import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule;
+import io.shiftleft.fuzzyc2cpg.outputmodules.ProtoOutputModule;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Stack;
@@ -14,7 +16,11 @@ public class AstWalker implements Observer {
   protected ASTNodeVisitor callbacks;
 
   public AstWalker() {
-    callbacks = new ParserCallbacks();
+    callbacks = new ParserCallbacks(new ProtoOutputModule());
+  }
+
+  public void setOutputModule(OutputModule module) {
+    callbacks = new ParserCallbacks(module);
   }
 
   public void startOfUnit(ParserRuleContext ctx, String filename) {
