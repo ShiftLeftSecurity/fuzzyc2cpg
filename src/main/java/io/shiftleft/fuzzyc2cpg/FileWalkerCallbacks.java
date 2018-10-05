@@ -41,6 +41,11 @@ class FileWalkerCallbacks extends SourceFileListener {
     initializeGlobalNamespaceBlock();
   }
 
+  /**
+   * Create a placeholder namespace node named '<global>' for all
+   * types and methods not explicitly placed in a namespace.
+   * */
+
   private void initializeGlobalNamespaceBlock() {
     Property.Builder nameProperty = Property.newBuilder()
         .setName(NodePropertyName.NAME)
@@ -53,7 +58,6 @@ class FileWalkerCallbacks extends SourceFileListener {
             .addProperty(nameProperty)
             .build()
     );
-
   }
 
   private void initializeWalker() {
@@ -117,6 +121,10 @@ class FileWalkerCallbacks extends SourceFileListener {
 
   @Override
   public void shutdown() {
+    outputStructuralCpg();
+  }
+
+  private void outputStructuralCpg() {
     String outputFilename = Paths
         .get(Config.outputDirectory, "structural-cpg.proto")
         .toString();
