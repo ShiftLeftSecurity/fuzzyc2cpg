@@ -1,7 +1,6 @@
 package io.shiftleft.fuzzyc2cpg;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
-import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
@@ -29,6 +28,8 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.Property;
 import io.shiftleft.proto.cpg.Cpg.NodePropertyName;
 import io.shiftleft.proto.cpg.Cpg.PropertyValue;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 
 public class FunctionDefHandler {
@@ -39,8 +40,7 @@ public class FunctionDefHandler {
   Node methodNode;
   CpgStruct.Builder bodyCpg;
 
-  public FunctionDefHandler(
-      StructureCpg structureCpg) {
+  public FunctionDefHandler(StructureCpg structureCpg) {
     this.structureCpg = structureCpg;
     this.bodyCpg = CpgStruct.newBuilder();
   }
@@ -49,6 +49,13 @@ public class FunctionDefHandler {
     initializeCfg(ast);
     addMethodStubToStructureCpg(ast);
     addMethodBodyCpg(cfg);
+    String outputFilename = generateOutputFilename(ast);
+    new ProtoOutputModule().output(bodyCpg, outputFilename);
+  }
+
+  private String generateOutputFilename(FunctionDefBase ast) {
+    Path path = Paths.get(Config.outputDirectory, ast.getName() + ".proto");
+    return path.toString();
   }
 
   private void initializeCfg(FunctionDefBase ast) {
@@ -128,9 +135,6 @@ public class FunctionDefHandler {
   private void addMethodBodyCpg(CFG cfg) {
     addNodes(cfg);
     addEdges(cfg);
-    System.out.println("Body CPG");
-    System.out.println(bodyCpg);
-    System.out.println("=========");
   }
 
   private void addNodes(CFG cfg) {

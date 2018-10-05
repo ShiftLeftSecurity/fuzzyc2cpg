@@ -2,6 +2,7 @@ package io.shiftleft.fuzzyc2cpg;
 
 import io.shiftleft.fuzzyc2cpg.filewalker.OrderedWalker;
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileWalker;
+import java.io.File;
 import java.io.IOException;
 
 public class Main {
@@ -23,10 +24,15 @@ public class Main {
    * */
   private static void setupParser() {
     parser = new FileWalkerCallbacks();
-    String outputDir = "out";
-    parser.setOutputDir(outputDir);
     parser.initialize();
+    createOutputDirectory();
     sourceFileWalker.addListener(parser);
+  }
+
+  private static void createOutputDirectory() {
+    new File(
+        Config.outputDirectory
+    ).mkdirs();
   }
 
   private static void walkCodebase(String[] fileAndDirNames) {

@@ -20,10 +20,7 @@ class FileWalkerCallbacks extends SourceFileListener {
   ModuleParser parser = new ModuleParser(driver);
 
   StructureCpg structureCpg;
-
-
   AstWalker astWalker;
-  String outputDir;
 
   @Override
   public void initialize() {
@@ -55,10 +52,6 @@ class FileWalkerCallbacks extends SourceFileListener {
   private void initializeWalker() {
     astWalker = new AstWalker();
     astWalker.setStructureCpg(structureCpg);
-  }
-
-  public void setOutputDir(String anOutputDir) {
-    outputDir = anOutputDir;
   }
 
   /**
@@ -116,7 +109,7 @@ class FileWalkerCallbacks extends SourceFileListener {
 
   @Override
   public void shutdown() {
-    System.out.println(structureCpg.getCpg());
+    // TODO: output structure CPG
   }
 
 }

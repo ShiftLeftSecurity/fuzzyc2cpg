@@ -11,7 +11,6 @@ public class ModuleParser {
   }
 
   public void parseFile(String filename) {
-    System.out.println(filename);
 
     try {
       parserDriver.parseAndWalkFile(filename);
