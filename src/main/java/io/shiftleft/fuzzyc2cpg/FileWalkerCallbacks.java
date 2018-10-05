@@ -80,8 +80,8 @@ class FileWalkerCallbacks extends SourceFileListener {
   private void connectFileNodeToNamespaceBlock(Node fileNode) {
     Edge.Builder edgeBuilder = Edge.newBuilder()
         .setType(EdgeType.AST)
-        .setSrc(structureCpg.getNamespaceBlockNode().getKey())
-        .setDst(fileNode.getKey());
+        .setSrc(fileNode.getKey())
+        .setDst(structureCpg.getNamespaceBlockNode().getKey());
     structureCpg.addEdge(edgeBuilder.build());
   }
 
