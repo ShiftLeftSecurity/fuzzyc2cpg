@@ -31,6 +31,18 @@ class ProgramStructureTests extends WordSpec with Matchers {
       nodes.size shouldBe 1
     }
 
+    "contain type-decl node" in {
+      val nodes = g.V.hasLabel(NodeType.TYPE_DECL.toString).l
+      nodes.size shouldBe 1
+    }
+
+    "contain AST edges from namespace blocks to type decl and method" in {
+      val labels = g.V.hasLabel(NodeType.NAMESPACE_BLOCK.toString)
+        .out("AST").label.l.toSet
+      labels shouldBe Set("METHOD", "TYPE_DECL")
+    }
+
+
   }
 
 }

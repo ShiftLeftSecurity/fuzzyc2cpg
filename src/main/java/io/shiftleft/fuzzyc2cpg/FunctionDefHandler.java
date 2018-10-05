@@ -36,7 +36,7 @@ import java.util.HashMap;
 public class FunctionDefHandler {
 
   private final StructureCpg structureCpg;
-  HashMap<CfgNode, Node> nodetoProtoNode = new HashMap<>();
+  HashMap<CfgNode, Node> nodeToProtoNode = new HashMap<>();
   private CFG cfg;
   Node methodNode;
   CpgStruct.Builder bodyCpg;
@@ -87,10 +87,6 @@ public class FunctionDefHandler {
   }
 
   private void connectMethodToNamespaceAndType(Node methodNode) {
-    // TODO: attach to correct namespace, once we handle
-    // namespaces. Also attach to type, if this is defined
-    // inside a class.
-
     structureCpg.addEdge(
         CpgStruct.Edge.newBuilder().setType(EdgeType.AST)
             .setSrc(structureCpg.getNamespaceBlockNode().getKey())
@@ -148,7 +144,7 @@ public class FunctionDefHandler {
         // that's already present in the structureCpg.
         // However, we do need to add it to the `nodeToProtoNode`
         // map so that the node is present when creating edges
-        nodetoProtoNode.put(cfg.getEntryNode(), methodNode);
+        nodeToProtoNode.put(cfg.getEntryNode(), methodNode);
       } else if (
           cfgNode instanceof CfgErrorNode ||
           cfgNode instanceof CfgExceptionNode ||
@@ -170,7 +166,7 @@ public class FunctionDefHandler {
     Builder nodeBuilder = Node.newBuilder()
         .setType(NodeType.LITERAL)
         .addProperty(codeProperty);
-    nodetoProtoNode.put(cfgNode, nodeBuilder.build());
+    nodeToProtoNode.put(cfgNode, nodeBuilder.build());
     bodyCpg.addNode(nodeBuilder);
   }
 

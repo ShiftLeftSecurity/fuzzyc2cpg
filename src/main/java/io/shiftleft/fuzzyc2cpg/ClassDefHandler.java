@@ -1,6 +1,8 @@
 package io.shiftleft.fuzzyc2cpg;
 
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
+import io.shiftleft.proto.cpg.Cpg.CpgStruct;
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.Property;
@@ -45,5 +47,13 @@ public class ClassDefHandler {
         .build();
 
     structureCpg.addNode(typeDeclNode);
+
+    structureCpg.addEdge(
+        CpgStruct.Edge.newBuilder().setType(EdgeType.AST)
+            .setSrc(structureCpg.getNamespaceBlockNode().getKey())
+            .setDst(typeDeclNode.getKey())
+            .build()
+    );
+
   }
 }
