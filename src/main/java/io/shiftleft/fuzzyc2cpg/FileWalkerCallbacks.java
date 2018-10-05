@@ -13,6 +13,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.Property;
 import io.shiftleft.proto.cpg.Cpg.NodePropertyName;
 import io.shiftleft.proto.cpg.Cpg.PropertyValue;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 class FileWalkerCallbacks extends SourceFileListener {
 
@@ -109,7 +110,10 @@ class FileWalkerCallbacks extends SourceFileListener {
 
   @Override
   public void shutdown() {
-    // TODO: output structure CPG
+    String outputFilename = Paths
+        .get(Config.outputDirectory, "structural-cpg.proto")
+        .toString();
+    new ProtoOutputModule().output(structureCpg.getCpg(), outputFilename);
   }
 
 }
