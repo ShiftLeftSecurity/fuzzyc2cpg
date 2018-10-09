@@ -27,7 +27,8 @@ class TypeDeclTests extends WordSpec with Matchers {
 
     "contain correct code fields for all members" in {
       val members = g.V.hasLabel(NodeType.MEMBER.toString).l
-      members.map(_.value[String]("CODE")).foreach(println(_))
+      members.map(_.value[String]("CODE")).toSet shouldBe
+        Set("x", "y", "* foo")
     }
 
   }

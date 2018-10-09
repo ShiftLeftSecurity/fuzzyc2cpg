@@ -1,6 +1,6 @@
 package io.shiftleft.fuzzyc2cpg
 
-import java.nio.file.{Path, Paths}
+import java.nio.file.Paths
 
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule

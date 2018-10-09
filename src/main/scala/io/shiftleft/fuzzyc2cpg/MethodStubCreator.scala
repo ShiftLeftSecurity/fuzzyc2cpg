@@ -1,12 +1,14 @@
 package io.shiftleft.fuzzyc2cpg
 
 import io.shiftleft.fuzzyc2cpg.Utils.newStringProperty
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.{FunctionDefBase, ParameterBase}
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.{FunctionDefBase, ParameterBase, ReturnType}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
+
 import scala.collection.JavaConverters._
+import io.shiftleft.fuzzyc2cpg.Utils.children
 
 class MethodStubCreator(structureCpg : StructureCpg) {
 
@@ -22,6 +24,17 @@ class MethodStubCreator(structureCpg : StructureCpg) {
     functionDef.getParameterList.asScala.foreach{ parameter =>
       addParameterCpg(parameter)
     }
+
+    val retNode = children(functionDef).find(_.isInstanceOf[ReturnType])
+    val retType = retNode.map(_.getEscapedCodeStr).getOrElse("")
+
+    val methodReturnNode = Node.newBuilder.setKey(IdPool.getNextId)
+        .setType(NodeType.METHOD_RETURN)
+        .addProperty(newStringProperty(NodePropertyName.CODE, "RET"))
+        .addProperty(newStringProperty(NodePropertyName.TYPE_FULL_NAME, retType ))
+      .build
+    structureCpg.addNode(methodReturnNode)
+
     methodNode
   }
 

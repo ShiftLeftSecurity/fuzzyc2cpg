@@ -32,6 +32,7 @@ class MethodHeaderTests extends WordSpec with Matchers {
       val returns = g.V.hasLabel(NodeTypes.METHOD_RETURN).l
       returns.size shouldBe 1
       returns.head.property[String]("CODE").value shouldBe "RET"
+      returns.head.property[String]("TYPE_FULL_NAME").value shouldBe "int"
     }
 
   }
