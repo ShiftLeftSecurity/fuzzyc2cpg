@@ -75,7 +75,9 @@ public class FunctionDefHandler {
     methodNode = Node.newBuilder()
         .setKey(IdPool.getNextId())
         .setType(NodeType.METHOD)
-        .addProperty(newStringProperty(NodePropertyName.NAME, name)).build();
+        .addProperty(newStringProperty(NodePropertyName.NAME, name))
+        .addProperty(newStringProperty(NodePropertyName.FULL_NAME, name))
+        .build();
 
     structureCpg.addNode(methodNode);
     connectMethodToNamespaceAndType(methodNode);
@@ -111,6 +113,7 @@ public class FunctionDefHandler {
 
     structureCpg.addNode(
         Node.newBuilder()
+            .setKey(IdPool.getNextId())
             .setType(NodeType.METHOD_PARAMETER_IN)
             .addProperty(codeProperty)
             .addProperty(nameProperty)

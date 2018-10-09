@@ -24,5 +24,11 @@ class TypeDeclTests extends WordSpec with Matchers {
         .out("AST").hasLabel(NodeType.MEMBER.toString).l
       members.size shouldBe 3
     }
+
+    "contain correct code fields for all members" in {
+      val members = g.V.hasLabel(NodeType.MEMBER.toString).l
+      members.map(_.value[String]("CODE")).foreach(println(_))
+    }
+
   }
 }

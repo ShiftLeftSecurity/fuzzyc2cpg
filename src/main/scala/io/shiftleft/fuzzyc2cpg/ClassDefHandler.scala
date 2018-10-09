@@ -64,22 +64,25 @@ class ClassDefHandler(structureCpg: StructureCpg) {
 
   def addAndConnectMemberNodes(typeDeclNode: Node, ast: ClassDefStatement) = {
 
-    val nameTypePairs : List[(String, String)] =
+    val nameTypeCodeTuples : List[(String, String, String)] =
       ast.content.getStatements.asScala
         .collect { case declStmt : IdentifierDeclStatement => {
             val typeName = declStmt.getType.baseType
-            val memberNames = children(declStmt)
+            val memberCodeAndNames = children(declStmt)
               .collect { case decl : IdentifierDecl =>
-              decl.getName.getEscapedCodeStr
+                (decl.getEscapedCodeStr,
+                decl.getName.getEscapedCodeStr)
             }
-            memberNames.map(name => (name, typeName))
+            memberCodeAndNames.map{ case (code, name) => (code, name, typeName) }
           }
         }.flatten.toList
 
-    nameTypePairs.foreach{ case (name, typeName) =>
+    nameTypeCodeTuples.foreach{ case (code, name, typeName) =>
       val nameProperty = stringProperty(NodePropertyName.NAME, name)
+      val codeProperty = stringProperty(NodePropertyName.CODE, code)
       val memberNode = Node.newBuilder.setKey(IdPool.getNextId)
         .setType(NodeType.MEMBER)
+        .addProperty(codeProperty)
         .addProperty(nameProperty)
           .build
       structureCpg.addNode(memberNode)
