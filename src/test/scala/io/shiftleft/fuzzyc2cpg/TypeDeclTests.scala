@@ -9,12 +9,12 @@ class TypeDeclTests extends WordSpec with Matchers {
   val g = fixture.cpg.scalaGraph.traversal
 
   "Type decl test project" should {
-    "contain one type decl node for Foo" in {
+    "contain one internal type decl node for Foo" in {
       val typeDeclNodes = g.V.hasLabel(NodeType.TYPE_DECL.toString)
-        .value(NodeKeys.NAME)
         .l
       typeDeclNodes.size shouldBe 1
-      typeDeclNodes.head shouldBe "Foo"
+      typeDeclNodes.head.value[String](NodeKeys.NAME.name) shouldBe "Foo"
+      typeDeclNodes.head.value[Boolean](NodeKeys.IS_EXTERNAL.name) shouldBe false
     }
 
     "contain three member nodes" in {
