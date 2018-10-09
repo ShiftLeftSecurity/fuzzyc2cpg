@@ -28,6 +28,12 @@ class MethodHeaderTests extends WordSpec with Matchers {
       parameters.map(_.property[String]("NAME").value) shouldBe Set("x", "y")
     }
 
+    "contain one METHOD_RETURN node with correct code field" in {
+      val returns = g.V.hasLabel(NodeTypes.METHOD_RETURN).l
+      returns.size shouldBe 1
+      returns.head.property[String]("CODE").value shouldBe "RET"
+    }
+
   }
 
 }

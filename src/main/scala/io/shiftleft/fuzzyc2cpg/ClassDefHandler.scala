@@ -1,6 +1,5 @@
 package io.shiftleft.fuzzyc2cpg
 
-import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
 import io.shiftleft.proto.cpg.Cpg
@@ -8,6 +7,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
+import io.shiftleft.fuzzyc2cpg.Utils.children
 
 import scala.collection.JavaConverters._
 
@@ -91,12 +91,5 @@ class ClassDefHandler(structureCpg: StructureCpg) {
       )
     }
   }
-
-  private def children(node: AstNode) =
-    (0 to node.getChildCount).map(node.getChild)
-      .filterNot(_ == null)
-      .toList
-
-
 
 }
