@@ -1,6 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.cfg.nodes;
 
-import io.shiftleft.fuzzyc2cpg.NodeKeys;
+import io.shiftleft.fuzzyc2cpg.JoernNodeKeys;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,9 +26,9 @@ public abstract class AbstractCfgNode implements CfgNode
 	public Map<String, Object> getProperties()
 	{
 		Map<String, Object> properties = new HashMap<String, Object>();
-		properties.put(NodeKeys.CODE, toString());
-		properties.put(NodeKeys.NODE_TYPE, getClass().getSimpleName());
-		properties.put(NodeKeys.IS_CFG_NODE, "True");
+		properties.put(JoernNodeKeys.CODE, toString());
+		properties.put(JoernNodeKeys.NODE_TYPE, getClass().getSimpleName());
+		properties.put(JoernNodeKeys.IS_CFG_NODE, "True");
 		return properties;
 	}
 

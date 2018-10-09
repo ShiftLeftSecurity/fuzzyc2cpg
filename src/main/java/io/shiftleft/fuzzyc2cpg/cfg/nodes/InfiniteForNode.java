@@ -1,6 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.cfg.nodes;
 
-import io.shiftleft.fuzzyc2cpg.NodeKeys;
+import io.shiftleft.fuzzyc2cpg.JoernNodeKeys;
 import java.util.Map;
 
 public class InfiniteForNode extends AbstractCfgNode
@@ -15,7 +15,7 @@ public class InfiniteForNode extends AbstractCfgNode
 	public Map<String, Object> getProperties()
 	{
 		Map<String, Object> properties = super.getProperties();
-		properties.put(NodeKeys.CODE, "true");
+		properties.put(JoernNodeKeys.CODE, "true");
 		return properties;
 	}
 }

@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg
 
+import io.shiftleft.codepropertygraph.generated.NodeKeys
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.scalatest.{Matchers, WordSpec}
 
@@ -9,10 +10,11 @@ class TypeDeclTests extends WordSpec with Matchers {
 
   "Type decl test project" should {
     "contain one type decl node for Foo" in {
-      val typeDeclNodes = g.V.hasLabel(NodeType.TYPE_DECL.toString).l
+      val typeDeclNodes = g.V.hasLabel(NodeType.TYPE_DECL.toString)
+        .value(NodeKeys.NAME)
+        .l
       typeDeclNodes.size shouldBe 1
-      typeDeclNodes.head.property[String]("NAME")
-        .value shouldBe "Foo"
+      typeDeclNodes.head shouldBe "Foo"
     }
 
     "contain three member nodes" in {

@@ -1,6 +1,6 @@
 package io.shiftleft.fuzzyc2cpg;
 
-public class NodeKeys
+public class JoernNodeKeys
 {
 
 	public static final String NODE_TYPE = "type";
