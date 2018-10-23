@@ -238,7 +238,7 @@ public class ModuleBuildersTest
 	private List<AstNode> parseInput(String input)
 	{
 		AntlrCModuleParserDriver parser = new AntlrCModuleParserDriver();
-		tests.languages.c.parseTreeToAST.TestASTWalker testProcessor = new tests.languages.c.parseTreeToAST.TestASTWalker();
+		tests.languages.c.parseTreeToAST.TestAntlrParserDriverObserver testProcessor = new tests.languages.c.parseTreeToAST.TestAntlrParserDriverObserver();
 		parser.addObserver(testProcessor);
 
 		ANTLRInputStream inputStream = new ANTLRInputStream(input);

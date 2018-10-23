@@ -35,8 +35,6 @@ import java.util.Stack;
 
 public abstract class ASTNodeVisitor {
 
-  protected StructureCpg structureCpg;
-
   public void visit(AstNode item) {
     visitChildren(item);
   }
@@ -166,9 +164,5 @@ public abstract class ASTNodeVisitor {
       child.accept(this);
     }
 
-  }
-
-  public void setStructureCpg(StructureCpg structureCpg) {
-    this.structureCpg = structureCpg;
   }
 }

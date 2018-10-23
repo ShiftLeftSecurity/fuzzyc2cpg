@@ -1,6 +1,5 @@
 package io.shiftleft.fuzzyc2cpg;
 
-import io.shiftleft.fuzzyc2cpg.ast.walking.AstWalker;
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener;
 import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule;
 import io.shiftleft.fuzzyc2cpg.parser.ModuleParser;
@@ -22,7 +21,7 @@ class FileWalkerCallbacks extends SourceFileListener {
   ModuleParser parser = new ModuleParser(driver);
 
   StructureCpg structureCpg;
-  AstWalker astWalker;
+  AstVisitor astVisitor;
   OutputModule outputModule;
 
   public FileWalkerCallbacks(OutputModule outputModule) {
@@ -32,8 +31,8 @@ class FileWalkerCallbacks extends SourceFileListener {
   @Override
   public void initialize() {
     initializeStructureCpg();
-    initializeWalker();
-    parser.addObserver(astWalker);
+    initializeAstVisitor();
+    parser.addObserver(astVisitor);
   }
 
   private void initializeStructureCpg() {
@@ -60,10 +59,8 @@ class FileWalkerCallbacks extends SourceFileListener {
     );
   }
 
-  private void initializeWalker() {
-    astWalker = new AstWalker();
-    astWalker.setOutputModule(outputModule);
-    astWalker.setStructureCpg(structureCpg);
+  private void initializeAstVisitor() {
+    astVisitor = new AstVisitor(outputModule, structureCpg);
   }
 
   /**

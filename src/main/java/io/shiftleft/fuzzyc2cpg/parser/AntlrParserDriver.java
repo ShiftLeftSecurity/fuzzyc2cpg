@@ -3,13 +3,12 @@ package io.shiftleft.fuzzyc2cpg.parser;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
-import io.shiftleft.fuzzyc2cpg.ast.walking.ASTWalkerEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Stack;
+import java.util.function.Consumer;
+
 import jdk.nashorn.internal.runtime.ParserException;
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -155,9 +154,9 @@ abstract public class AntlrParserDriver {
     observers.add(observer);
   }
 
-  private void notifyObservers(ASTWalkerEvent event) {
+  private void notifyObservers(Consumer<AntlrParserDriverObserver> function) {
     for (AntlrParserDriverObserver observer : observers) {
-      observer.update(event);
+      function.accept(observer);
     }
 
   }
@@ -171,37 +170,38 @@ abstract public class AntlrParserDriver {
   }
 
   private void notifyObserversOfBegin() {
-    ASTWalkerEvent event = new ASTWalkerEvent(ASTWalkerEvent.eventID.BEGIN);
-    notifyObservers(event);
+    notifyObservers(AntlrParserDriverObserver::begin);
   }
 
   private void notifyObserversOfEnd() {
-    ASTWalkerEvent event = new ASTWalkerEvent(ASTWalkerEvent.eventID.END);
-    notifyObservers(event);
+    notifyObservers(AntlrParserDriverObserver::end);
   }
 
   public void notifyObserversOfUnitStart(ParserRuleContext ctx) {
-    ASTWalkerEvent event = new ASTWalkerEvent(
-        ASTWalkerEvent.eventID.START_OF_UNIT);
-    event.ctx = ctx;
-    event.filename = filename;
-    notifyObservers(event);
+    notifyObservers(new Consumer<AntlrParserDriverObserver>() {
+      @Override
+      public void accept(AntlrParserDriverObserver observer) {
+        observer.startOfUnit(ctx, filename);
+      }
+    });
   }
 
   public void notifyObserversOfUnitEnd(ParserRuleContext ctx) {
-    ASTWalkerEvent event = new ASTWalkerEvent(
-        ASTWalkerEvent.eventID.END_OF_UNIT);
-    event.ctx = ctx;
-    event.filename = filename;
-    notifyObservers(event);
+    notifyObservers(new Consumer<AntlrParserDriverObserver>() {
+      @Override
+      public void accept(AntlrParserDriverObserver observer) {
+        observer.endOfUnit(ctx, filename);
+      }
+    });
   }
 
   public void notifyObserversOfItem(AstNode aItem) {
-    ASTWalkerEvent event = new ASTWalkerEvent(
-        ASTWalkerEvent.eventID.PROCESS_ITEM);
-    event.item = aItem;
-    event.itemStack = builderStack;
-    notifyObservers(event);
+    notifyObservers(new Consumer<AntlrParserDriverObserver>() {
+      @Override
+      public void accept(AntlrParserDriverObserver observer) {
+        observer.processItem(aItem, builderStack);
+      }
+    });
   }
 
   public CompoundStatement getResult() {
