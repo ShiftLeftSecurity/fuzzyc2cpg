@@ -1,7 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.parser;
 
-import java.util.Observer;
-
 public class ModuleParser {
 
   AntlrParserDriver parserDriver;
@@ -19,7 +17,7 @@ public class ModuleParser {
     }
   }
 
-  public void addObserver(Observer anObserver) {
+  public void addObserver(AntlrParserDriverObserver anObserver) {
     parserDriver.addObserver(anObserver);
   }
 

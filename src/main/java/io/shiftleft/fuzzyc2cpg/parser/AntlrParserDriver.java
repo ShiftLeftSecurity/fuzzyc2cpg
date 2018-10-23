@@ -5,7 +5,10 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTWalkerEvent;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Observable;
+import java.util.Observer;
 import java.util.Stack;
 import jdk.nashorn.internal.runtime.ParserException;
 import org.antlr.v4.runtime.ANTLRFileStream;
@@ -21,7 +24,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-abstract public class AntlrParserDriver extends Observable {
+abstract public class AntlrParserDriver {
   // TODO: This class does two things:
   // * It is a driver for the ANTLRParser, i.e., the parser
   // that creates ParseTrees from Strings. It can also already
@@ -37,6 +40,8 @@ abstract public class AntlrParserDriver extends Observable {
   private Parser antlrParser;
   private ParseTreeListener listener;
   private CommonParserContext context = null;
+
+  private List<AntlrParserDriverObserver> observers = new ArrayList<>();
 
   public AntlrParserDriver() {
     super();
@@ -146,6 +151,17 @@ abstract public class AntlrParserDriver extends Observable {
 
   // //////////////////
 
+  public void addObserver(AntlrParserDriverObserver observer) {
+    observers.add(observer);
+  }
+
+  private void notifyObservers(ASTWalkerEvent event) {
+    for (AntlrParserDriverObserver observer : observers) {
+      observer.update(event);
+    }
+
+  }
+
   public void begin() {
     notifyObserversOfBegin();
   }
@@ -156,13 +172,11 @@ abstract public class AntlrParserDriver extends Observable {
 
   private void notifyObserversOfBegin() {
     ASTWalkerEvent event = new ASTWalkerEvent(ASTWalkerEvent.eventID.BEGIN);
-    setChanged();
     notifyObservers(event);
   }
 
   private void notifyObserversOfEnd() {
     ASTWalkerEvent event = new ASTWalkerEvent(ASTWalkerEvent.eventID.END);
-    setChanged();
     notifyObservers(event);
   }
 
@@ -171,7 +185,6 @@ abstract public class AntlrParserDriver extends Observable {
         ASTWalkerEvent.eventID.START_OF_UNIT);
     event.ctx = ctx;
     event.filename = filename;
-    setChanged();
     notifyObservers(event);
   }
 
@@ -180,7 +193,6 @@ abstract public class AntlrParserDriver extends Observable {
         ASTWalkerEvent.eventID.END_OF_UNIT);
     event.ctx = ctx;
     event.filename = filename;
-    setChanged();
     notifyObservers(event);
   }
 
@@ -189,7 +201,6 @@ abstract public class AntlrParserDriver extends Observable {
         ASTWalkerEvent.eventID.PROCESS_ITEM);
     event.item = aItem;
     event.itemStack = builderStack;
-    setChanged();
     notifyObservers(event);
   }
 

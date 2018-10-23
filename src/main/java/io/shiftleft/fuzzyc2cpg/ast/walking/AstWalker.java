@@ -6,12 +6,12 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule;
 import io.shiftleft.fuzzyc2cpg.outputmodules.ProtoOutputModule;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Stack;
+
+import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public class AstWalker implements Observer {
+public class AstWalker implements AntlrParserDriverObserver {
 
   protected ASTNodeVisitor callbacks;
 
@@ -33,8 +33,7 @@ public class AstWalker implements Observer {
     node.accept(callbacks);
   }
 
-  public void update(Observable obj, Object arg) {
-    ASTWalkerEvent event = (ASTWalkerEvent) arg;
+  public void update(ASTWalkerEvent event) {
     switch (event.id) {
       case BEGIN:
         begin();
