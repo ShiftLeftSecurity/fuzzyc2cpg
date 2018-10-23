@@ -2,21 +2,31 @@ package tests.languages.c.parseTreeToAST;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
-import io.shiftleft.fuzzyc2cpg.ast.walking.AstWalker;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
+import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public class TestASTWalker extends AstWalker
+public class TestAntlrParserDriverObserver implements AntlrParserDriverObserver
 {
 
 	public List<AstNode> codeItems;
 
-	public TestASTWalker()
+	public TestAntlrParserDriverObserver()
 	{
 		codeItems = new LinkedList<>();
+	}
+
+	@Override
+	public void begin() {
+
+	}
+
+	@Override
+	public void end() {
+
 	}
 
 	@Override
