@@ -24,7 +24,6 @@ public class AstWalker implements Observer {
   }
 
   public void startOfUnit(ParserRuleContext ctx, String filename) {
-    callbacks.handleStartOfUnit();
   }
 
   public void endOfUnit(ParserRuleContext ctx, String filename) {

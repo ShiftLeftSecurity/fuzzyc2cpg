@@ -35,12 +35,7 @@ import java.util.Stack;
 
 public abstract class ASTNodeVisitor {
 
-  protected Stack<Long> contextStack;
   protected StructureCpg structureCpg;
-
-  public void handleStartOfUnit() {
-    contextStack = new Stack<Long>();
-  }
 
   public void visit(AstNode item) {
     visitChildren(item);
