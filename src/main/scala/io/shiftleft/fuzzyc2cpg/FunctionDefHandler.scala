@@ -7,12 +7,10 @@ import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule
 
 class FunctionDefHandler(structureCpg: StructureCpg, outputModule: OutputModule) {
 
-  val methodCreator = new MethodCreator(structureCpg)
 
   def handle(ast: FunctionDefBase): Unit = {
-
-    val methodNode = methodCreator.addMethodStubToStructureCpg(ast)
-    val bodyCpg = methodCreator.addMethodBodyCpg(methodNode, ast)
+    val methodCreator = new MethodCreator(structureCpg, ast)
+    val bodyCpg = methodCreator.addMethodCpg()
     val outputFilename = generateOutputFilename(ast)
     outputModule.output(bodyCpg, outputFilename)
   }
