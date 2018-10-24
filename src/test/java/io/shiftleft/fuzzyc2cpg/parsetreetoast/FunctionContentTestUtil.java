@@ -5,7 +5,8 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.parser.FunctionParser;
 import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
 import io.shiftleft.fuzzyc2cpg.parser.functions.AntlrCFunctionParserDriver;
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 public class FunctionContentTestUtil
@@ -31,7 +32,7 @@ public class FunctionContentTestUtil
 
 	private static TokenSubStream tokenStreamFromString(String input)
 	{
-		ANTLRInputStream inputStream = new ANTLRInputStream(input);
+		CharStream inputStream = CharStreams.fromString(input);
 		FunctionLexer lex = new FunctionLexer(inputStream);
 		TokenSubStream tokens = new TokenSubStream(lex);
 		return tokens;

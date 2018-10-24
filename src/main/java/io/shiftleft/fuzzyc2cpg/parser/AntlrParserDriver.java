@@ -10,9 +10,9 @@ import java.util.Stack;
 import java.util.function.Consumer;
 
 import jdk.nashorn.internal.runtime.ParserException;
-import org.antlr.v4.runtime.ANTLRFileStream;
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
@@ -48,7 +48,7 @@ abstract public class AntlrParserDriver {
 
   public abstract ParseTree parseTokenStreamImpl(TokenSubStream tokens);
 
-  public abstract Lexer createLexer(ANTLRInputStream input);
+  public abstract Lexer createLexer(CharStream input);
 
   public void parseAndWalkFile(String filename) throws ParserException {
     TokenSubStream stream = createTokenStreamFromFile(filename);
@@ -82,9 +82,7 @@ abstract public class AntlrParserDriver {
   }
 
   public ParseTree parseString(String input) throws ParserException {
-    char[] charArray = input.toCharArray();
-    ANTLRInputStream inputStream = new ANTLRInputStream(charArray,
-        charArray.length);
+    CharStream inputStream = CharStreams.fromString(input);
     Lexer lex = createLexer(inputStream);
     TokenSubStream tokens = new TokenSubStream(lex);
     ParseTree tree = parseTokenStream(tokens);
@@ -94,9 +92,9 @@ abstract public class AntlrParserDriver {
   protected TokenSubStream createTokenStreamFromFile(String filename)
       throws ParserException {
 
-    ANTLRInputStream input;
+    CharStream input;
     try {
-      input = new ANTLRFileStream(filename);
+      input = CharStreams.fromFileName(filename);
     } catch (IOException exception) {
       throw new ParserException("");
     }

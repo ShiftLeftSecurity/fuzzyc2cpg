@@ -15,7 +15,8 @@ import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver;
 import java.util.List;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.junit.Test;
 
 public class ModuleBuildersTest
@@ -241,7 +242,7 @@ public class ModuleBuildersTest
 		tests.languages.c.parseTreeToAST.TestAntlrParserDriverObserver testProcessor = new tests.languages.c.parseTreeToAST.TestAntlrParserDriverObserver();
 		parser.addObserver(testProcessor);
 
-		ANTLRInputStream inputStream = new ANTLRInputStream(input);
+		CharStream inputStream = CharStreams.fromString(input);
 		ModuleLexer lex = new ModuleLexer(inputStream);
 		TokenSubStream tokens = new TokenSubStream(lex);
 

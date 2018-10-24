@@ -33,6 +33,7 @@ public class TokenSubStream extends BufferedTokenStream {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void reset() {
     seek(startIndex);
   }

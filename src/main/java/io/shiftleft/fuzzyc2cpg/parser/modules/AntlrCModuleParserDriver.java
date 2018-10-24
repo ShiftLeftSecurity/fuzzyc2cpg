@@ -4,7 +4,7 @@ import io.shiftleft.fuzzyc2cpg.ModuleLexer;
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriver;
 import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -34,7 +34,7 @@ public class AntlrCModuleParserDriver extends AntlrParserDriver {
   }
 
   @Override
-  public Lexer createLexer(ANTLRInputStream input) {
+  public Lexer createLexer(CharStream input) {
     return new ModuleLexer(input);
   }
 
