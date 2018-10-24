@@ -18,12 +18,13 @@ class AstVisitor(outputModule: OutputModule,
                  astRootNode: Node)
   extends ASTNodeVisitor with AntlrParserDriverObserver {
   private var astParentStack = List(astRootNode)
+  private var fileNameOption = Option.empty[String]
 
   /**
     * Callback triggered for each function definition
     * */
   override def visit(ast: FunctionDefBase): Unit =  {
-    new FunctionDefHandler(structureCpg, astParentStack.head, outputModule).handle(ast)
+    new FunctionDefHandler(structureCpg, astParentStack.head, outputModule, fileNameOption.get).handle(ast)
   }
 
   /**
@@ -49,7 +50,7 @@ class AstVisitor(outputModule: OutputModule,
   }
 
   override def startOfUnit(ctx: ParserRuleContext, filename: String): Unit = {
-
+    fileNameOption = Some(filename)
   }
 
   override def endOfUnit(ctx: ParserRuleContext, filename: String): Unit = {

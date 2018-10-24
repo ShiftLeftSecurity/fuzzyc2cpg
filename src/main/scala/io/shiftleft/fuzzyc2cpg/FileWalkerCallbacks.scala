@@ -2,6 +2,7 @@ package io.shiftleft.fuzzyc2cpg
 
 import java.nio.file.{Path, Paths}
 
+import io.shiftleft.fuzzyc2cpg.Utils.newEdge
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener
 import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule
 import io.shiftleft.fuzzyc2cpg.parser.{ModuleParser => ParserModuleParser}
@@ -25,7 +26,7 @@ class FileWalkerCallbacks(outputModule: OutputModule) extends SourceFileListener
     val namespaceBlock = createNamespaceBlockNode(pathToFile)
     structureCpg.addNode(fileNode)
     structureCpg.addNode(namespaceBlock)
-    structureCpg.addEdge(Utils.newEdge(EdgeType.AST, namespaceBlock, fileNode))
+    structureCpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
 
     val astVisitor = new AstVisitor(outputModule, structureCpg, namespaceBlock)
     parser.addObserver(astVisitor)

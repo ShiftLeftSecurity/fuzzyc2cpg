@@ -9,11 +9,12 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 
 class FunctionDefHandler(structureCpg: CpgStruct.Builder,
                          astParentNode: Node,
-                         outputModule: OutputModule) {
+                         outputModule: OutputModule,
+                         containingFileName: String) {
 
 
   def handle(ast: FunctionDefBase): Unit = {
-    val methodCreator = new MethodCreator(structureCpg, ast, astParentNode)
+    val methodCreator = new MethodCreator(structureCpg, ast, astParentNode, containingFileName)
     val bodyCpg = methodCreator.addMethodCpg()
     val outputFilename = generateOutputFilename(ast)
     outputModule.output(bodyCpg, outputFilename)
