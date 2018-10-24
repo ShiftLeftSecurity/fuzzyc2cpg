@@ -15,5 +15,5 @@ public interface AntlrParserDriverObserver {
 
   void endOfUnit(ParserRuleContext ctx, String filename);
 
-  void processItem(AstNode node, Stack<AstNodeBuilder> nodeStack);
+  void processItem(AstNode node, Stack<AstNodeBuilder> builderStack);
 }

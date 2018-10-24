@@ -16,8 +16,9 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 
 import scala.collection.JavaConverters._
 
-class MethodCreator(structureCpg: StructureCpg,
-                    functionDef: FunctionDefBase) {
+class MethodCreator(structureCpg: CpgStruct.Builder,
+                    functionDef: FunctionDefBase,
+                    astParentNode: Node) {
   private var nodeToProtoNode = Map[CfgNode, CpgStruct.Node]()
   private val bodyCpg = CpgStruct.newBuilder()
   private var methodNode: CpgStruct.Node = _
@@ -123,10 +124,16 @@ class MethodCreator(structureCpg: StructureCpg,
     val methodNode = Node.newBuilder.setKey(IdPool.getNextId)
       .setType(NodeType.METHOD)
       .addProperty(newStringProperty(NodePropertyName.NAME, name))
-      .addProperty(newStringProperty(NodePropertyName.FULL_NAME, name)).build
+      .addProperty(newStringProperty(NodePropertyName.FULL_NAME, name))
+      /*
+      .addProperty(newStringProperty(NodePropertyName.AST_PARENT_TYPE, astParentNode.getType))
+      .addProperty(newStringProperty(NodePropertyName.AST_PARENT_FULL_NAME,
+        astParentNode.getPropertyList.asScala.find(_.getName == NodePropertyName.FULL_NAME)
+          .get.getValue.getStringValue))
+          */
+      .build
 
     structureCpg.addNode(methodNode)
-    connectMethodToNamespaceAndType(methodNode)
     functionDef.getParameterList.asScala.foreach{ parameter =>
       addParameterCpg(parameter)
     }
@@ -142,13 +149,6 @@ class MethodCreator(structureCpg: StructureCpg,
     structureCpg.addNode(methodReturnNode)
 
     methodNode
-  }
-
-  private def connectMethodToNamespaceAndType(methodNode: CpgStruct.Node): Unit = {
-    structureCpg.addEdge(
-      CpgStruct.Edge.newBuilder.setType(EdgeType.AST)
-        .setSrc(structureCpg.getNamespaceBlockNode.getKey)
-        .setDst(methodNode.getKey).build)
   }
 
   private def addParameterCpg(parameter: ParameterBase): Unit = {

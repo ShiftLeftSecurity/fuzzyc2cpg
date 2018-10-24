@@ -9,23 +9,28 @@ import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver
+import io.shiftleft.proto.cpg.Cpg.CpgStruct
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import org.antlr.v4.runtime.ParserRuleContext
 
 class AstVisitor(outputModule: OutputModule,
-                 structureCpg: StructureCpg) extends ASTNodeVisitor with AntlrParserDriverObserver {
+                 structureCpg: CpgStruct.Builder,
+                 astRootNode: Node)
+  extends ASTNodeVisitor with AntlrParserDriverObserver {
+  private var astParentStack = List(astRootNode)
 
   /**
     * Callback triggered for each function definition
     * */
   override def visit(ast: FunctionDefBase): Unit =  {
-    new FunctionDefHandler(structureCpg, outputModule).handle(ast)
+    new FunctionDefHandler(structureCpg, astParentStack.head, outputModule).handle(ast)
   }
 
   /**
     * Callback triggered for every class/struct
     * */
   override def visit(ast: ClassDefStatement): Unit = {
-    new ClassDefHandler(structureCpg).handle(ast)
+    new ClassDefHandler(structureCpg, astParentStack.head).handle(ast)
   }
 
   /**
@@ -51,7 +56,7 @@ class AstVisitor(outputModule: OutputModule,
 
   }
 
-  override def processItem(node: AstNode , nodeStack: util.Stack[AstNodeBuilder]): Unit = {
+  override def processItem(node: AstNode , builderStack: util.Stack[AstNodeBuilder]): Unit = {
     node.accept(this)
   }
 }
