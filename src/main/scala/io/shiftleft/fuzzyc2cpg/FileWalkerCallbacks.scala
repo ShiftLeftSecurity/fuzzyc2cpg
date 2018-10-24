@@ -9,52 +9,28 @@ import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
-import io.shiftleft.proto.cpg.Cpg.{NodePropertyName, PropertyValue}
+import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
 
 class FileWalkerCallbacks(outputModule: OutputModule) extends SourceFileListener {
-  private final val driver = new AntlrCModuleParserDriver()
-  private final val parser = new ParserModuleParser(driver)
-  private final val structureCpg = new StructureCpg()
-  private final val astVisitor = new AstVisitor(outputModule, structureCpg)
-
-  initializeGlobalNamespaceBlock()
-  parser.addObserver(astVisitor)
-
-
-  /**
-    * Create a placeholder namespace node named '<global>' for all
-    * types and methods not explicitly placed in a namespace.
-    * */
-
-  private def initializeGlobalNamespaceBlock(): Unit = {
-    val nameProperty = Property.newBuilder()
-      .setName(NodePropertyName.NAME)
-      .setValue(PropertyValue.newBuilder().setStringValue("<global>").build());
-
-    structureCpg.setNamespaceBlockNode(
-      Node.newBuilder()
-        .setKey(IdPool.getNextId())
-        .setType(NodeType.NAMESPACE_BLOCK)
-        .addProperty(nameProperty)
-        .build()
-    )
-  }
+  private val structureCpg = CpgStruct.newBuilder()
 
   /**
     * Callback invoked for each file
     * */
   override def visitFile(pathToFile: Path): Unit = {
-    val fileNode = addFileNode(pathToFile)
-    connectFileNodeToNamespaceBlock(fileNode)
-    parser.parseFile(pathToFile.toString())
-  }
+    val driver = new AntlrCModuleParserDriver()
+    val parser = new ParserModuleParser(driver)
 
-  private def connectFileNodeToNamespaceBlock(fileNode: Node): Unit = {
-    val edgeBuilder = Edge.newBuilder()
-      .setType(EdgeType.AST)
-      .setSrc(fileNode.getKey())
-      .setDst(structureCpg.getNamespaceBlockNode().getKey());
-    structureCpg.addEdge(edgeBuilder.build());
+    val fileNode = createFileNode(pathToFile)
+    val namespaceBlock = createNamespaceBlockNode(pathToFile)
+    structureCpg.addNode(fileNode)
+    structureCpg.addNode(namespaceBlock)
+    structureCpg.addEdge(Utils.newEdge(EdgeType.AST, namespaceBlock, fileNode))
+
+    val astVisitor = new AstVisitor(outputModule, structureCpg, namespaceBlock)
+    parser.addObserver(astVisitor)
+
+    parser.parseFile(pathToFile.toString)
   }
 
   /**
@@ -71,20 +47,36 @@ class FileWalkerCallbacks(outputModule: OutputModule) extends SourceFileListener
 
   }
 
-  private def addFileNode(pathToFile: Path): Node = {
+  private def createFileNode(pathToFile: Path): Node = {
     val nodeBuilder = Node.newBuilder()
-      .setKey(IdPool.getNextId())
+      .setKey(IdPool.getNextId)
     val nameValue = PropertyValue.newBuilder()
-      .setStringValue(pathToFile.toString())
+      .setStringValue(pathToFile.toString)
     val nameProperty = Property.newBuilder()
       .setName(NodePropertyName.NAME)
       .setValue(nameValue)
     nodeBuilder.setType(NodeType.FILE)
       .addProperty(nameProperty)
-    val fileNode = nodeBuilder.build()
-    structureCpg.addNode(fileNode)
-    fileNode
+    nodeBuilder.build()
   }
+
+  private def createNamespaceBlockNode(pathToFile: Path): Node = {
+    val nameProperty = Property.newBuilder()
+      .setName(NodePropertyName.NAME)
+      .setValue(PropertyValue.newBuilder().setStringValue("<global>").build());
+
+    val fullNameProperty = Utils.newStringProperty(
+      NodePropertyName.FULL_NAME,
+        s"${pathToFile.toString}:<global>")
+
+    Node.newBuilder()
+      .setKey(IdPool.getNextId)
+      .setType(NodeType.NAMESPACE_BLOCK)
+      .addProperty(nameProperty)
+      .addProperty(fullNameProperty)
+      .build()
+  }
+
 
   override def shutdown(): Unit = {
     outputStructuralCpg()
@@ -94,7 +86,7 @@ class FileWalkerCallbacks(outputModule: OutputModule) extends SourceFileListener
     val outputFilename = Paths
       .get(Config.outputDirectory, "structural-cpg.proto")
       .toString();
-    outputModule.output(structureCpg.getCpg(), outputFilename);
+    outputModule.output(structureCpg, outputFilename);
   }
 
   override def initialize(): Unit = {

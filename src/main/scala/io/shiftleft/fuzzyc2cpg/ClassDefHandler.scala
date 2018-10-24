@@ -7,15 +7,15 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
-import io.shiftleft.fuzzyc2cpg.Utils.children
+import io.shiftleft.fuzzyc2cpg.Utils.{children, newStringProperty, newEdge}
 
 import scala.collection.JavaConverters._
 
-class ClassDefHandler(structureCpg: StructureCpg) {
+class ClassDefHandler(structureCpg: CpgStruct.Builder,
+                      astParentNode: Node) {
 
   def handle(ast: ClassDefStatement): Unit = {
     val typeDeclNode = createTypeDeclNode(ast)
-    connectNamespaceAndTypeDecl(typeDeclNode)
     addAndConnectMemberNodes(typeDeclNode, ast)
   }
 
@@ -25,42 +25,30 @@ class ClassDefHandler(structureCpg: StructureCpg) {
     // once the parser handles namespaces.
     var typeName = ast.identifier.toString
     typeName = typeName.substring(1, typeName.length - 1)
-    val nameProperty = stringProperty(NodePropertyName.NAME, typeName)
-    val fullNameProperty = stringProperty(NodePropertyName.FULL_NAME, typeName)
+    val nameProperty = newStringProperty(NodePropertyName.NAME, typeName)
+    val fullNameProperty = newStringProperty(NodePropertyName.FULL_NAME, typeName)
 
     val isExternalProperty = Property.newBuilder.setName(NodePropertyName.IS_EXTERNAL)
       .setValue(PropertyValue.newBuilder.setBoolValue(false).build)
       .build
 
-    val typeDeclNode = Node.newBuilder.setKey(IdPool.getNextId)
-      .setType(NodeType.TYPE_DECL).addProperty(nameProperty)
-      .addProperty(fullNameProperty).addProperty(isExternalProperty)
+    val typeDeclNode = Node.newBuilder
+      .setKey(IdPool.getNextId)
+      .setType(NodeType.TYPE_DECL)
+      .addProperty(nameProperty)
+      .addProperty(fullNameProperty)
+      .addProperty(isExternalProperty)
+      /*
+      .addProperty(newStringProperty(NodePropertyName.AST_PARENT_TYPE, astParentNode.getType))
+      .addProperty(newStringProperty(NodePropertyName.AST_PARENT_FULL_NAME,
+        astParentNode.getPropertyList.asScala.find(_.getName == NodePropertyName.FULL_NAME)
+          .get.getValue.getStringValue))
+          */
       .build
 
     structureCpg.addNode(typeDeclNode)
     typeDeclNode
   }
-
-  private def stringProperty(propertyType : Cpg.NodePropertyName, propertyValue : String) = {
-    Property.newBuilder
-      .setName(propertyType)
-      .setValue(PropertyValue.newBuilder
-        .setStringValue(propertyValue).build)
-      .build
-  }
-
-  private def connectNamespaceAndTypeDecl(typeDeclNode: CpgStruct.Node): Unit = {
-    structureCpg
-      .addEdge(
-        edge(EdgeType.AST,
-        structureCpg.getNamespaceBlockNode.getKey,
-        typeDeclNode.getKey
-      ).build)
-  }
-
-  private def edge(edgeType : EdgeType, src: Long, dst: Long) =
-    CpgStruct.Edge.newBuilder.setType(edgeType)
-    .setSrc(src).setDst(dst)
 
   def addAndConnectMemberNodes(typeDeclNode: Node, ast: ClassDefStatement) = {
 
@@ -78,17 +66,15 @@ class ClassDefHandler(structureCpg: StructureCpg) {
         }.flatten.toList
 
     nameTypeCodeTuples.foreach{ case (code, name, typeName) =>
-      val nameProperty = stringProperty(NodePropertyName.NAME, name)
-      val codeProperty = stringProperty(NodePropertyName.CODE, code)
+      val nameProperty = newStringProperty(NodePropertyName.NAME, name)
+      val codeProperty = newStringProperty(NodePropertyName.CODE, code)
       val memberNode = Node.newBuilder.setKey(IdPool.getNextId)
         .setType(NodeType.MEMBER)
         .addProperty(codeProperty)
         .addProperty(nameProperty)
           .build
       structureCpg.addNode(memberNode)
-      structureCpg.addEdge(
-        edge(EdgeType.AST, typeDeclNode.getKey, memberNode.getKey).build
-      )
+      structureCpg.addEdge(newEdge(EdgeType.AST, memberNode, typeDeclNode))
     }
   }
 

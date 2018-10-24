@@ -1,6 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.ast.walking;
 
-import io.shiftleft.fuzzyc2cpg.StructureCpg;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Argument;

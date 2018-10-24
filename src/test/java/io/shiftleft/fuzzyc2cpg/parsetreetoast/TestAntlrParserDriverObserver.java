@@ -42,7 +42,7 @@ public class TestAntlrParserDriverObserver implements AntlrParserDriverObserver
 	}
 
 	@Override
-	public void processItem(AstNode item, Stack<AstNodeBuilder> itemStack)
+	public void processItem(AstNode item, Stack<AstNodeBuilder> builderStack)
 	{
 		codeItems.add(item);
 	}
