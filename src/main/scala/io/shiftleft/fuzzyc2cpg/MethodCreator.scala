@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg
 
+import io.shiftleft.codepropertygraph.generated.EvaluationStrategies
 import io.shiftleft.fuzzyc2cpg.ast.expressions.{AssignmentExpression, Expression}
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.{FunctionDefBase, ParameterBase, ReturnType}
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
@@ -11,21 +12,22 @@ import io.shiftleft.fuzzyc2cpg.cfg.nodes._
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
-import io.shiftleft.fuzzyc2cpg.Utils.{children, newStringProperty}
+import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 
 import scala.collection.JavaConverters._
 
 class MethodCreator(structureCpg: CpgStruct.Builder,
                     functionDef: FunctionDefBase,
-                    astParentNode: Node) {
+                    astParentNode: Node,
+                    containingFileName: String) {
   private var nodeToProtoNode = Map[CfgNode, CpgStruct.Node]()
   private val bodyCpg = CpgStruct.newBuilder()
   private var methodNode: CpgStruct.Node = _
   val cfg = initializeCfg(functionDef)
 
   def addMethodCpg(): CpgStruct.Builder = {
-    methodNode = addMethodStubToStructureCpg()
+    methodNode = convertMethodHeader(structureCpg)
     addMethodBodyCpg()
   }
 
@@ -58,7 +60,7 @@ class MethodCreator(structureCpg: CpgStruct.Builder,
       val callExpression = expression.asInstanceOf[CallExpression]
       val targetFunc = callExpression.getTargetFunc
       val operator = targetFunc.getEscapedCodeStr
-      nodeBuilder.addProperty(newStringProperty(NodePropertyName.NAME, operator))
+      nodeBuilder.addStringProperty(NodePropertyName.NAME, operator)
     }
     bodyCpg.addNode(nodeBuilder)
   }
@@ -119,12 +121,34 @@ class MethodCreator(structureCpg: CpgStruct.Builder,
     converter.convert(ast)
   }
 
-  def addMethodStubToStructureCpg(): CpgStruct.Node = {
+  private def convertMethodHeader(targetCpg: CpgStruct.Builder): Node = {
+    val methodNode = createMethodNode
+    targetCpg.addNode(methodNode)
+
+    functionDef.getParameterList.asScala.foreach{ parameter =>
+      val parameterNode = new ParameterConverter(parameter).convert(structureCpg)
+      targetCpg.addEdge(EdgeType.AST, parameterNode, methodNode)
+    }
+
+    val methodReturnNode = createMethodReturnNode
+    targetCpg.addNode(methodReturnNode)
+    targetCpg.addEdge(EdgeType.AST, methodReturnNode, methodNode)
+
+    methodNode
+  }
+
+  private def createMethodNode: Node = {
     val name = functionDef.getName
-    val methodNode = Node.newBuilder.setKey(IdPool.getNextId)
+    val signature = functionDef.getReturnType.getEscapedCodeStr +
+      functionDef.getParameterList.asScala.map(_.getType.getEscapedCodeStr).mkString("(", ",", ")")
+    val methodNode = Node.newBuilder
+      .setKey(IdPool.getNextId)
       .setType(NodeType.METHOD)
-      .addProperty(newStringProperty(NodePropertyName.NAME, name))
-      .addProperty(newStringProperty(NodePropertyName.FULL_NAME, name))
+      .addStringProperty(NodePropertyName.NAME, functionDef.getName)
+      .addStringProperty(NodePropertyName.FULL_NAME, s"$containingFileName:${functionDef.getName}")
+      .addIntProperty(NodePropertyName.LINE_NUMBER, functionDef.getLocation.startLine)
+      .addIntProperty(NodePropertyName.COLUMN_NUMBER, functionDef.getLocation.startPos)
+      .addStringProperty(NodePropertyName.SIGNATURE, signature)
       /*
       .addProperty(newStringProperty(NodePropertyName.AST_PARENT_TYPE, astParentNode.getType))
       .addProperty(newStringProperty(NodePropertyName.AST_PARENT_FULL_NAME,
@@ -132,49 +156,18 @@ class MethodCreator(structureCpg: CpgStruct.Builder,
           .get.getValue.getStringValue))
           */
       .build
-
-    structureCpg.addNode(methodNode)
-    functionDef.getParameterList.asScala.foreach{ parameter =>
-      addParameterCpg(parameter)
-    }
-
-    val retNode = children(functionDef).find(_.isInstanceOf[ReturnType])
-    val retType = retNode.map(_.getEscapedCodeStr).getOrElse("")
-
-    val methodReturnNode = Node.newBuilder.setKey(IdPool.getNextId)
-      .setType(NodeType.METHOD_RETURN)
-      .addProperty(newStringProperty(NodePropertyName.CODE, "RET"))
-      .addProperty(newStringProperty(NodePropertyName.TYPE_FULL_NAME, retType ))
-      .build
-    structureCpg.addNode(methodReturnNode)
-
     methodNode
   }
 
-  private def addParameterCpg(parameter: ParameterBase): Unit = {
-    val codeProperty = newStringProperty(NodePropertyName.CODE, parameter.getEscapedCodeStr)
-    val nameProperty = newStringProperty(NodePropertyName.NAME, parameter.getName)
-    val orderProperty = Property.newBuilder
-      .setName(NodePropertyName.ORDER)
-      .setValue(PropertyValue.newBuilder.setIntValue(parameter.getChildNumber))
+  private def createMethodReturnNode: Node = {
+    Node.newBuilder
+      .setKey(IdPool.getNextId)
+      .setType(NodeType.METHOD_RETURN)
+      .addStringProperty(NodePropertyName.CODE, "RET")
+      .addStringProperty(NodePropertyName.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
+      .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO" )
+      .addIntProperty(NodePropertyName.LINE_NUMBER, functionDef.getReturnType.getLocation.startLine)
+      .addIntProperty(NodePropertyName.COLUMN_NUMBER, functionDef.getReturnType.getLocation.startPos)
       .build
-
-    structureCpg.addNode(
-      Node.newBuilder.setKey(IdPool.getNextId)
-        .setType(NodeType.METHOD_PARAMETER_IN)
-        .addProperty(codeProperty)
-        .addProperty(nameProperty)
-        .addProperty(orderProperty).build
-    )
-
-    val evalNode = Node.newBuilder
-      .setType(NodeType.TYPE)
-      .addProperty(Property.newBuilder.setName(NodePropertyName.NAME)
-        .setValue(PropertyValue.newBuilder.setStringValue(parameter.getType.getEscapedCodeStr)))
-      .addProperty(Property.newBuilder.setName(NodePropertyName.FULL_NAME)
-        .setValue(PropertyValue.newBuilder.setStringValue(parameter.getType.getEscapedCodeStr)))
-      .build
-    structureCpg.addNode(evalNode)
   }
-
 }

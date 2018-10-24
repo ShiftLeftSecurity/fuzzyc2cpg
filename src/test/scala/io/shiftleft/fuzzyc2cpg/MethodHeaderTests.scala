@@ -1,38 +1,64 @@
 package io.shiftleft.fuzzyc2cpg
 
-import io.shiftleft.codepropertygraph.generated.{NodeKeys, NodeTypes}
+import gremlin.scala._
+import io.shiftleft.codepropertygraph.generated.{EdgeTypes, EvaluationStrategies, NodeKeys, NodeTypes}
 import org.scalatest.{Matchers, WordSpec}
 
 class MethodHeaderTests extends WordSpec with Matchers {
   val fixture = CpgTestFixture("methodheader")
   val g = fixture.cpg.scalaGraph.traversal
 
-  "Method header test project" should {
+  "Method header" should {
 
-    "contain one method node with NAME `foo`" in {
-      val methods = g.V.hasLabel(NodeTypes.METHOD).value(NodeKeys.NAME).l
+    "have correct METHOD node for method foo" in {
+      val methods = g.V.hasLabel(NodeTypes.METHOD).has(NodeKeys.NAME -> "foo").l
       methods.size shouldBe 1
-      methods.head shouldBe "foo"
+      methods.head.value2(NodeKeys.FULL_NAME) shouldBe "src/test/resources/testcode/methodheader/methodheader.c:foo"
+      methods.head.value2(NodeKeys.SIGNATURE) shouldBe "int(int,int)"
+      methods.head.value2(NodeKeys.LINE_NUMBER) shouldBe 1
+      methods.head.value2(NodeKeys.COLUMN_NUMBER) shouldBe 0
     }
 
-    "contain one method node with FULL_NAME `foo`" in {
-      val methods = g.V.hasLabel(NodeTypes.METHOD).value(NodeKeys.FULL_NAME).l
-      val method = methods.head
-      method shouldBe "foo"
-    }
-
-    "contain two parameter nodes" in {
-      val parameters = g.V.hasLabel(NodeTypes.METHOD_PARAMETER_IN)
-        .value(NodeKeys.NAME).l.toSet
-      parameters shouldBe Set("x", "y")
-    }
-
-    "contain one METHOD_RETURN node with correct code field" in {
-      val returns = g.V.hasLabel(NodeTypes.METHOD_RETURN)
-        .value(NodeKeys.TYPE_FULL_NAME)
+    "have correct METHOD_PARAMETER_IN nodes for method foo" in {
+      val parameters = g.V
+        .hasLabel(NodeTypes.METHOD)
+        .has(NodeKeys.NAME -> "foo")
+        .out(EdgeTypes.AST)
+        .hasLabel(NodeTypes.METHOD_PARAMETER_IN)
         .l
-      returns.size shouldBe 1
-      returns.head shouldBe "int"
+
+      parameters.size shouldBe 2
+      val param1Option = parameters.find(_.value2(NodeKeys.ORDER) == 1)
+      param1Option.isDefined shouldBe true
+      param1Option.get.value2(NodeKeys.CODE) shouldBe "int x"
+      param1Option.get.value2(NodeKeys.NAME) shouldBe "x"
+      param1Option.get.value2(NodeKeys.EVALUATION_STRATEGY) shouldBe EvaluationStrategies.BY_VALUE
+      param1Option.get.value2(NodeKeys.LINE_NUMBER) shouldBe 1
+      param1Option.get.value2(NodeKeys.COLUMN_NUMBER) shouldBe 8
+
+      val param2Option = parameters.find(_.value2(NodeKeys.ORDER) == 2)
+      param2Option.isDefined shouldBe true
+      param2Option.isDefined shouldBe true
+      param2Option.get.value2(NodeKeys.CODE) shouldBe "int y"
+      param2Option.get.value2(NodeKeys.NAME) shouldBe "y"
+      param2Option.get.value2(NodeKeys.EVALUATION_STRATEGY) shouldBe EvaluationStrategies.BY_VALUE
+      param2Option.get.value2(NodeKeys.LINE_NUMBER) shouldBe 1
+      param2Option.get.value2(NodeKeys.COLUMN_NUMBER) shouldBe 15
+    }
+
+    "have correct METHOD_RETURN node for method foo" in {
+      val methodReturn = g.V
+        .hasLabel(NodeTypes.METHOD)
+        .has(NodeKeys.NAME -> "foo")
+        .out(EdgeTypes.AST)
+        .hasLabel(NodeTypes.METHOD_RETURN)
+        .l
+
+      methodReturn.size shouldBe 1
+      methodReturn.head.value2(NodeKeys.CODE) shouldBe "RET"
+      methodReturn.head.value2(NodeKeys.EVALUATION_STRATEGY) shouldBe EvaluationStrategies.BY_VALUE
+      methodReturn.head.value2(NodeKeys.LINE_NUMBER) shouldBe 1
+      methodReturn.head.value2(NodeKeys.COLUMN_NUMBER) shouldBe 0
     }
 
   }

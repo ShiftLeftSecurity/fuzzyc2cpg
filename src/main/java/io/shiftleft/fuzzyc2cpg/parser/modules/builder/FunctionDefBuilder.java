@@ -41,6 +41,7 @@ public class FunctionDefBuilder extends AstNodeBuilder {
         .setBaseType(ParseTreeUtils.childTokenString(ctx.type_name()));
     returnType.setCompleteType(ParseTreeUtils.childTokenString(ctx));
     thisItem.addChild(returnType);
+    thisItem.setReturnType(returnType);
   }
 
   public void setParameterList(Function_param_listContext ctx,
