@@ -31,7 +31,7 @@ class MethodCreator(structureCpg: CpgStruct.Builder,
     addMethodBodyCpg()
   }
 
-  def addMethodBodyCpg() : CpgStruct.Builder = {
+  private def addMethodBodyCpg(): CpgStruct.Builder = {
 
     addBodyNodes
     addBodyEdges

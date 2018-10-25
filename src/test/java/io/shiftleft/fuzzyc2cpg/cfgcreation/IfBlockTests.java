@@ -107,6 +107,23 @@ public class IfBlockTests extends CCFGCreatorTest
 	}
 
 	@Test
+	public void testIfJoinWithNextCodeAndElseBranch()
+	{
+		String input = "if(foo){ bar(); }else { baz();} x = 10; ";
+		CFG cfg = getCFGForCode(input);
+
+		assertTrue(cfg.outDegree(getNodeByCode(cfg, "foo")) == 2);
+		assertTrue(cfg.outDegree(getNodeByCode(cfg, "bar ( )")) == 1);
+		assertTrue(cfg.outDegree(getNodeByCode(cfg, "baz ( )")) == 1);
+
+		assertTrue(isConnected(cfg, "foo", "bar ( )"));
+		assertTrue(isConnected(cfg, "foo", "baz ( )"));
+		assertTrue(isConnected(cfg, "bar ( )", "x = 10"));
+		assertTrue(isConnected(cfg, "baz ( )", "x = 10"));
+		assertTrue(isConnected(cfg, "x = 10", "EXIT"));
+	}
+
+	@Test
 	public void testEmptyElse()
 	{
 		// String input = "if(foo) bar(); else {}";
