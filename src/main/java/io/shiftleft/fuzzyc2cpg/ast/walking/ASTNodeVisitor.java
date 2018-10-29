@@ -5,6 +5,7 @@ import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Argument;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.CallExpressionBase;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Constant;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.MemberAccess;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.PrimaryExpression;
@@ -15,6 +16,7 @@ import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterList;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Condition;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Label;
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Statement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.DoStatement;
@@ -75,6 +77,10 @@ public abstract class ASTNodeVisitor {
   }
 
   public void visit(PrimaryExpression expression) {
+    defaultHandler(expression);
+  }
+
+  public void visit(Constant expression) {
     defaultHandler(expression);
   }
 
@@ -147,6 +153,10 @@ public abstract class ASTNodeVisitor {
   }
 
   public void visit(ForEachStatement node) {
+    defaultHandler(node);
+  }
+
+  public void visit(Statement node) {
     defaultHandler(node);
   }
 

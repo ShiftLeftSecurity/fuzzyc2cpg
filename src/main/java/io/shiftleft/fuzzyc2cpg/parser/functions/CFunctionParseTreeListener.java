@@ -681,6 +681,20 @@ public class CFunctionParseTreeListener extends FunctionBaseListener {
   }
 
   @Override
+  public void enterConstant(FunctionParser.ConstantContext ctx) {
+    FunctionContentBuilder builder = (FunctionContentBuilder) p.builderStack
+        .peek();
+    builder.enterConstant(ctx);
+  }
+
+  @Override
+  public void exitConstant(FunctionParser.ConstantContext ctx) {
+    FunctionContentBuilder builder = (FunctionContentBuilder) p.builderStack
+        .peek();
+    builder.exitConstant(ctx);
+  }
+
+  @Override
   public void enterIdentifier(FunctionParser.IdentifierContext ctx) {
     FunctionContentBuilder builder = (FunctionContentBuilder) p.builderStack
         .peek();
