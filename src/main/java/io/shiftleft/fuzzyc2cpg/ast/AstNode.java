@@ -139,7 +139,7 @@ public class AstNode {
   }
 
   public void accept(ASTNodeVisitor visitor) {
-    visitor.visit(this);
+    throw new RuntimeException("Not overriden accept() for node class:" + this.getClass());
   }
 
   public void markAsCFGNode() {
