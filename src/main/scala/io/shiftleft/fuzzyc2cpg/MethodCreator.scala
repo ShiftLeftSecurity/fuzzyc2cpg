@@ -17,27 +17,22 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 
 import scala.collection.JavaConverters._
 
-class MethodCreator(structureCpg: CpgStruct.Builder,
-                    functionDef: FunctionDefBase,
+class MethodCreator(functionDef: FunctionDefBase,
                     astParentNode: Node,
                     containingFileName: String) {
   private var nodeToProtoNode = Map[CfgNode, CpgStruct.Node]()
   private val bodyCpg = CpgStruct.newBuilder()
-  private var methodNode: CpgStruct.Node = _
   val cfg = initializeCfg(functionDef)
 
   def addMethodCpg(): CpgStruct.Builder = {
-    methodNode = convertMethodHeader(structureCpg)
-    addMethodBodyCpg()
+    val methodNode = convertMethodHeader(bodyCpg)
+    val bodyBlockNode = addMethodBodyCpg(bodyCpg)
+    bodyCpg.addEdge(EdgeType.AST, bodyBlockNode, methodNode)
   }
 
-  private def addMethodBodyCpg(): CpgStruct.Builder = {
-
+  private def addMethodBodyCpg(targetCpg: CpgStruct.Builder): Node = {
     val bodyVisitor = new MethodBodyVisitor(functionDef)
-
-    val ast = bodyVisitor.convert()
-
-    bodyCpg
+    bodyVisitor.convert(targetCpg)
   }
 
 
@@ -52,7 +47,7 @@ class MethodCreator(structureCpg: CpgStruct.Builder,
     targetCpg.addNode(methodNode)
 
     functionDef.getParameterList.asScala.foreach{ parameter =>
-      val parameterNode = new ParameterConverter(parameter).convert(structureCpg)
+      val parameterNode = new ParameterConverter(parameter).convert(targetCpg)
       targetCpg.addEdge(EdgeType.AST, parameterNode, methodNode)
     }
 
