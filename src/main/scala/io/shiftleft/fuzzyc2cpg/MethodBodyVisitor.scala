@@ -17,17 +17,22 @@ import scala.collection.JavaConverters._
 
 class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVisitor {
   private var cpg: CpgStruct.Builder = _
-  private var contextOption = Option.empty[Context]
+  private var contextStack = List[Context]()
   private var astRoot: Node = _
 
-  private case class Context(parent: Node, childNum: Int)
+  private class Context(val parent: Node, var childNum: Int = 0) {
+  }
 
-  private def setContext(parent: Node, childNum: Int): Unit = {
-    contextOption = Some(Context(parent, childNum))
+  private def pushContext(parent: Node): Unit = {
+    contextStack = new Context(parent) :: contextStack
+  }
+
+  private def popContext(): Unit = {
+    contextStack = contextStack.tail
   }
 
   private def context: Context = {
-    contextOption.get
+    contextStack.head
   }
 
   // There is already another NodeBuilderWrapper in Utils.scala.
@@ -74,10 +79,12 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     cpg.addNode(cpgAssignment)
     cpg.addEdge(EdgeType.AST, cpgAssignment, context.parent)
 
-    setContext(cpgAssignment, 1)
+    pushContext(cpgAssignment)
+    context.childNum = 1
     astAssignment.getLeft.accept(this)
-    setContext(cpgAssignment, 2)
+    context.childNum = 2
     astAssignment.getRight.accept(this)
+    popContext()
   }
 
   override def visit(astConstant: Constant): Unit = {
@@ -116,19 +123,21 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .build
 
     cpg.addNode(cpgBlock)
-    contextOption match {
-      case Some(context) =>
+    contextStack match {
+      case context :: _ =>
         cpg.addEdge(EdgeType.AST, cpgBlock, context.parent)
-      case None =>
+      case _ =>
         astRoot = cpgBlock
     }
 
     var childNum = 1
+    pushContext(cpgBlock)
     astBlock.getStatements.asScala.foreach { statement =>
-      setContext(cpgBlock, childNum)
+      context.childNum = childNum
       childNum += 1
       statement.accept(this)
     }
+    popContext()
   }
 
   override def visit(ifStmt: IfStatementBase): Unit = {
@@ -144,8 +153,10 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     cpg.addNode(cpgReturn)
     cpg.addEdge(EdgeType.AST, cpgReturn, context.parent)
 
-    setContext(cpgReturn, 1)
+    pushContext(cpgReturn)
+    context.childNum = 1
     astReturnStmt.getReturnExpression.accept(this)
+    popContext()
   }
 
   override def defaultHandler(item: AstNode): Unit = {
