@@ -9,6 +9,7 @@ import io.shiftleft.proto.cpg.Cpg.{CpgStruct, DispatchTypes, NodePropertyName}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import Utils._
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Statement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 
@@ -132,6 +133,19 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
 
   override def visit(ifStmt: IfStatementBase): Unit = {
     //ifStmt.get
+  }
+
+  override def visit(astReturnStmt: ReturnStatement): Unit = {
+    val cpgReturn =
+      Node.newBuilder()
+      .addCommons(astReturnStmt, context)
+      .build
+
+    cpg.addNode(cpgReturn)
+    cpg.addEdge(EdgeType.AST, cpgReturn, context.parent)
+
+    setContext(cpgReturn, 1)
+    astReturnStmt.getReturnExpression.accept(this)
   }
 
   override def defaultHandler(item: AstNode): Unit = {
