@@ -4,17 +4,15 @@ import java.nio.file.Paths
 
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule
-import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 
-class FunctionDefHandler(structureCpg: CpgStruct.Builder,
-                         astParentNode: Node,
+class FunctionDefHandler(astParentNode: Node,
                          outputModule: OutputModule,
                          containingFileName: String) {
 
 
   def handle(ast: FunctionDefBase): Unit = {
-    val methodCreator = new MethodCreator(structureCpg, ast, astParentNode, containingFileName)
+    val methodCreator = new MethodCreator(ast, astParentNode, containingFileName)
     val bodyCpg = methodCreator.addMethodCpg()
     val outputFilename = generateOutputFilename(ast)
     outputModule.output(bodyCpg, outputFilename)

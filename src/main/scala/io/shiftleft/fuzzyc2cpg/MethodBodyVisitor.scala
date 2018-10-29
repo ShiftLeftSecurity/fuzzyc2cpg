@@ -15,7 +15,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import scala.collection.JavaConverters._
 
 class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVisitor {
-  private var ast = CpgStruct.newBuilder()
+  private var cpg: CpgStruct.Builder = _
   private var contextOption = Option.empty[Context]
   private var astRoot: Node = _
 
@@ -29,9 +29,10 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     contextOption.get
   }
 
-  def convert(): (CpgStruct, Node) = {
+  def convert(targetCpg: CpgStruct.Builder): Node = {
+    cpg = targetCpg
     visit(originalFunctionAst)
-    (ast.build(), astRoot)
+    astRoot
   }
 
   override def visit(astFunction: FunctionDefBase): Unit = {
@@ -58,8 +59,8 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astAssignment.getLocation.startPos)
         .build
 
-    ast.addNode(cpgAssignment)
-    ast.addEdge(EdgeType.AST, cpgAssignment, context.parent)
+    cpg.addNode(cpgAssignment)
+    cpg.addEdge(EdgeType.AST, cpgAssignment, context.parent)
 
     setContext(cpgAssignment, 1)
     astAssignment.getLeft.accept(this)
@@ -80,8 +81,8 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astConstant.getLocation.startPos)
         .build
 
-    ast.addNode(cpgConstant)
-    ast.addEdge(EdgeType.AST, cpgConstant, context.parent)
+    cpg.addNode(cpgConstant)
+    cpg.addEdge(EdgeType.AST, cpgConstant, context.parent)
   }
 
   override def visit(astIdentifier: Identifier): Unit = {
@@ -97,8 +98,8 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astIdentifier.getLocation.startPos)
         .build
 
-    ast.addNode(cpgIdentifier)
-    ast.addEdge(EdgeType.AST, cpgIdentifier, context.parent)
+    cpg.addNode(cpgIdentifier)
+    cpg.addEdge(EdgeType.AST, cpgIdentifier, context.parent)
   }
 
   override def visit(astBlock: CompoundStatement): Unit = {
@@ -109,10 +110,10 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astBlock.getLocation.startPos)
         .build
 
-    ast.addNode(cpgBlock)
+    cpg.addNode(cpgBlock)
     contextOption match {
       case Some(context) =>
-        ast.addEdge(EdgeType.AST, cpgBlock, context.parent)
+        cpg.addEdge(EdgeType.AST, cpgBlock, context.parent)
       case None =>
         astRoot = cpgBlock
     }

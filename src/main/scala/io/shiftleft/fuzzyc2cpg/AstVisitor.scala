@@ -24,7 +24,7 @@ class AstVisitor(outputModule: OutputModule,
     * Callback triggered for each function definition
     * */
   override def visit(ast: FunctionDefBase): Unit =  {
-    new FunctionDefHandler(structureCpg, astParentStack.head, outputModule, fileNameOption.get).handle(ast)
+    new FunctionDefHandler(astParentStack.head, outputModule, fileNameOption.get).handle(ast)
   }
 
   /**
