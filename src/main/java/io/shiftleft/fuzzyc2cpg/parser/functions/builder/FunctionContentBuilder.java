@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.parser.functions.builder;
 
+import io.shiftleft.fuzzyc2cpg.FunctionParser;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.Additive_expressionContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.And_expressionContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.ArrayIndexingContext;
@@ -27,6 +28,7 @@ import io.shiftleft.fuzzyc2cpg.FunctionParser.FuncCallContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.Function_argumentContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.Function_argument_listContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.GotoStatementContext;
+import io.shiftleft.fuzzyc2cpg.FunctionParser.ConstantContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.IdentifierContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.If_statementContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.IncDecOpContext;
@@ -62,6 +64,7 @@ import io.shiftleft.fuzzyc2cpg.FunctionParser.Unary_operatorContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.While_statementContext;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Constant;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.SizeofExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.ElseStatement;
@@ -609,6 +612,16 @@ public class FunctionContentBuilder extends AstNodeBuilder {
   }
 
   public void exitUnaryExpression(Unary_expressionContext ctx) {
+    nesting.consolidateSubExpression(ctx);
+  }
+
+  public void enterConstant(ConstantContext ctx) {
+    Constant expr = new Constant();
+    nodeToRuleContext.put(expr, ctx);
+    stack.push(expr);
+  }
+
+  public void exitConstant(ConstantContext ctx) {
     nesting.consolidateSubExpression(ctx);
   }
 

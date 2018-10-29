@@ -1,5 +1,10 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
-public class AssignmentExpression extends BinaryExpression {
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
+public class AssignmentExpression extends BinaryExpression {
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 }
