@@ -1,6 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
-import io.shiftleft.fuzzyc2cpg.ast.AstNodeProperties;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class Identifier extends Expression {
@@ -12,14 +11,6 @@ public class Identifier extends Expression {
 
   public Identifier(Identifier name) {
     super(name);
-  }
-
-  public String getEnclosingNamespace() {
-    return getProperty(AstNodeProperties.NAMESPACE);
-  }
-
-  public void setEnclosingNamespace(String namespace) {
-    setProperty(AstNodeProperties.NAMESPACE, namespace);
   }
 
   public StringExpression getNameChild() {

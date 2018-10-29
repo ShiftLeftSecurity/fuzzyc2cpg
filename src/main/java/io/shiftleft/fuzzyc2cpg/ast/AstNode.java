@@ -10,9 +10,9 @@ public class AstNode {
 
   protected LinkedList<AstNode> children;
   protected int childNumber;
-  private Map<String, String> properties;
   private CodeLocation location = new CodeLocation();
   private boolean isInCFG = false;
+  private String code;
 
 
   /* constructors */
@@ -88,34 +88,6 @@ public class AstNode {
 
   /* getters and setters */
 
-  public String getProperty(String key) {
-    if (properties == null) {
-      return null;
-    }
-
-    String retval = properties.get(key);
-    if (retval == null) {
-      return null;
-    }
-    return retval;
-  }
-
-  public void setProperty(String key, String val) {
-    if (properties == null) {
-      properties = new HashMap<String, String>();
-    }
-
-    properties.put(key, val);
-  }
-
-  public String getFlags() {
-    return getProperty(AstNodeProperties.FLAGS);
-  }
-
-  public void setFlags(String flags) {
-    setProperty(AstNodeProperties.FLAGS, flags);
-  }
-
   public int getChildNumber() {
     return this.childNumber;
   }
@@ -129,30 +101,11 @@ public class AstNode {
   }
 
   protected String getCodeStr() {
-    return getProperty(AstNodeProperties.CODE);
+    return code;
   }
 
   public void setCodeStr(String aCodeStr) {
-    setProperty(AstNodeProperties.CODE, aCodeStr);
-  }
-
-  public Long getNodeId() {
-    Long id;
-    try {
-      id = Long.parseLong(getProperty(AstNodeProperties.NODE_ID));
-    } catch (NumberFormatException e) {
-      id = -1l;
-      System.err
-          .println("Trying to retrieve node for node " + super.toString() + ", but none is set " +
-              "(type = " + getTypeAsString() + ", location = " + getLocation() + ", code = "
-              + getCodeStr() + ")");
-      e.printStackTrace();
-    }
-    return id;
-  }
-
-  public void setNodeId(Long id) {
-    setProperty(AstNodeProperties.NODE_ID, Long.toString(id));
+    code = aCodeStr;
   }
 
   public String getLocationString() {
@@ -202,16 +155,10 @@ public class AstNode {
 
   @Override
   public String toString() {
-    if (null != getEscapedCodeStr() && null != getProperty(AstNodeProperties.NODE_ID)) {
-      return "[(" + getNodeId() + ") " + getEscapedCodeStr() + "]";
-    }
     if (null != getEscapedCodeStr()) {
       return "[" + getEscapedCodeStr() + "]";
+    } else {
+      return "[" + getTypeAsString() + "]";
     }
-    if (null != getProperty(AstNodeProperties.NODE_ID)) {
-      return "[(" + getNodeId() + ") " + getTypeAsString() + "]";
-    }
-
-    return super.toString();
   }
 }
