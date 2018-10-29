@@ -29,6 +29,21 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     contextOption.get
   }
 
+  // There is already another NodeBuilderWrapper in Utils.scala.
+  // We need to choose a different name here because Scala otherwise
+  // gets confused witht he implicit resolution.
+  private implicit class NodeBuilderWrapper2(nodeBuilder: Node.Builder) {
+    def addCommons(astNode: AstNode, context: Context): Node.Builder = {
+      nodeBuilder
+        .setKey(IdPool.getNextId)
+        .addStringProperty(NodePropertyName.CODE, astNode.getEscapedCodeStr)
+        .addIntProperty(NodePropertyName.ORDER, context.childNum)
+        .addIntProperty(NodePropertyName.ARGUMENT_INDEX, context.childNum)
+        .addIntProperty(NodePropertyName.LINE_NUMBER, astNode.getLocation.startLine)
+        .addIntProperty(NodePropertyName.COLUMN_NUMBER, astNode.getLocation.startPos)
+    }
+  }
+
   def convert(targetCpg: CpgStruct.Builder): Node = {
     cpg = targetCpg
     visit(originalFunctionAst)
@@ -47,16 +62,12 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     val cpgAssignment =
       Node.newBuilder()
         .setType(NodeType.CALL)
-        .addStringProperty(NodePropertyName.CODE, astAssignment.getEscapedCodeStr)
         .addStringProperty(NodePropertyName.NAME, "<operator>.assignment")
-        .addIntProperty(NodePropertyName.ORDER, context.childNum)
-        .addIntProperty(NodePropertyName.ARGUMENT_INDEX, context.childNum)
         .addStringProperty(NodePropertyName.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
         .addStringProperty(NodePropertyName.SIGNATURE, "TODO assignment signature")
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, "<operator>.assignment")
-        .addIntProperty(NodePropertyName.LINE_NUMBER, astAssignment.getLocation.startLine)
-        .addIntProperty(NodePropertyName.COLUMN_NUMBER, astAssignment.getLocation.startPos)
+        .addCommons(astAssignment, context)
         .build
 
     cpg.addNode(cpgAssignment)
@@ -72,13 +83,9 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     val cpgConstant =
       Node.newBuilder()
         .setType(NodeType.LITERAL)
-        .addStringProperty(NodePropertyName.CODE, astConstant.getEscapedCodeStr)
         .addStringProperty(NodePropertyName.NAME, astConstant.getEscapedCodeStr)
-        .addIntProperty(NodePropertyName.ORDER, context.childNum)
-        .addIntProperty(NodePropertyName.ARGUMENT_INDEX, context.childNum)
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
-        .addIntProperty(NodePropertyName.LINE_NUMBER, astConstant.getLocation.startLine)
-        .addIntProperty(NodePropertyName.COLUMN_NUMBER, astConstant.getLocation.startPos)
+        .addCommons(astConstant, context)
         .build
 
     cpg.addNode(cpgConstant)
@@ -89,13 +96,9 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     val cpgIdentifier =
       Node.newBuilder()
         .setType(NodeType.IDENTIFIER)
-        .addStringProperty(NodePropertyName.CODE, astIdentifier.getEscapedCodeStr)
         .addStringProperty(NodePropertyName.NAME, astIdentifier.getEscapedCodeStr)
-        .addIntProperty(NodePropertyName.ORDER, context.childNum)
-        .addIntProperty(NodePropertyName.ARGUMENT_INDEX, context.childNum)
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
-        .addIntProperty(NodePropertyName.LINE_NUMBER, astIdentifier.getLocation.startLine)
-        .addIntProperty(NodePropertyName.COLUMN_NUMBER, astIdentifier.getLocation.startPos)
+        .addCommons(astIdentifier, context)
         .build
 
     cpg.addNode(cpgIdentifier)
@@ -105,6 +108,7 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
   override def visit(astBlock: CompoundStatement): Unit = {
     val cpgBlock =
       Node.newBuilder()
+        .setKey(IdPool.getNextId)
         .setType(NodeType.BLOCK)
         .addIntProperty(NodePropertyName.LINE_NUMBER, astBlock.getLocation.startLine)
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astBlock.getLocation.startPos)
@@ -126,10 +130,6 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     }
   }
 
-  override def visit(astPrimaryExpression: PrimaryExpression): Unit = {
-    println(astPrimaryExpression.getEscapedCodeStr)
-  }
-
   override def visit(ifStmt: IfStatementBase): Unit = {
     //ifStmt.get
   }
@@ -138,7 +138,4 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     throw new RuntimeException("Not implemented.")
   }
 
-  private def addExpressionProperties(cpgNode: Node.Builder, astExpression: Expression): Unit = {
-
-  }
 }
