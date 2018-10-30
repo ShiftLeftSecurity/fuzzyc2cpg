@@ -53,7 +53,6 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
   private implicit class NodeBuilderWrapper2(nodeBuilder: Node.Builder) {
     def addCommons(astNode: AstNode, context: Context): Node.Builder = {
       nodeBuilder
-        .setKey(IdPool.getNextId)
         .addStringProperty(NodePropertyName.CODE, astNode.getEscapedCodeStr)
         .addIntProperty(NodePropertyName.ORDER, context.childNum)
         .addIntProperty(NodePropertyName.ARGUMENT_INDEX, context.childNum)
@@ -78,39 +77,69 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
 
   override def visit(astAssignment: AssignmentExpression): Unit = {
     val cpgAssignment =
-      Node.newBuilder()
-        .setType(NodeType.CALL)
-        .addStringProperty(NodePropertyName.NAME, "<operator>.assignment")
+      newNode(NodeType.CALL)
+        .addStringProperty(NodePropertyName.NAME, Operators.assignment)
         .addStringProperty(NodePropertyName.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
         .addStringProperty(NodePropertyName.SIGNATURE, "TODO assignment signature")
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
-        .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, "<operator>.assignment")
+        .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, Operators.assignment)
         .addCommons(astAssignment, context)
         .build
 
-    cpg.addNode(cpgAssignment)
-    cpg.addEdge(EdgeType.AST, cpgAssignment, context.parent)
+    visitBinaryExpr(astAssignment, cpgAssignment)
+  }
 
-    pushContext(cpgAssignment)
-    context.childNum = 1
-    astAssignment.getLeft.accept(this)
-    context.childNum = 2
-    astAssignment.getRight.accept(this)
-    popContext()
+  override def visit(astAdd: AdditiveExpression): Unit = {
+    val operatorMethod = astAdd.getOperator match {
+      case "+" => Operators.addition
+      case "-" => Operators.substraction
+    }
+
+    val cpgAdd =
+      newNode(NodeType.CALL)
+        .addStringProperty(NodePropertyName.NAME, operatorMethod)
+        .addStringProperty(NodePropertyName.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+        .addStringProperty(NodePropertyName.SIGNATURE, "TODO assignment signature")
+        .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
+        .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, operatorMethod)
+        .addCommons(astAdd, context)
+        .build
+
+    visitBinaryExpr(astAdd, cpgAdd)
+  }
+
+  override def visit(astMult: MultiplicativeExpression): Unit = {
+    val operatorMethod = astMult.getOperator match {
+      case "*" => Operators.multiplication
+      case "/" => Operators.division
+      case "%" => Operators.modulo
+    }
+
+    val cpgMult =
+      newNode(NodeType.CALL)
+        .addStringProperty(NodePropertyName.NAME, operatorMethod)
+        .addStringProperty(NodePropertyName.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+        .addStringProperty(NodePropertyName.SIGNATURE, "TODO assignment signature")
+        .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
+        .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, operatorMethod)
+        .addCommons(astMult, context)
+        .build
+
+    visitBinaryExpr(astMult, cpgMult)
   }
 
   override def visit(astCall: CallExpression): Unit = {
-    val cpgCall = Node.newBuilder()
-      .setType(NodeType.CALL)
-      .addStringProperty(NodePropertyName.NAME, astCall.getTargetFunc.getEscapedCodeStr)
-      // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
-      // At the moment we use STATIC_DISPATCH also for calls of function pointers.
-      .addStringProperty(NodePropertyName.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addStringProperty(NodePropertyName.SIGNATURE, "TODO signature")
-      .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
-      .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, "<operator>.assignment")
-      .addCommons(astCall, context)
-      .build
+    val cpgCall =
+      newNode(NodeType.CALL)
+        .addStringProperty(NodePropertyName.NAME, astCall.getTargetFunc.getEscapedCodeStr)
+        // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
+        // At the moment we use STATIC_DISPATCH also for calls of function pointers.
+        .addStringProperty(NodePropertyName.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+        .addStringProperty(NodePropertyName.SIGNATURE, "TODO signature")
+        .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
+        .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, "<operator>.assignment")
+        .addCommons(astCall, context)
+        .build
 
     cpg.addNode(cpgCall)
     cpg.addEdge(EdgeType.AST, cpgCall, context.parent)
@@ -127,8 +156,7 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
 
   override def visit(astConstant: Constant): Unit = {
     val cpgConstant =
-      Node.newBuilder()
-        .setType(NodeType.LITERAL)
+      newNode(NodeType.LITERAL)
         .addStringProperty(NodePropertyName.NAME, astConstant.getEscapedCodeStr)
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addCommons(astConstant, context)
@@ -142,8 +170,7 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     val identifierName = astIdentifier.getEscapedCodeStr
 
     val cpgIdentifier =
-      Node.newBuilder()
-        .setType(NodeType.IDENTIFIER)
+      newNode(NodeType.IDENTIFIER)
         .addStringProperty(NodePropertyName.NAME, identifierName)
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addCommons(astIdentifier, context)
@@ -164,9 +191,7 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
 
   override def visit(astBlock: CompoundStatement): Unit = {
     val cpgBlock =
-      Node.newBuilder()
-        .setKey(IdPool.getNextId)
-        .setType(NodeType.BLOCK)
+      newNode(NodeType.BLOCK)
         .addIntProperty(NodePropertyName.LINE_NUMBER, astBlock.getLocation.startLine)
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astBlock.getLocation.startPos)
         .build
@@ -197,10 +222,9 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
 
   override def visit(astReturnStmt: ReturnStatement): Unit = {
     val cpgReturn =
-      Node.newBuilder()
-      .setType(NodeType.RETURN)
-      .addCommons(astReturnStmt, context)
-      .build
+      newNode(NodeType.RETURN)
+        .addCommons(astReturnStmt, context)
+        .build
 
     cpg.addNode(cpgReturn)
     cpg.addEdge(EdgeType.AST, cpgReturn, context.parent)
@@ -219,13 +243,12 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
 
   override def visit(identifierDecl: IdentifierDecl): Unit = {
     val localName = identifierDecl.getName.getEscapedCodeStr
-    val cpgLocal = Node.newBuilder()
-      .setType(NodeType.LOCAL)
-      .setKey(IdPool.getNextId)
-      .addStringProperty(NodePropertyName.CODE, localName)
-      .addStringProperty(NodePropertyName.NAME, localName)
-      .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
-      .build
+    val cpgLocal =
+      newNode(NodeType.LOCAL)
+        .addStringProperty(NodePropertyName.CODE, localName)
+        .addStringProperty(NodePropertyName.NAME, localName)
+        .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
+        .build
 
     val scopeParentNode = scope.addToScope(localName, cpgLocal)
     cpg.addNode(cpgLocal)
@@ -241,4 +264,15 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     throw new RuntimeException("Not implemented.")
   }
 
+  private def visitBinaryExpr(astBinaryExpr: BinaryExpression, cpgBinaryExpr: Node): Unit = {
+    cpg.addNode(cpgBinaryExpr)
+    cpg.addEdge(EdgeType.AST, cpgBinaryExpr, context.parent)
+
+    pushContext(cpgBinaryExpr)
+    context.childNum = 1
+    astBinaryExpr.getLeft.accept(this)
+    context.childNum = 2
+    astBinaryExpr.getRight.accept(this)
+    popContext()
+  }
 }

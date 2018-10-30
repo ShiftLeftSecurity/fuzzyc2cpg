@@ -1,5 +1,9 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
-public class AdditiveExpression extends BinaryOperationExpression {
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
+public class AdditiveExpression extends BinaryOperationExpression {
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 }
