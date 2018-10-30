@@ -4,6 +4,7 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.ArgumentList;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.CallExpressionBase;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class CallExpression extends CallExpressionBase {
 
@@ -16,5 +17,9 @@ public class CallExpression extends CallExpressionBase {
     } else {
       super.addChild(node);
     }
+  }
+
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }
