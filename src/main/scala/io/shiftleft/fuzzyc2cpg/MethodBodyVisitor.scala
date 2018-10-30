@@ -8,7 +8,10 @@ import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, DispatchTypes, NodePropertyName}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import Utils._
+import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
+import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Statement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
@@ -87,6 +90,32 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     popContext()
   }
 
+  override def visit(astCall: CallExpression): Unit = {
+    val cpgCall = Node.newBuilder()
+      .setType(NodeType.CALL)
+      .addStringProperty(NodePropertyName.NAME, astCall.getTargetFunc.getEscapedCodeStr)
+      // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
+      // At the moment we use STATIC_DISPATCH also for calls of function pointers.
+      .addStringProperty(NodePropertyName.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addStringProperty(NodePropertyName.SIGNATURE, "TODO signature")
+      .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
+      .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, "<operator>.assignment")
+      .addCommons(astCall, context)
+      .build
+
+    cpg.addNode(cpgCall)
+    cpg.addEdge(EdgeType.AST, cpgCall, context.parent)
+
+    pushContext(cpgCall)
+    var childNum = 1
+    astCall.getArgumentList.iterator().asScala.foreach { argument =>
+      context.childNum = childNum
+      childNum += 1
+      argument.accept(this)
+    }
+    popContext()
+  }
+
   override def visit(astConstant: Constant): Unit = {
     val cpgConstant =
       Node.newBuilder()
@@ -147,6 +176,7 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
   override def visit(astReturnStmt: ReturnStatement): Unit = {
     val cpgReturn =
       Node.newBuilder()
+      .setType(NodeType.RETURN)
       .addCommons(astReturnStmt, context)
       .build
 
