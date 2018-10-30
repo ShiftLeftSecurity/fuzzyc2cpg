@@ -3,12 +3,14 @@ package io.shiftleft.fuzzyc2cpg.ast.walking;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.AdditiveExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Argument;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.CallExpressionBase;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Constant;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.MemberAccess;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.MultiplicativeExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.PrimaryExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryExpression;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
@@ -168,6 +170,14 @@ public abstract class ASTNodeVisitor {
 
   public void visit(Statement node) {
     defaultHandler(node);
+  }
+
+  public void visit(AdditiveExpression expression) {
+    defaultHandler(expression);
+  }
+
+  public void visit(MultiplicativeExpression expression) {
+    defaultHandler(expression);
   }
 
   public void defaultHandler(AstNode item) {
