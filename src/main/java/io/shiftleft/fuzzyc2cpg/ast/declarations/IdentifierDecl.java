@@ -1,18 +1,23 @@
 package io.shiftleft.fuzzyc2cpg.ast.declarations;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class IdentifierDecl extends AstNode {
 
   private IdentifierDeclType type;
   private Identifier name;
+  private AssignmentExpression assignment;
 
   public void addChild(AstNode node) {
     if (node instanceof Identifier) {
       setName((Identifier) node);
     } else if (node instanceof IdentifierDeclType) {
       setType((IdentifierDeclType) node);
+    } else if (node instanceof AssignmentExpression) {
+      setAssignment((AssignmentExpression)node);
     }
 
     super.addChild(node);
@@ -34,4 +39,15 @@ public class IdentifierDecl extends AstNode {
     this.type = type;
   }
 
+  public AssignmentExpression getAssignment() {
+    return this.assignment;
+  }
+
+  private void setAssignment(AssignmentExpression assignment) {
+    this.assignment = assignment;
+  }
+
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 }
