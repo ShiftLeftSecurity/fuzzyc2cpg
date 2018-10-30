@@ -13,17 +13,26 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement
+import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
+import org.slf4j.{LoggerFactory, MDC}
 
 import scala.collection.JavaConverters._
 
+object MethodBodyVisitor {
+  private val logger = LoggerFactory.getLogger(getClass)
+}
+
 class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVisitor {
+  import MethodBodyVisitor._
   private var cpg: CpgStruct.Builder = _
   private var contextStack = List[Context]()
+  private val scope = new Scope[String, Node, Node]()
   private var astRoot: Node = _
 
-  private class Context(val parent: Node, var childNum: Int = 0) {
+  private class Context(val parent: Node) {
+    var childNum = 0
   }
 
   private def pushContext(parent: Node): Unit = {
@@ -130,16 +139,27 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
   }
 
   override def visit(astIdentifier: Identifier): Unit = {
+    val identifierName = astIdentifier.getEscapedCodeStr
+
     val cpgIdentifier =
       Node.newBuilder()
         .setType(NodeType.IDENTIFIER)
-        .addStringProperty(NodePropertyName.NAME, astIdentifier.getEscapedCodeStr)
+        .addStringProperty(NodePropertyName.NAME, identifierName)
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addCommons(astIdentifier, context)
         .build
 
     cpg.addNode(cpgIdentifier)
     cpg.addEdge(EdgeType.AST, cpgIdentifier, context.parent)
+
+    scope.lookupVariable(identifierName) match {
+      case Some(variable) =>
+        cpg.addEdge(EdgeType.REF, variable, cpgIdentifier)
+      case None =>
+        MDC.put("identifier", identifierName)
+        logger.warn("Cannot find variable for identifier.")
+        MDC.remove("identifier")
+    }
   }
 
   override def visit(astBlock: CompoundStatement): Unit = {
@@ -161,12 +181,14 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
 
     var childNum = 1
     pushContext(cpgBlock)
+    scope.pushNewScope(cpgBlock)
     astBlock.getStatements.asScala.foreach { statement =>
       context.childNum = childNum
       childNum += 1
       statement.accept(this)
     }
     popContext()
+    scope.popScope()
   }
 
   override def visit(ifStmt: IfStatementBase): Unit = {
@@ -187,6 +209,32 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     context.childNum = 1
     astReturnStmt.getReturnExpression.accept(this)
     popContext()
+  }
+
+  override def visit(astIdentifierDeclStmt: IdentifierDeclStatement): Unit = {
+    astIdentifierDeclStmt.getIdentifierDeclList.asScala.foreach { identifierDecl =>
+      identifierDecl.accept(this);
+    }
+  }
+
+  override def visit(identifierDecl: IdentifierDecl): Unit = {
+    val localName = identifierDecl.getName.getEscapedCodeStr
+    val cpgLocal = Node.newBuilder()
+      .setType(NodeType.LOCAL)
+      .setKey(IdPool.getNextId)
+      .addStringProperty(NodePropertyName.CODE, localName)
+      .addStringProperty(NodePropertyName.NAME, localName)
+      .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
+      .build
+
+    val scopeParentNode = scope.addToScope(localName, cpgLocal)
+    cpg.addNode(cpgLocal)
+    cpg.addEdge(EdgeType.AST, cpgLocal, scopeParentNode)
+
+    val assignmentExpression = identifierDecl.getAssignment
+    if (assignmentExpression != null) {
+      assignmentExpression.accept(this)
+    }
   }
 
   override def defaultHandler(item: AstNode): Unit = {
