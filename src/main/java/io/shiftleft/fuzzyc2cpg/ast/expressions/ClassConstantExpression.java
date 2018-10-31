@@ -1,5 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
+
 public class ClassConstantExpression extends MemberAccess {
 
   private Expression classExpression = null;
@@ -21,5 +23,9 @@ public class ClassConstantExpression extends MemberAccess {
   public void setConstantName(StringExpression constantName) {
     this.constantName = constantName;
     super.addChild(constantName);
+  }
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

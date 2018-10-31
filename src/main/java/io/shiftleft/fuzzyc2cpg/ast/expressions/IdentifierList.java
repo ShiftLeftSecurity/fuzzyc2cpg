@@ -1,6 +1,8 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -24,5 +26,10 @@ public class IdentifierList extends AstNode implements Iterable<Identifier> {
   @Override
   public Iterator<Identifier> iterator() {
     return this.identifiers.iterator();
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

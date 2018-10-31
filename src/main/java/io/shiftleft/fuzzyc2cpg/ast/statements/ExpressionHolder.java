@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.statements;
 
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 // By default, Expressions holding only a single
 // child are replaced by their child during
@@ -26,4 +27,8 @@ public class ExpressionHolder extends Expression {
     return (Expression) children.get(0);
   }
 
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 }

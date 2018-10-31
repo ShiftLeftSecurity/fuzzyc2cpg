@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.declarations;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class IdentifierDeclType extends AstNode {
 
@@ -11,4 +12,8 @@ public class IdentifierDeclType extends AstNode {
     return completeType;
   }
 
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 }

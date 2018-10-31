@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class ArrayIndexing extends Expression {
 
@@ -34,5 +35,10 @@ public class ArrayIndexing extends Expression {
     } else {
       super.addChild(node);
     }
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

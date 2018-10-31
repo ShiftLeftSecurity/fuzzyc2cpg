@@ -1,5 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
+
 public class ConditionalExpression extends Expression {
 
   protected Expression condition = null;
@@ -31,5 +33,10 @@ public class ConditionalExpression extends Expression {
   public void setFalseExpression(Expression falseExpression) {
     this.falseExpression = falseExpression;
     super.addChild(falseExpression);
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class BinaryExpression extends Expression {
 
@@ -35,5 +36,10 @@ public class BinaryExpression extends Expression {
       throw new RuntimeException(
           "Error: attempting to add third child to binary expression");
     }
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

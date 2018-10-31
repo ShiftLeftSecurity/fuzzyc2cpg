@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class CastExpression extends Expression {
 
@@ -32,5 +33,10 @@ public class CastExpression extends Expression {
   public void setCastExpression(Expression castExpression) {
     this.castExpression = castExpression;
     super.addChild(castExpression);
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

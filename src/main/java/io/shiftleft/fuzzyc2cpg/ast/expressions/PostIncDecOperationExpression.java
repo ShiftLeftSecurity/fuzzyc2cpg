@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class PostIncDecOperationExpression extends PostfixExpression {
 
@@ -22,5 +23,10 @@ public class PostIncDecOperationExpression extends PostfixExpression {
     } else {
       super.addChild(node);
     }
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

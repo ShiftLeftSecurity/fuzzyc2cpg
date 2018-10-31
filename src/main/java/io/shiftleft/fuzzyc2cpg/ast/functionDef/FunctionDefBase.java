@@ -2,6 +2,7 @@ package io.shiftleft.fuzzyc2cpg.ast.functionDef;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public abstract class FunctionDefBase extends AstNode {
 
@@ -43,5 +44,10 @@ public abstract class FunctionDefBase extends AstNode {
   public String getEscapedCodeStr() {
     setCodeStr(getFunctionSignature());
     return getCodeStr();
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.logical.statements;
 
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class BlockStarter extends Statement {
 
@@ -25,4 +26,8 @@ public class BlockStarter extends Statement {
     super.addChild(statement);
   }
 
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 }

@@ -3,6 +3,7 @@ package io.shiftleft.fuzzyc2cpg.ast.langc.functiondef;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterBase;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class Parameter extends ParameterBase {
 
@@ -42,5 +43,10 @@ public class Parameter extends ParameterBase {
     } else {
       super.addChild(node);
     }
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

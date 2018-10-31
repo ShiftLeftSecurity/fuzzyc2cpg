@@ -1,5 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -23,5 +25,10 @@ public class ExpressionList extends Expression implements Iterable<Expression> {
   @Override
   public Iterator<Expression> iterator() {
     return this.expressions.iterator();
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }
