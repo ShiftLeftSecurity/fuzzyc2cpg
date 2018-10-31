@@ -1,10 +1,14 @@
 package io.shiftleft.fuzzyc2cpg.cfg;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.BinaryExpression;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
+import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BreakOrContinueStatement;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Label;
+import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.CatchStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.DoStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.ForStatement;
@@ -74,14 +78,58 @@ public class AstToCfgConverter implements ASTNodeVisitor, IAstToCfgConverter {
   public void visit(AstNode node) {
     try {
       CFG block = new CFG();
-      CfgNode last = block.getEntryNode();
 
       CfgNode container = new ASTNodeContainer(node);
       block.addVertex(container);
-      block.addEdge(last, container);
-      last = container;
+      block.addEdge(block.getEntryNode(), container);
+      block.addEdge(container, block.getExitNode());
 
-      block.addEdge(last, block.getExitNode());
+      returnCfg = block;
+    } catch (RuntimeException exception) {
+      returnCfg = newErrorInstance(exception);
+    }
+  }
+
+  @Override
+  public void visit(ExpressionStatement expressionStatement) {
+    expressionStatement.getExpression().accept(this);
+  }
+
+  @Override
+  public void visit(CallExpression callExpression) {
+    try {
+      CFG block = newPassThroughCFG();
+
+      for (Expression argument : callExpression.getArgumentList()) {
+        CFG argumentCfg = convert(argument);
+        block.appendCFG(argumentCfg);
+      }
+
+      CfgNode container = new ASTNodeContainer(callExpression);
+      block.appendCFGNode(container);
+
+      returnCfg = block;
+    } catch (RuntimeException exception) {
+      returnCfg = newErrorInstance(exception);
+    }
+  }
+
+  // TODO This also handles || and && for which we do not correctly model the lazyness.
+  // Fix ones clear how to represent in CFG.
+  @Override
+  public void visit(BinaryExpression binaryExpression) {
+    try {
+      CFG block = newPassThroughCFG();
+
+      CFG leftArgumentCfg = convert(binaryExpression.getLeft());
+      CFG rightArgumentCfg = convert(binaryExpression.getRight());
+
+      block.appendCFG(leftArgumentCfg);
+      block.appendCFG(rightArgumentCfg);
+
+      CfgNode container = new ASTNodeContainer(binaryExpression);
+      block.appendCFGNode(container);
+
       returnCfg = block;
     } catch (RuntimeException exception) {
       returnCfg = newErrorInstance(exception);
