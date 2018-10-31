@@ -1,13 +1,8 @@
 package io.shiftleft.fuzzyc2cpg
 
 import io.shiftleft.codepropertygraph.generated.EvaluationStrategies
-import io.shiftleft.fuzzyc2cpg.ast.expressions.{AssignmentExpression, Expression}
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.{FunctionDefBase, ParameterBase, ReturnType}
-import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
-import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Condition
-import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
-import io.shiftleft.fuzzyc2cpg.cfg.{ASTToCFGConverter, CCFGFactory, CFG}
+import io.shiftleft.fuzzyc2cpg.cfg.{CAstToCfgConverter, CFG}
 import io.shiftleft.fuzzyc2cpg.cfg.nodes._
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
@@ -37,9 +32,10 @@ class MethodCreator(functionDef: FunctionDefBase,
 
 
   private def initializeCfg(ast: FunctionDefBase): CFG = {
-    val converter = new ASTToCFGConverter
-    converter.setFactory(new CCFGFactory)
-    converter.convert(ast)
+    val converter = new CAstToCfgConverter
+    val cfg = converter.convert(ast)
+
+    cfg
   }
 
   private def convertMethodHeader(targetCpg: CpgStruct.Builder): Node = {
