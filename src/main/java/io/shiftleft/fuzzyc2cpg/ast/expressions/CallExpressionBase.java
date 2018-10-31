@@ -1,5 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
+
 public class CallExpressionBase extends PostfixExpression {
 
   private Expression targetFunc = null;
@@ -21,5 +23,10 @@ public class CallExpressionBase extends PostfixExpression {
   public void setArgumentList(ArgumentList argumentList) {
     this.argumentList = argumentList;
     super.addChild(argumentList);
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

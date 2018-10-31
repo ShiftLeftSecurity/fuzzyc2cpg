@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.langc.functiondef;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class ParameterType extends AstNode {
 
@@ -21,4 +22,8 @@ public class ParameterType extends AstNode {
     this.baseType = baseType;
   }
 
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 }

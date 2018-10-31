@@ -1,5 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
+
 public class InstanceofExpression extends Expression {
 
   Expression instanceExpression = null;
@@ -21,5 +23,10 @@ public class InstanceofExpression extends Expression {
   public void setClassExpression(Expression classExpression) {
     this.classExpression = classExpression;
     super.addChild(classExpression);
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

@@ -3,6 +3,7 @@ package io.shiftleft.fuzzyc2cpg.ast.statements;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Statement;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class ExpressionHolderStatement extends Statement {
 
@@ -36,5 +37,10 @@ public class ExpressionHolderStatement extends Statement {
     } else {
       super.addChild(node);
     }
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }

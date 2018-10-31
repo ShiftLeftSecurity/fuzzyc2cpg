@@ -2,6 +2,7 @@ package io.shiftleft.fuzzyc2cpg.ast.logical.statements;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Condition;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class BlockStarterWithStmtAndCnd extends BlockStarter {
 
@@ -16,4 +17,8 @@ public class BlockStarterWithStmtAndCnd extends BlockStarter {
     }
   }
 
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
+  }
 }
