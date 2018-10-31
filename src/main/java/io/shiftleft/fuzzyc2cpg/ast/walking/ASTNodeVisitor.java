@@ -10,7 +10,6 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions.Argument;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.ArgumentList;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.ArrayIndexing;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentWithOpExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.BinaryExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.BinaryOperationExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.BitAndExpression;
@@ -134,10 +133,6 @@ public interface ASTNodeVisitor {
 
   default void visit(AssignmentExpression expression) {
     visit((BinaryExpression)expression);
-  }
-
-  default void visit(AssignmentWithOpExpression expression) {
-    visit((AssignmentExpression)expression);
   }
 
   default void visit(BinaryExpression expression) {
