@@ -13,7 +13,7 @@ public class AssignmentTests extends CCFGCreatorTest
 	{
 		String input = "x = y;";
 		CFG cfg = getCFGForCode(input);
-		assertTrue(cfg.size() == 3);
+		assertTrue(cfg.size() == 5);
 	}
 
 	@Test

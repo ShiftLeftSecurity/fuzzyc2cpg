@@ -99,7 +99,7 @@ public class OtherTests extends CCFGCreatorTest
 	{
 		String input = "x = 10; y = 20;";
 		CFG cfg = getCFGForCode(input);
-		assertTrue(cfg.size() == 4);
+		assertTrue(cfg.size() == 8);
 	}
 
 	@Test
@@ -107,7 +107,7 @@ public class OtherTests extends CCFGCreatorTest
 	{
 		String input = "x = 10; y = 20;";
 		CFG cfg = getCFGForCode(input);
-		assertTrue(cfg.numberOfEdges() == 3);
+		assertTrue(cfg.numberOfEdges() == 7);
 	}
 
 	@Test

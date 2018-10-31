@@ -138,6 +138,16 @@ public class CFG extends IncidenceListGraph<CfgNode, CFGEdge>
 		}
 	}
 
+	public void appendCFGNode(CfgNode node) {
+        addVertex(node);
+		for (CFGEdge edgeToExit : incomingEdges(getExitNode())) {
+			addEdge(edgeToExit.getSource(), node, edgeToExit.getLabel());
+		}
+		removeEdgesTo(getExitNode());
+		addEdge(node, getExitNode(), CFGEdge.EMPTY_LABEL);
+
+	}
+
 	public void mountCFG(CfgNode branchNode, CfgNode mergeNode, CFG cfg,
 			String label)
 	{
