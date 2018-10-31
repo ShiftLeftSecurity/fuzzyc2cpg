@@ -2,13 +2,14 @@ package io.shiftleft.fuzzyc2cpg.ast;
 
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class AstNode {
 
-  protected LinkedList<AstNode> children;
+  protected List<AstNode> children;
   protected int childNumber;
   private CodeLocation location = new CodeLocation();
   private boolean isInCFG = false;
@@ -50,7 +51,7 @@ public class AstNode {
 
   public void addChild(AstNode node) {
     if (children == null) {
-      children = new LinkedList<AstNode>();
+      children = new ArrayList<>();
     }
     node.setChildNumber(children.size());
     children.add(node);
@@ -81,8 +82,12 @@ public class AstNode {
     return retval;
   }
 
+  public Iterator<AstNode> getChildIterator() {
+    return children.iterator();
+  }
+
   public AstNode popLastChild() {
-    return children.removeLast();
+    return children.remove(children.size() - 1);
   }
 
 
