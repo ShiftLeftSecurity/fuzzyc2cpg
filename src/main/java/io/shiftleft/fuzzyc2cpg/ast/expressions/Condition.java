@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.ast.logical.statements;
+package io.shiftleft.fuzzyc2cpg.ast.expressions;
 
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionHolder;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;

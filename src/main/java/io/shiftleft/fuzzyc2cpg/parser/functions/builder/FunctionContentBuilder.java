@@ -1,6 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.parser.functions.builder;
 
-import io.shiftleft.fuzzyc2cpg.FunctionParser;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.Additive_expressionContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.And_expressionContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.ArrayIndexingContext;
@@ -107,7 +106,7 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryOperator;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockCloser;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockStarter;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Condition;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Condition;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Label;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Statement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement;

@@ -13,7 +13,7 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockStarter;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Condition;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Condition;
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.ForStatement;
