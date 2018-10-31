@@ -4,7 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Condition;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Condition;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.DoStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.WhileStatement;
 import org.junit.Test;

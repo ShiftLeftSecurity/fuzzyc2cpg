@@ -4,7 +4,7 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.ForInit;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockStarter;
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Condition;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Condition;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Statement;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
