@@ -31,7 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class AstToCfgConverter extends ASTNodeVisitor implements IAstToCfgConverter {
+public class AstToCfgConverter implements ASTNodeVisitor, IAstToCfgConverter {
   protected CFG returnCfg;
 
   @Override
@@ -80,7 +80,7 @@ public class AstToCfgConverter extends ASTNodeVisitor implements IAstToCfgConver
       block.addVertex(container);
       block.addEdge(last, container);
       last = container;
-      
+
       block.addEdge(last, block.getExitNode());
       returnCfg = block;
     } catch (RuntimeException exception) {
