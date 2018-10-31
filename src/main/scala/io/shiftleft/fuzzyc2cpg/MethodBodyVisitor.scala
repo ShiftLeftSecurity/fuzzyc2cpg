@@ -71,8 +71,11 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     astFunction.getContent.accept(this)
   }
 
-  override def visit(node: Statement): Unit = {
-    visitChildren(node)
+  override def visit(statement: Statement): Unit = {
+    // TODO handle statements correctly
+    statement.getChildIterator.asScala.foreach { child =>
+      child.accept(this)
+    }
   }
 
   override def visit(astAssignment: AssignmentExpression): Unit = {
@@ -258,10 +261,6 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     if (assignmentExpression != null) {
       assignmentExpression.accept(this)
     }
-  }
-
-  override def defaultHandler(item: AstNode): Unit = {
-    throw new RuntimeException("Not implemented.")
   }
 
   private def visitBinaryExpr(astBinaryExpr: BinaryExpression, cpgBinaryExpr: Node): Unit = {
