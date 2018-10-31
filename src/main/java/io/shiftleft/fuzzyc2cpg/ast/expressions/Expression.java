@@ -15,8 +15,7 @@ public class Expression extends AstNode {
   }
 
   public void replaceFirstChild(AstNode node) {
-    children.removeFirst();
-    children.addFirst(node);
+    children.set(0, node);
   }
 
   public String getOperator() {
