@@ -13,4 +13,6 @@ case class CpgTestFixture(projectName: String) {
     inmemoryOutputModule.getCpg
   }
 
+  val V = cpg.scalaGraph.V
+
 }

@@ -6,12 +6,11 @@ import org.scalatest.{Matchers, WordSpec}
 
 class MethodHeaderTests extends WordSpec with Matchers {
   val fixture = CpgTestFixture("methodheader")
-  val g = fixture.cpg.scalaGraph.traversal
 
   "Method header" should {
 
     "have correct METHOD node for method foo" in {
-      val methods = g.V.hasLabel(NodeTypes.METHOD).has(NodeKeys.NAME -> "foo").l
+      val methods = fixture.V.hasLabel(NodeTypes.METHOD).has(NodeKeys.NAME -> "foo").l
       methods.size shouldBe 1
       methods.head.value2(NodeKeys.FULL_NAME) shouldBe "src/test/resources/testcode/methodheader/methodheader.c:foo"
       methods.head.value2(NodeKeys.SIGNATURE) shouldBe "int(int,int)"
@@ -20,7 +19,7 @@ class MethodHeaderTests extends WordSpec with Matchers {
     }
 
     "have correct METHOD_PARAMETER_IN nodes for method foo" in {
-      val parameters = g.V
+      val parameters = fixture.V
         .hasLabel(NodeTypes.METHOD)
         .has(NodeKeys.NAME -> "foo")
         .out(EdgeTypes.AST)
@@ -47,7 +46,7 @@ class MethodHeaderTests extends WordSpec with Matchers {
     }
 
     "have correct METHOD_RETURN node for method foo" in {
-      val methodReturn = g.V
+      val methodReturn = fixture.V
         .hasLabel(NodeTypes.METHOD)
         .has(NodeKeys.NAME -> "foo")
         .out(EdgeTypes.AST)
