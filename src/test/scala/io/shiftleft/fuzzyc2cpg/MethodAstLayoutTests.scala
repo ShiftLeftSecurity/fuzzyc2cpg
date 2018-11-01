@@ -166,4 +166,70 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
     result.head.value2(NodeKeys.NAME) shouldBe "y"
   }
 
+  "have UNKNOWN 'whileStatment' in method5" in {
+    val result = fixture.V
+      .hasLabel(NodeTypes.METHOD)
+      .has(NodeKeys.NAME -> "method5")
+      .out(EdgeTypes.AST)
+      .hasLabel(NodeTypes.BLOCK)
+      .out(EdgeTypes.AST)
+      .hasLabel(NodeTypes.UNKNOWN)
+      .l
+
+    result.size shouldBe 1
+  }
+
+  "have CALL to operator condition below 'whileStatment' in method5" in {
+    val result = fixture.V
+      .hasLabel(NodeTypes.METHOD)
+      .has(NodeKeys.NAME -> "method5")
+      .out(EdgeTypes.AST)
+      .hasLabel(NodeTypes.BLOCK)
+      .out(EdgeTypes.AST)
+      .hasLabel(NodeTypes.UNKNOWN)
+      .has(NodeKeys.PARSER_TYPE_NAME -> "WhileStatement")
+      .out(EdgeTypes.AST)
+      .hasLabel(NodeTypes.CALL)
+      .has(NodeKeys.NAME -> Operators.lessThan)
+      .l
+
+    result.size shouldBe 1
+  }
+
+   "have BLOCK below 'whileStatment' in method5" in {
+     val result = fixture.V
+       .hasLabel(NodeTypes.METHOD)
+       .has(NodeKeys.NAME -> "method5")
+       .out(EdgeTypes.AST)
+       .hasLabel(NodeTypes.BLOCK)
+       .out(EdgeTypes.AST)
+       .hasLabel(NodeTypes.UNKNOWN)
+       .has(NodeKeys.PARSER_TYPE_NAME -> "WhileStatement")
+       .out(EdgeTypes.AST)
+       .hasLabel(NodeTypes.BLOCK)
+       .l
+
+     result.size shouldBe 1
+   }
+
+  "have CALL to '+=' below BLOCK in method5" in {
+    val result = fixture.V
+      .hasLabel(NodeTypes.METHOD)
+      .has(NodeKeys.NAME -> "method5")
+      .out(EdgeTypes.AST)
+      .hasLabel(NodeTypes.BLOCK)
+      .out(EdgeTypes.AST)
+      .hasLabel(NodeTypes.UNKNOWN)
+      .has(NodeKeys.PARSER_TYPE_NAME -> "WhileStatement")
+      .out(EdgeTypes.AST)
+      .hasLabel(NodeTypes.BLOCK)
+      .out(EdgeTypes.AST)
+      .hasLabel(NodeTypes.CALL)
+      .has(NodeKeys.NAME -> Operators.assignmentPlus)
+      .has(NodeKeys.ORDER -> 1)
+      .l
+
+    result.size shouldBe 1
+  }
+
 }

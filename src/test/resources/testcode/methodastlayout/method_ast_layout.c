@@ -20,3 +20,9 @@ void method4() {
     int y;
   }
 }
+
+void method5(int x) {
+  while (x < 1) {
+    x += 1;
+  }
+}

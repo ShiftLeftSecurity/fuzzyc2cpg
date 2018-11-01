@@ -3,15 +3,15 @@ package io.shiftleft.fuzzyc2cpg
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
-import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.IfStatementBase
+import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{IfStatementBase, WhileStatement}
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, DispatchTypes, NodePropertyName}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import Utils._
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Statement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, BlockStarterWithStmtAndCnd, CompoundStatement, Statement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement
 import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
@@ -32,15 +32,12 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
   private val scope = new Scope[String, Node, Node]()
   private var astToProtoMapping = Map[AstNode, Node]()
 
-  pushContext(methodNode)
-  context.childNum = 1
+  pushContext(methodNode, 1)
 
-  private class Context(val parent: Node) {
-    var childNum = 0
-  }
+  private class Context(val parent: Node, var childNum: Int)
 
-  private def pushContext(parent: Node): Unit = {
-    contextStack = new Context(parent) :: contextStack
+  private def pushContext(parent: Node, startChildNum: Int): Unit = {
+    contextStack = new Context(parent, startChildNum) :: contextStack
   }
 
   private def popContext(): Unit = {
@@ -82,21 +79,19 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     astFunction.getContent.accept(this)
   }
 
-  override def visit(statement: Statement): Unit = {
-    // TODO handle statements correctly
-    statement.getChildIterator.asScala.foreach { child =>
-      child.accept(this)
-    }
-  }
-
   override def visit(astAssignment: AssignmentExpression): Unit = {
+    val operatorMethod = astAssignment.getOperator match {
+      case "=" => Operators.assignment
+      case "+=" => Operators.assignmentPlus
+    }
+
     val cpgAssignment =
       newNode(NodeType.CALL)
-        .addStringProperty(NodePropertyName.NAME, Operators.assignment)
+        .addStringProperty(NodePropertyName.NAME, operatorMethod)
         .addStringProperty(NodePropertyName.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
         .addStringProperty(NodePropertyName.SIGNATURE, "TODO assignment signature")
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
-        .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, Operators.assignment)
+        .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, operatorMethod)
         .addCommons(astAssignment, context)
         .buildAndUpdateMapping(astAssignment)
 
@@ -142,6 +137,27 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     visitBinaryExpr(astMult, cpgMult)
   }
 
+  override def visit(astRelation: RelationalExpression): Unit = {
+    val operatorMethod = astRelation.getOperator match {
+      case "<" => Operators.lessThan
+      case ">" => Operators.greaterThan
+      case "<=" => Operators.lessEqualsThan
+      case ">=" => Operators.greaterEqualsThan
+    }
+
+    val cpgRelation =
+      newNode(NodeType.CALL)
+        .addStringProperty(NodePropertyName.NAME, operatorMethod)
+        .addStringProperty(NodePropertyName.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+        .addStringProperty(NodePropertyName.SIGNATURE, "TODO assignment signature")
+        .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
+        .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, operatorMethod)
+        .addCommons(astRelation, context)
+        .buildAndUpdateMapping(astRelation)
+
+    visitBinaryExpr(astRelation, cpgRelation)
+  }
+
   override def visit(astCall: CallExpression): Unit = {
     val cpgCall =
       newNode(NodeType.CALL)
@@ -155,14 +171,10 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
         .addCommons(astCall, context)
         .buildAndUpdateMapping(astCall)
 
-    targetCpg.addNode(cpgCall)
-    targetCpg.addEdge(EdgeType.AST, cpgCall, context.parent)
+    addAstChild(cpgCall)
 
-    pushContext(cpgCall)
-    var childNum = 1
+    pushContext(cpgCall, 1)
     astCall.getArgumentList.iterator().asScala.foreach { argument =>
-      context.childNum = childNum
-      childNum += 1
       argument.accept(this)
     }
     popContext()
@@ -176,8 +188,7 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
         .addCommons(astConstant, context)
         .buildAndUpdateMapping(astConstant)
 
-    targetCpg.addNode(cpgConstant)
-    targetCpg.addEdge(EdgeType.AST, cpgConstant, context.parent)
+    addAstChild(cpgConstant)
   }
 
   override def visit(astIdentifier: Identifier): Unit = {
@@ -190,8 +201,7 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
         .addCommons(astIdentifier, context)
         .buildAndUpdateMapping(astIdentifier)
 
-    targetCpg.addNode(cpgIdentifier)
-    targetCpg.addEdge(EdgeType.AST, cpgIdentifier, context.parent)
+    addAstChild(cpgIdentifier)
 
     scope.lookupVariable(identifierName) match {
       case Some(variable) =>
@@ -203,6 +213,30 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     }
   }
 
+  override def visit(condition: Condition): Unit = {
+    condition.getExpression.accept(this)
+  }
+
+  override def visit(astBlockStarter: BlockStarter): Unit = {
+    val cpgBlockStarter =
+      newNode(NodeType.UNKNOWN)
+        .addStringProperty(NodePropertyName.PARSER_TYPE_NAME, astBlockStarter.getClass.getSimpleName)
+        .addCommons(astBlockStarter, context)
+        .buildAndUpdateMapping(astBlockStarter)
+
+    addAstChild(cpgBlockStarter)
+
+    pushContext(cpgBlockStarter, 1)
+    astBlockStarter.getChildIterator.asScala.foreach { child =>
+      child.accept(this)
+    }
+    popContext()
+  }
+
+  override def visit(statement: ExpressionStatement): Unit = {
+    statement.getExpression.accept(this)
+  }
+
   override def visit(astBlock: CompoundStatement): Unit = {
     val cpgBlock =
       newNode(NodeType.BLOCK)
@@ -212,23 +246,15 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astBlock.getLocation.startPos)
         .buildAndUpdateMapping(astBlock)
 
-    targetCpg.addNode(cpgBlock)
-    targetCpg.addEdge(EdgeType.AST, cpgBlock, context.parent)
+    addAstChild(cpgBlock)
 
-    var childNum = 1
-    pushContext(cpgBlock)
+    pushContext(cpgBlock, 1)
     scope.pushNewScope(cpgBlock)
     astBlock.getStatements.asScala.foreach { statement =>
-      context.childNum = childNum
-      childNum += 1
       statement.accept(this)
     }
     popContext()
     scope.popScope()
-  }
-
-  override def visit(ifStmt: IfStatementBase): Unit = {
-    //ifStmt.get
   }
 
   override def visit(astReturn: ReturnStatement): Unit = {
@@ -237,11 +263,9 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
         .addCommons(astReturn, context)
         .buildAndUpdateMapping(astReturn)
 
-    targetCpg.addNode(cpgReturn)
-    targetCpg.addEdge(EdgeType.AST, cpgReturn, context.parent)
+    addAstChild(cpgReturn)
 
-    pushContext(cpgReturn)
-    context.childNum = 1
+    pushContext(cpgReturn, 1)
     astReturn.getReturnExpression.accept(this)
     popContext()
   }
@@ -262,6 +286,9 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
         .buildAndUpdateMapping(identifierDecl)
 
     val scopeParentNode = scope.addToScope(localName, cpgLocal)
+    // Here we on purpose do not use addAstChild because the LOCAL nodes
+    // are not really in the AST (they also have no ORDER property).
+    // So do not be confused that the format still demands an AST edge.
     targetCpg.addNode(cpgLocal)
     targetCpg.addEdge(EdgeType.AST, cpgLocal, scopeParentNode)
 
@@ -272,14 +299,17 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
   }
 
   private def visitBinaryExpr(astBinaryExpr: BinaryExpression, cpgBinaryExpr: Node): Unit = {
-    targetCpg.addNode(cpgBinaryExpr)
-    targetCpg.addEdge(EdgeType.AST, cpgBinaryExpr, context.parent)
+    addAstChild(cpgBinaryExpr)
 
-    pushContext(cpgBinaryExpr)
-    context.childNum = 1
+    pushContext(cpgBinaryExpr, 1)
     astBinaryExpr.getLeft.accept(this)
-    context.childNum = 2
     astBinaryExpr.getRight.accept(this)
     popContext()
+  }
+
+  private def addAstChild(child: Node): Unit = {
+    targetCpg.addNode(child)
+    targetCpg.addEdge(EdgeType.AST, child, context.parent)
+    context.childNum += 1
   }
 }
