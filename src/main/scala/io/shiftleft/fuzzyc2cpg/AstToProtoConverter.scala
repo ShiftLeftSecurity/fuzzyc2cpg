@@ -20,16 +20,18 @@ import org.slf4j.{LoggerFactory, MDC}
 
 import scala.collection.JavaConverters._
 
-object MethodBodyVisitor {
+object AstToProtoConverter {
   private val logger = LoggerFactory.getLogger(getClass)
 }
 
-class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVisitor {
-  import MethodBodyVisitor._
-  private var cpg: CpgStruct.Builder = _
+class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
+                          methodNode: Node,
+                          targetCpg: CpgStruct.Builder) extends ASTNodeVisitor {
+  import AstToProtoConverter._
   private var contextStack = List[Context]()
   private val scope = new Scope[String, Node, Node]()
   private var astRoot: Node = _
+  private var astToProtoMapping = Map[AstNode, Node]()
 
   private class Context(val parent: Node) {
     var childNum = 0
@@ -59,12 +61,20 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addIntProperty(NodePropertyName.LINE_NUMBER, astNode.getLocation.startLine)
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astNode.getLocation.startPos)
     }
+    def buildAndUpdateMapping(astNode: AstNode): Node = {
+      val node = nodeBuilder.build()
+      astToProtoMapping += astNode -> node
+      node
+    }
   }
 
-  def convert(targetCpg: CpgStruct.Builder): Node = {
-    cpg = targetCpg
+  def getAstToProtoMapping: Map[AstNode, Node] = {
+    astToProtoMapping
+  }
+
+  def convert(): Unit = {
     visit(originalFunctionAst)
-    astRoot
+    targetCpg.addEdge(EdgeType.AST, astRoot, methodNode)
   }
 
   override def visit(astFunction: FunctionDefBase): Unit = {
@@ -87,7 +97,7 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, Operators.assignment)
         .addCommons(astAssignment, context)
-        .build
+        .buildAndUpdateMapping(astAssignment)
 
     visitBinaryExpr(astAssignment, cpgAssignment)
   }
@@ -106,7 +116,7 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, operatorMethod)
         .addCommons(astAdd, context)
-        .build
+        .buildAndUpdateMapping(astAdd)
 
     visitBinaryExpr(astAdd, cpgAdd)
   }
@@ -126,7 +136,7 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, operatorMethod)
         .addCommons(astMult, context)
-        .build
+        .buildAndUpdateMapping(astMult)
 
     visitBinaryExpr(astMult, cpgMult)
   }
@@ -142,10 +152,10 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addStringProperty(NodePropertyName.METHOD_INST_FULL_NAME, "<operator>.assignment")
         .addCommons(astCall, context)
-        .build
+        .buildAndUpdateMapping(astCall)
 
-    cpg.addNode(cpgCall)
-    cpg.addEdge(EdgeType.AST, cpgCall, context.parent)
+    targetCpg.addNode(cpgCall)
+    targetCpg.addEdge(EdgeType.AST, cpgCall, context.parent)
 
     pushContext(cpgCall)
     var childNum = 1
@@ -163,10 +173,10 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addStringProperty(NodePropertyName.NAME, astConstant.getEscapedCodeStr)
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addCommons(astConstant, context)
-        .build
+        .buildAndUpdateMapping(astConstant)
 
-    cpg.addNode(cpgConstant)
-    cpg.addEdge(EdgeType.AST, cpgConstant, context.parent)
+    targetCpg.addNode(cpgConstant)
+    targetCpg.addEdge(EdgeType.AST, cpgConstant, context.parent)
   }
 
   override def visit(astIdentifier: Identifier): Unit = {
@@ -177,14 +187,14 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addStringProperty(NodePropertyName.NAME, identifierName)
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
         .addCommons(astIdentifier, context)
-        .build
+        .buildAndUpdateMapping(astIdentifier)
 
-    cpg.addNode(cpgIdentifier)
-    cpg.addEdge(EdgeType.AST, cpgIdentifier, context.parent)
+    targetCpg.addNode(cpgIdentifier)
+    targetCpg.addEdge(EdgeType.AST, cpgIdentifier, context.parent)
 
     scope.lookupVariable(identifierName) match {
       case Some(variable) =>
-        cpg.addEdge(EdgeType.REF, variable, cpgIdentifier)
+        targetCpg.addEdge(EdgeType.REF, variable, cpgIdentifier)
       case None =>
         MDC.put("identifier", identifierName)
         logger.warn("Cannot find variable for identifier.")
@@ -197,12 +207,12 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
       newNode(NodeType.BLOCK)
         .addIntProperty(NodePropertyName.LINE_NUMBER, astBlock.getLocation.startLine)
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astBlock.getLocation.startPos)
-        .build
+        .buildAndUpdateMapping(astBlock)
 
-    cpg.addNode(cpgBlock)
+    targetCpg.addNode(cpgBlock)
     contextStack match {
       case context :: _ =>
-        cpg.addEdge(EdgeType.AST, cpgBlock, context.parent)
+        targetCpg.addEdge(EdgeType.AST, cpgBlock, context.parent)
       case _ =>
         astRoot = cpgBlock
     }
@@ -223,18 +233,18 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
     //ifStmt.get
   }
 
-  override def visit(astReturnStmt: ReturnStatement): Unit = {
+  override def visit(astReturn: ReturnStatement): Unit = {
     val cpgReturn =
       newNode(NodeType.RETURN)
-        .addCommons(astReturnStmt, context)
-        .build
+        .addCommons(astReturn, context)
+        .buildAndUpdateMapping(astReturn)
 
-    cpg.addNode(cpgReturn)
-    cpg.addEdge(EdgeType.AST, cpgReturn, context.parent)
+    targetCpg.addNode(cpgReturn)
+    targetCpg.addEdge(EdgeType.AST, cpgReturn, context.parent)
 
     pushContext(cpgReturn)
     context.childNum = 1
-    astReturnStmt.getReturnExpression.accept(this)
+    astReturn.getReturnExpression.accept(this)
     popContext()
   }
 
@@ -251,11 +261,11 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
         .addStringProperty(NodePropertyName.CODE, localName)
         .addStringProperty(NodePropertyName.NAME, localName)
         .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO ANY")
-        .build
+        .buildAndUpdateMapping(identifierDecl)
 
     val scopeParentNode = scope.addToScope(localName, cpgLocal)
-    cpg.addNode(cpgLocal)
-    cpg.addEdge(EdgeType.AST, cpgLocal, scopeParentNode)
+    targetCpg.addNode(cpgLocal)
+    targetCpg.addEdge(EdgeType.AST, cpgLocal, scopeParentNode)
 
     val assignmentExpression = identifierDecl.getAssignment
     if (assignmentExpression != null) {
@@ -264,8 +274,8 @@ class MethodBodyVisitor(originalFunctionAst: FunctionDefBase) extends ASTNodeVis
   }
 
   private def visitBinaryExpr(astBinaryExpr: BinaryExpression, cpgBinaryExpr: Node): Unit = {
-    cpg.addNode(cpgBinaryExpr)
-    cpg.addEdge(EdgeType.AST, cpgBinaryExpr, context.parent)
+    targetCpg.addNode(cpgBinaryExpr)
+    targetCpg.addEdge(EdgeType.AST, cpgBinaryExpr, context.parent)
 
     pushContext(cpgBinaryExpr)
     context.childNum = 1
