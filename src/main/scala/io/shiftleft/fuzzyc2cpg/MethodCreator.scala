@@ -8,6 +8,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
 import io.shiftleft.fuzzyc2cpg.Utils._
+import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 
 import scala.collection.JavaConverters._
@@ -15,43 +16,49 @@ import scala.collection.JavaConverters._
 class MethodCreator(functionDef: FunctionDefBase,
                     astParentNode: Node,
                     containingFileName: String) {
-  private var nodeToProtoNode = Map[CfgNode, CpgStruct.Node]()
   private val bodyCpg = CpgStruct.newBuilder()
-  val cfg = initializeCfg(functionDef)
 
   def addMethodCpg(): CpgStruct.Builder = {
-    val methodNode = convertMethodHeader(bodyCpg)
-    val bodyBlockNode = addMethodBodyCpg(bodyCpg)
-    bodyCpg.addEdge(EdgeType.AST, bodyBlockNode, methodNode)
+    val (methodNode, methodExitNode) = convertMethodHeader()
+    val astToProtoMapping = addMethodBodyAst(methodNode)
+    addMethodBodyCfg(methodNode, methodExitNode, astToProtoMapping)
+
+    bodyCpg
   }
 
-  private def addMethodBodyCpg(targetCpg: CpgStruct.Builder): Node = {
-    val bodyVisitor = new MethodBodyVisitor(functionDef)
-    bodyVisitor.convert(targetCpg)
+  private def addMethodBodyAst(methodNode: Node): Map[AstNode, Node] = {
+    val bodyVisitor = new AstToProtoConverter(functionDef, methodNode, bodyCpg)
+    bodyVisitor.convert()
+    bodyVisitor.getAstToProtoMapping
+  }
+
+  private def addMethodBodyCfg(methodNode: Node,
+                               methodExitNode: Node,
+                               astToProtoMapping: Map[AstNode, Node]): Unit = {
+    val astToCfgConverter = new CAstToCfgConverter
+    val cfg = astToCfgConverter.convert(functionDef)
+
+    val cfgToProtoConverter =
+      new CfgToProtoConverter(cfg, methodNode, methodExitNode, astToProtoMapping, bodyCpg)
+    cfgToProtoConverter.convert()
+
   }
 
 
-  private def initializeCfg(ast: FunctionDefBase): CFG = {
-    val converter = new CAstToCfgConverter
-    val cfg = converter.convert(ast)
-
-    cfg
-  }
-
-  private def convertMethodHeader(targetCpg: CpgStruct.Builder): Node = {
+  private def convertMethodHeader(): (Node, Node) = {
     val methodNode = createMethodNode
-    targetCpg.addNode(methodNode)
+    bodyCpg.addNode(methodNode)
 
     functionDef.getParameterList.asScala.foreach{ parameter =>
-      val parameterNode = new ParameterConverter(parameter).convert(targetCpg)
-      targetCpg.addEdge(EdgeType.AST, parameterNode, methodNode)
+      val parameterNode = new ParameterConverter(parameter).convert(bodyCpg)
+      bodyCpg.addEdge(EdgeType.AST, parameterNode, methodNode)
     }
 
     val methodReturnNode = createMethodReturnNode
-    targetCpg.addNode(methodReturnNode)
-    targetCpg.addEdge(EdgeType.AST, methodReturnNode, methodNode)
+    bodyCpg.addNode(methodReturnNode)
+    bodyCpg.addEdge(EdgeType.AST, methodReturnNode, methodNode)
 
-    methodNode
+    (methodNode, methodReturnNode)
   }
 
   private def createMethodNode: Node = {
