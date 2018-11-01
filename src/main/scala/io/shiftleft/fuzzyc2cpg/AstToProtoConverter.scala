@@ -30,8 +30,10 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
   import AstToProtoConverter._
   private var contextStack = List[Context]()
   private val scope = new Scope[String, Node, Node]()
-  private var astRoot: Node = _
   private var astToProtoMapping = Map[AstNode, Node]()
+
+  pushContext(methodNode)
+  context.childNum = 1
 
   private class Context(val parent: Node) {
     var childNum = 0
@@ -74,7 +76,6 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
 
   def convert(): Unit = {
     visit(originalFunctionAst)
-    targetCpg.addEdge(EdgeType.AST, astRoot, methodNode)
   }
 
   override def visit(astFunction: FunctionDefBase): Unit = {
@@ -205,17 +206,14 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
   override def visit(astBlock: CompoundStatement): Unit = {
     val cpgBlock =
       newNode(NodeType.BLOCK)
+        .addIntProperty(NodePropertyName.ORDER, context.childNum)
+        .addIntProperty(NodePropertyName.ARGUMENT_INDEX, context.childNum)
         .addIntProperty(NodePropertyName.LINE_NUMBER, astBlock.getLocation.startLine)
         .addIntProperty(NodePropertyName.COLUMN_NUMBER, astBlock.getLocation.startPos)
         .buildAndUpdateMapping(astBlock)
 
     targetCpg.addNode(cpgBlock)
-    contextStack match {
-      case context :: _ =>
-        targetCpg.addEdge(EdgeType.AST, cpgBlock, context.parent)
-      case _ =>
-        astRoot = cpgBlock
-    }
+    targetCpg.addEdge(EdgeType.AST, cpgBlock, context.parent)
 
     var childNum = 1
     pushContext(cpgBlock)
