@@ -19,17 +19,14 @@ class MethodCreator(functionDef: FunctionDefBase,
   private val bodyCpg = CpgStruct.newBuilder()
 
   def addMethodCpg(): CpgStruct.Builder = {
-    val (methodNode, methodExitNode) = convertMethodHeader()
-    val astToProtoMapping = addMethodBodyAst(methodNode)
-    addMethodBodyCfg(methodNode, methodExitNode, astToProtoMapping)
+    val bodyVisitor = new AstToProtoConverter(functionDef, containingFileName, bodyCpg)
+    bodyVisitor.convert()
+    
+    addMethodBodyCfg(bodyVisitor.getMethodNode.get,
+      bodyVisitor.getMethodReturnNode.get,
+      bodyVisitor.getAstToProtoMapping)
 
     bodyCpg
-  }
-
-  private def addMethodBodyAst(methodNode: Node): Map[AstNode, Node] = {
-    val bodyVisitor = new AstToProtoConverter(functionDef, methodNode, bodyCpg)
-    bodyVisitor.convert()
-    bodyVisitor.getAstToProtoMapping
   }
 
   private def addMethodBodyCfg(methodNode: Node,
@@ -42,56 +39,5 @@ class MethodCreator(functionDef: FunctionDefBase,
       new CfgToProtoConverter(cfg, methodNode, methodExitNode, astToProtoMapping, bodyCpg)
     cfgToProtoConverter.convert()
 
-  }
-
-
-  private def convertMethodHeader(): (Node, Node) = {
-    val methodNode = createMethodNode
-    bodyCpg.addNode(methodNode)
-
-    functionDef.getParameterList.asScala.foreach{ parameter =>
-      val parameterNode = new ParameterConverter(parameter).convert(bodyCpg)
-      bodyCpg.addEdge(EdgeType.AST, parameterNode, methodNode)
-    }
-
-    val methodReturnNode = createMethodReturnNode
-    bodyCpg.addNode(methodReturnNode)
-    bodyCpg.addEdge(EdgeType.AST, methodReturnNode, methodNode)
-
-    (methodNode, methodReturnNode)
-  }
-
-  private def createMethodNode: Node = {
-    val name = functionDef.getName
-    val signature = functionDef.getReturnType.getEscapedCodeStr +
-      functionDef.getParameterList.asScala.map(_.getType.getEscapedCodeStr).mkString("(", ",", ")")
-    val methodNode = Node.newBuilder
-      .setKey(IdPool.getNextId)
-      .setType(NodeType.METHOD)
-      .addStringProperty(NodePropertyName.NAME, functionDef.getName)
-      .addStringProperty(NodePropertyName.FULL_NAME, s"$containingFileName:${functionDef.getName}")
-      .addIntProperty(NodePropertyName.LINE_NUMBER, functionDef.getLocation.startLine)
-      .addIntProperty(NodePropertyName.COLUMN_NUMBER, functionDef.getLocation.startPos)
-      .addStringProperty(NodePropertyName.SIGNATURE, signature)
-      /*
-      .addProperty(newStringProperty(NodePropertyName.AST_PARENT_TYPE, astParentNode.getType))
-      .addProperty(newStringProperty(NodePropertyName.AST_PARENT_FULL_NAME,
-        astParentNode.getPropertyList.asScala.find(_.getName == NodePropertyName.FULL_NAME)
-          .get.getValue.getStringValue))
-          */
-      .build
-    methodNode
-  }
-
-  private def createMethodReturnNode: Node = {
-    Node.newBuilder
-      .setKey(IdPool.getNextId)
-      .setType(NodeType.METHOD_RETURN)
-      .addStringProperty(NodePropertyName.CODE, "RET")
-      .addStringProperty(NodePropertyName.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
-      .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO" )
-      .addIntProperty(NodePropertyName.LINE_NUMBER, functionDef.getReturnType.getLocation.startLine)
-      .addIntProperty(NodePropertyName.COLUMN_NUMBER, functionDef.getReturnType.getLocation.startPos)
-      .build
   }
 }

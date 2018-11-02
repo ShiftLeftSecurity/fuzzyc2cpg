@@ -8,6 +8,7 @@ import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, DispatchTypes, NodePropertyName}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import Utils._
+import io.shiftleft.codepropertygraph.generated.EvaluationStrategies
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
@@ -26,14 +27,14 @@ object AstToProtoConverter {
 }
 
 class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
-                          methodNode: Node,
+                          containingFileName: String,
                           targetCpg: CpgStruct.Builder) extends ASTNodeVisitor {
   import AstToProtoConverter._
   private var contextStack = List[Context]()
   private val scope = new Scope[String, Node, Node]()
   private var astToProtoMapping = Map[AstNode, Node]()
-
-  pushContext(methodNode, 1)
+  private var methodNode = Option.empty[Node]
+  private var methodReturnNode = Option.empty[Node]
 
   private class Context(val parent: Node, var childNum: Int)
 
@@ -72,26 +73,77 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     astToProtoMapping
   }
 
+  def getMethodNode: Option[Node] = {
+    methodNode
+  }
+
+  def getMethodReturnNode: Option[Node] = {
+    methodReturnNode
+  }
+
   def convert(): Unit = {
     visit(originalFunctionAst)
   }
 
   override def visit(astFunction: FunctionDefBase): Unit = {
-    scope.pushNewScope(methodNode)
+    val name = astFunction.getName
+    val signature = astFunction.getReturnType.getEscapedCodeStr +
+      astFunction.getParameterList.asScala.map(_.getType.getEscapedCodeStr).mkString("(", ",", ")")
+    val cpgMethod =
+      newNode(NodeType.METHOD)
+      .addStringProperty(NodePropertyName.NAME, astFunction.getName)
+      .addStringProperty(NodePropertyName.FULL_NAME, s"$containingFileName:${astFunction.getName}")
+      .addIntProperty(NodePropertyName.LINE_NUMBER, astFunction.getLocation.startLine)
+      .addIntProperty(NodePropertyName.COLUMN_NUMBER, astFunction.getLocation.startPos)
+      .addStringProperty(NodePropertyName.SIGNATURE, signature)
+      /*
+      .addProperty(newStringProperty(NodePropertyName.AST_PARENT_TYPE, astParentNode.getType))
+      .addProperty(newStringProperty(NodePropertyName.AST_PARENT_FULL_NAME,
+        astParentNode.getPropertyList.asScala.find(_.getName == NodePropertyName.FULL_NAME)
+          .get.getValue.getStringValue))
+          */
+      .buildAndUpdateMapping(astFunction)
+    targetCpg.addNode(cpgMethod)
+    methodNode = Some(cpgMethod)
+
+    pushContext(cpgMethod, 1)
+    scope.pushNewScope(cpgMethod)
 
     astFunction.getParameterList.asScala.foreach { parameter =>
       parameter.accept(this)
     }
 
+    val cpgMethodReturn =
+      newNode(NodeType.METHOD_RETURN)
+        .addStringProperty(NodePropertyName.CODE, "RET")
+        .addStringProperty(NodePropertyName.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
+        .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO" )
+        .addIntProperty(NodePropertyName.LINE_NUMBER, astFunction.getReturnType.getLocation.startLine)
+        .addIntProperty(NodePropertyName.COLUMN_NUMBER, astFunction.getReturnType.getLocation.startPos)
+        .build() // Not used buildAndUpdateMapping since there is no Ast Node from which METHOD_RETRUN is derived.
+    methodReturnNode = Some(cpgMethodReturn)
+
+    addAstChild(cpgMethodReturn)
+
     astFunction.getContent.accept(this)
 
     scope.popScope()
+    popContext()
   }
 
   override def visit(astParameter: Parameter): Unit = {
-    // The parameter is here not added because we process the method header
-    // separately.
-    scope.addToScope(astParameter.getName, astParameter)
+    val cpgParameter = newNode(NodeType.METHOD_PARAMETER_IN)
+      .addStringProperty(NodePropertyName.CODE, astParameter.getEscapedCodeStr)
+      .addStringProperty(NodePropertyName.NAME, astParameter.getName)
+      .addIntProperty(NodePropertyName.ORDER, astParameter.getChildNumber + 1)
+      .addStringProperty(NodePropertyName.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
+      .addStringProperty(NodePropertyName.TYPE_FULL_NAME, "TODO")
+      .addIntProperty(NodePropertyName.LINE_NUMBER, astParameter.getLocation.startLine)
+      .addIntProperty(NodePropertyName.COLUMN_NUMBER, astParameter.getLocation.startPos)
+      .build
+
+    scope.addToScope(astParameter.getName, cpgParameter)
+    addAstChild(cpgParameter)
   }
 
   override def visit(astAssignment: AssignmentExpression): Unit = {

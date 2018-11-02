@@ -17,8 +17,6 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
         .l
 
       result.size shouldBe 1
-      result.head.value2(NodeKeys.ORDER) shouldBe 1
-      result.head.value2(NodeKeys.ARGUMENT_INDEX) shouldBe 1
     }
 
     "have LOCAL below BLOCK in method2" in {
@@ -154,10 +152,8 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
       .has(NodeKeys.NAME -> "method4")
       .out(EdgeTypes.AST)
       .hasLabel(NodeTypes.BLOCK)
-      .has(NodeKeys.ORDER -> 1)
       .out(EdgeTypes.AST)
       .hasLabel(NodeTypes.BLOCK)
-      .has(NodeKeys.ORDER -> 1)
       .out(EdgeTypes.AST)
       .hasLabel(NodeTypes.LOCAL)
       .l
