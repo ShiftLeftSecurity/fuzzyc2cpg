@@ -4,6 +4,7 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -83,7 +84,12 @@ public class AstNode {
   }
 
   public Iterator<AstNode> getChildIterator() {
-    return children.iterator();
+    if (children != null) {
+      return children.iterator();
+    } else {
+      return Collections.emptyIterator();
+    }
+
   }
 
   public AstNode popLastChild() {
