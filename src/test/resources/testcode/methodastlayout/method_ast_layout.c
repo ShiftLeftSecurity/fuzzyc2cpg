@@ -26,3 +26,19 @@ void method5(int x) {
     x += 1;
   }
 }
+
+void method6(int x) {
+  int y;
+  if (x > 0) {
+    y = 0;
+  }
+}
+
+void method7(int x) {
+  int y;
+  if (x > 0) {
+    y = 0;
+  } else {
+    y = 1;
+  }
+}
