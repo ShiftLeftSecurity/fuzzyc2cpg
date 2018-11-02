@@ -10,6 +10,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import Utils._
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, BlockStarterWithStmtAndCnd, CompoundStatement, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement
@@ -76,7 +77,21 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
   }
 
   override def visit(astFunction: FunctionDefBase): Unit = {
+    scope.pushNewScope(methodNode)
+
+    astFunction.getParameterList.asScala.foreach { parameter =>
+      parameter.accept(this)
+    }
+
     astFunction.getContent.accept(this)
+
+    scope.popScope()
+  }
+
+  override def visit(astParameter: Parameter): Unit = {
+    // The parameter is here not added because we process the method header
+    // separately.
+    scope.addToScope(astParameter.getName, astParameter)
   }
 
   override def visit(astAssignment: AssignmentExpression): Unit = {
