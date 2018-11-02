@@ -29,7 +29,7 @@ public class AssignmentTests extends CCFGCreatorTest
 	{
 		String input = "int x = 10;";
 		CFG cfg = getCFGForCode(input);
-		assertTrue(cfg.size() == 3);
+		assertTrue(cfg.size() == 5);
 	}
 
 }

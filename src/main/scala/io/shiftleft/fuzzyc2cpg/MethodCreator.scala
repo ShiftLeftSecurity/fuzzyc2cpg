@@ -21,7 +21,7 @@ class MethodCreator(functionDef: FunctionDefBase,
   def addMethodCpg(): CpgStruct.Builder = {
     val bodyVisitor = new AstToProtoConverter(functionDef, containingFileName, bodyCpg)
     bodyVisitor.convert()
-    
+
     addMethodBodyCfg(bodyVisitor.getMethodNode.get,
       bodyVisitor.getMethodReturnNode.get,
       bodyVisitor.getAstToProtoMapping)
