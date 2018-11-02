@@ -11,7 +11,8 @@ libraryDependencies ++= Seq(
   "io.shiftleft" % "cpgloader-tinkergraph" % cpgVersion,
   "com.novocode" % "junit-interface" % "0.11" % Test,
   "junit" % "junit" % "4.12" % Test,
-   "org.scalatest" %% "scalatest" % "3.0.3" % Test
+   "org.scalatest" %% "scalatest" % "3.0.3" % Test,
+   "org.slf4j" % "slf4j-simple" % "1.7.25" % Test
 )
 
 // uncomment if you want to use a cpg version that has *just* been released
