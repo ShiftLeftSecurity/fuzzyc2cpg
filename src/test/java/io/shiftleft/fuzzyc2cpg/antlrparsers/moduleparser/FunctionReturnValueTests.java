@@ -29,7 +29,6 @@ public class FunctionReturnValueTests extends FunctionDefinitionTests
 
 		ModuleParser parser = createParser(input);
 		String output = parser.function_def().toStringTree(parser);
-		System.out.println(output);
 		assertTrue(output.equals(expected));
 	}
 
@@ -41,7 +40,6 @@ public class FunctionReturnValueTests extends FunctionDefinitionTests
 
 		ModuleParser parser = createParser(input);
 		String output = parser.function_def().toStringTree(parser);
-		System.out.println(output);
 		assertTrue(output.equals(expected));
 	}
 
@@ -52,7 +50,6 @@ public class FunctionReturnValueTests extends FunctionDefinitionTests
 
 		ModuleParser parser = createParser(input);
 		String output = parser.function_def().toStringTree(parser);
-		System.out.println(output);
 		assertTrue(output.startsWith(
 				"(function_def (return_type (function_decl_specifiers static) (type_name unsigned)) (function_name (identifier my_atoi))"));
 	}

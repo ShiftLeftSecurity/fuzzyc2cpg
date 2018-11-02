@@ -23,7 +23,6 @@ public class PreprocessorTests
 		String input = "#if foo\n bar(); #else\n foo(); foo(); #endif";
 		CompoundStatement contentItem = (CompoundStatement) FunctionContentTestUtil
 				.parseAndWalk(input);
-		System.out.println(contentItem.getStatements().size());
 		assertTrue(contentItem.getStatements().size() == 1);
 	}
 
