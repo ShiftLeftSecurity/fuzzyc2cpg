@@ -16,7 +16,6 @@ public class ForLoopTests extends FunctionParserTestBase
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		System.out.println(output);
 		assertTrue(output.contains("selection_or_iteration"));
 	}
 
@@ -27,7 +26,6 @@ public class ForLoopTests extends FunctionParserTestBase
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		System.out.println(output);
 		assertTrue(output.contains(
 				"for ( (for_init_statement (simple_decl (var_decl (type_name (base_type int))"));
 	}
@@ -39,7 +37,6 @@ public class ForLoopTests extends FunctionParserTestBase
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		System.out.println(output);
 		assertTrue(output.contains("assign_expr"));
 	}
 }

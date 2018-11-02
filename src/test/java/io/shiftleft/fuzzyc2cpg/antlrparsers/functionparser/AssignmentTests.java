@@ -17,7 +17,6 @@ public class AssignmentTests extends FunctionParserTestBase
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		System.out.println(output);
 		assertTrue(output.contains("assign_expr"));
 	}
 
@@ -28,7 +27,6 @@ public class AssignmentTests extends FunctionParserTestBase
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		System.out.println(output);
 		assertTrue(output.contains("assign_expr"));
 	}
 
@@ -39,7 +37,6 @@ public class AssignmentTests extends FunctionParserTestBase
 		FunctionParser functionParser = createFunctionParser();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
-		System.out.println(output);
 		assertTrue(output.contains("simple_decl"));
 	}
 

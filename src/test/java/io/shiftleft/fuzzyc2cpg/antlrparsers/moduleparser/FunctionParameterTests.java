@@ -28,7 +28,6 @@ public class FunctionParameterTests extends FunctionDefinitionTests
 
 		ModuleParser parser = createParser(input);
 		String output = parser.function_def().toStringTree(parser);
-		System.out.println(output);
 		assertTrue(output.startsWith("(function_def "));
 	}
 
@@ -49,7 +48,7 @@ public class FunctionParameterTests extends FunctionDefinitionTests
 
 		ModuleParser parser = createParser(input);
 		String output = parser.function_def().toStringTree(parser);
-		System.out.println(output);
+		assertTrue(output.startsWith("(function_def"));
 	}
 
 	@Test

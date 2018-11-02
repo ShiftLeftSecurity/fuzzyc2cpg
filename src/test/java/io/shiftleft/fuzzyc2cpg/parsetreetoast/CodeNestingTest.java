@@ -59,7 +59,6 @@ public class CodeNestingTest
 		BlockStarter starter = (BlockStarter) item.getStatements().get(0);
 		AssignmentExpression condition = (AssignmentExpression) ((Condition)starter.getCondition())
 				.getExpression();
-		System.out.println(condition.getEscapedCodeStr());
 		assertTrue(condition.getEscapedCodeStr().equals("foo = bar"));
 	}
 
@@ -93,7 +92,6 @@ public class CodeNestingTest
 
 		String condExprString = ((Condition)forItem.getCondition()).getExpression()
 				.getEscapedCodeStr();
-		System.out.println(condExprString);
 		assertTrue(condExprString.equals("i < 10"));
 
 	}
@@ -107,7 +105,6 @@ public class CodeNestingTest
 		ForStatement forItem = (ForStatement) contentItem.getStatements()
 				.get(0);
 
-		System.out.println(forItem.getChildCount());
 
 		String condExprString = ((Condition)forItem.getCondition()).getExpression()
 				.getEscapedCodeStr();
@@ -136,7 +133,6 @@ public class CodeNestingTest
 		IdentifierDeclStatement declStatement = (IdentifierDeclStatement) contentItem
 				.getStatements().get(0);
 		IdentifierDecl decl = (IdentifierDecl) declStatement.getChild(0);
-		System.out.println(decl.getType().getEscapedCodeStr());
 		assertEquals("int", decl.getType().getEscapedCodeStr());
 	}
 
