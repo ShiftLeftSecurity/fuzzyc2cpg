@@ -559,15 +559,6 @@ public class AstToCfgConverter implements ASTNodeVisitor, IAstToCfgConverter {
     while (it.hasNext()) {
       CfgNode breakOrContinueNode = it.next();
 
-      ASTNodeContainer nodeContainer = (ASTNodeContainer) breakOrContinueNode;
-      BreakOrContinueStatement statement = (BreakOrContinueStatement) nodeContainer.getASTNode();
-
-      Integer depth = statement.getDepthAsInteger();
-      if(depth != 0 && depth != 1) {
-        statement.decrementDepth();
-        continue;
-      }
-
       thisCFG.removeEdgesFrom(breakOrContinueNode);
       thisCFG.addEdge(breakOrContinueNode, target);
       it.remove();
