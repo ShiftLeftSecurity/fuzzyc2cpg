@@ -12,6 +12,7 @@ import io.shiftleft.codepropertygraph.generated.EvaluationStrategies
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
+import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, BlockStarterWithStmtAndCnd, CompoundStatement, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement
@@ -296,6 +297,25 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     pushContext(cpgBlockStarter, 1)
     astBlockStarter.getChildIterator.asScala.foreach { child =>
       child.accept(this)
+    }
+    popContext()
+  }
+
+  override def visit(astIfStmt: IfStatement): Unit = {
+    val cpgIfStmt =
+      newNode(NodeType.UNKNOWN)
+        .addStringProperty(NodePropertyName.PARSER_TYPE_NAME, astIfStmt.getClass.getSimpleName)
+        .addCommons(astIfStmt, context)
+        .buildAndUpdateMapping(astIfStmt)
+
+    addAstChild(cpgIfStmt)
+
+    pushContext(cpgIfStmt, 1)
+    astIfStmt.getCondition.accept(this)
+    astIfStmt.getStatement.accept(this)
+    val astElseStmt = astIfStmt.getElseNode
+    if (astElseStmt != null) {
+      astElseStmt.accept(this)
     }
     popContext()
   }
