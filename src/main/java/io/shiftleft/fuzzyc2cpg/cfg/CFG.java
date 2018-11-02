@@ -7,6 +7,8 @@ import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExceptionNode;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgExitNode;
 import io.shiftleft.fuzzyc2cpg.cfg.nodes.CfgNode;
 import io.shiftleft.fuzzyc2cpg.graphutils.IncidenceListGraph;
+
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
@@ -166,6 +168,31 @@ public class CFG extends IncidenceListGraph<CfgNode, CFGEdge>
 		else
 		{
 			addEdge(branchNode, mergeNode, label);
+		}
+	}
+
+	public void mountCFGAtExit(CfgNode mergeNode, CFG cfg, String label) {
+		Collection<CFGEdge> edgesToExit = incomingEdges(getExitNode());
+		if (!cfg.isEmpty())
+		{
+			addCFG(cfg);
+			for (CFGEdge edgeToExit: edgesToExit) {
+				for (CFGEdge edge : cfg.outgoingEdges(cfg.getEntryNode()))
+				{
+					addEdge(edgeToExit.getSource(), edge.getDestination(), label);
+				}
+			}
+
+			for (CFGEdge edge : cfg.incomingEdges(cfg.getExitNode()))
+			{
+				addEdge(edge.getSource(), mergeNode, edge.getLabel());
+			}
+		}
+		else
+		{
+			for (CFGEdge edgeToExit: edgesToExit) {
+				addEdge(edgeToExit.getSource(), mergeNode, label);
+			}
 		}
 	}
 

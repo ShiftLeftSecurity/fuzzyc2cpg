@@ -9,3 +9,10 @@ void method2() {
 
   x = y + z;
 }
+
+void method3(int x) {
+  int y;
+  while (x < 1) {
+    y += 1;
+  }
+}

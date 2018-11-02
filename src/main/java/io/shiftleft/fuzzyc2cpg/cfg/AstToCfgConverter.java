@@ -4,6 +4,7 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.BinaryExpression;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Condition;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Constant;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
@@ -139,6 +140,11 @@ public class AstToCfgConverter implements ASTNodeVisitor, IAstToCfgConverter {
   }
 
   @Override
+  public void visit(Condition condition) {
+    condition.getExpression().accept(this);
+  }
+
+  @Override
   public void visit(ExpressionStatement expressionStatement) {
     expressionStatement.getExpression().accept(this);
   }
@@ -186,6 +192,25 @@ public class AstToCfgConverter implements ASTNodeVisitor, IAstToCfgConverter {
 
   @Override
   public void visit(WhileStatement whileStatement) {
+
+    try {
+      CFG whileCfg = convert(whileStatement.getCondition());
+      CFG whileBody = convert(whileStatement.getStatement());
+
+      whileCfg.mountCFGAtExit(whileCfg.getEntryNode(),
+          whileBody, CFGEdge.TRUE_LABEL);
+      whileCfg.addEdge(whileCfg.getExitNode(), whileBlock.getExitNode(),
+          CFGEdge.FALSE_LABEL);
+
+      fixBreakStatements(whileBlock, whileBlock.getExitNode());
+      fixContinueStatement(whileBlock, conditionContainer);
+
+      returnCfg = whileBlock;
+    } catch (RuntimeException exception) {
+      returnCfg = newErrorInstance(exception);
+    }
+
+
     try {
       CFG whileBlock = new CFG();
       CfgNode conditionContainer = new ASTNodeContainer(

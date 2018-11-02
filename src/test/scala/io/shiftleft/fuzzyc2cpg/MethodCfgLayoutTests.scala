@@ -70,4 +70,15 @@ class MethodCfgLayoutTests extends WordSpec with Matchers {
     }
   }
 
+  "be correct for while in method3" in {
+    var result = getMethod("method3").expandCfg()
+    result.checkForSingle(NodeTypes.IDENTIFIER, "x")
+
+    result = result.expandCfg()
+    result.checkForSingle(NodeTypes.LITERAL, "1")
+
+    result = result.expandCfg()
+    result.checkForSingle(NodeTypes.CALL, Operators.lessThan)
+  }
+
 }
