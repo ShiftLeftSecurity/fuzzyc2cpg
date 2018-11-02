@@ -1,14 +1,21 @@
 package io.shiftleft.fuzzyc2cpg.cfg;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.BinaryExpression;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Constant;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterList;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression;
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BreakOrContinueStatement;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Label;
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement;
+import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.CatchStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.DoStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.ForStatement;
@@ -75,19 +82,60 @@ public class AstToCfgConverter implements ASTNodeVisitor, IAstToCfgConverter {
   }
 
   @Override
-  public void visit(AstNode node) {
+  public void visit(ParameterList parameterList) {
     try {
-      CFG block = new CFG();
+      CFG block = newPassThroughCFG();
 
-      CfgNode container = new ASTNodeContainer(node);
-      block.addVertex(container);
-      block.addEdge(block.getEntryNode(), container);
-      block.addEdge(container, block.getExitNode());
+      parameterList.getChildIterator().forEachRemaining(parameter -> {
+        CFG parameterCfg = convert(parameter);
+        block.appendCFG(parameterCfg);
+      });
 
       returnCfg = block;
     } catch (RuntimeException exception) {
       returnCfg = newErrorInstance(exception);
     }
+  }
+
+  @Override
+  public void visit(Parameter parameter) {
+    returnCfg = newPassThroughCFG();
+  }
+
+  @Override
+  public void visit(IdentifierDeclStatement identifierDeclStatement) {
+    try {
+      CFG block = newPassThroughCFG();
+
+      for (AstNode identifierDecl : identifierDeclStatement.getIdentifierDeclList()) {
+        CFG identifierDeclCfg = convert(identifierDecl);
+        block.appendCFG(identifierDeclCfg);
+      }
+
+      returnCfg = block;
+    } catch (RuntimeException exception) {
+      returnCfg = newErrorInstance(exception);
+    }
+  }
+
+  @Override
+  public void visit(IdentifierDecl identifierDecl) {
+    AssignmentExpression assignment = identifierDecl.getAssignment();
+    if (assignment != null) {
+      assignment.accept(this);
+    } else {
+      returnCfg = newPassThroughCFG();
+    }
+  }
+
+  @Override
+  public void visit(Identifier identifier) {
+    returnCfg = newSingleNodeCfg(identifier);
+  }
+
+  @Override
+  public void visit(Constant constant) {
+    returnCfg = newSingleNodeCfg(constant);
   }
 
   @Override
@@ -470,6 +518,15 @@ public class AstToCfgConverter implements ASTNodeVisitor, IAstToCfgConverter {
     CFG cfg = new CFG();
     cfg.addEdge(cfg.getEntryNode(), cfg.getExitNode());
     return cfg;
+  }
+
+  private CFG newSingleNodeCfg(AstNode node) {
+    CFG block = new CFG();
+    CfgNode container = new ASTNodeContainer(node);
+    block.addVertex(container);
+    block.addEdge(block.getEntryNode(), container);
+    block.addEdge(container, block.getExitNode());
+    return block;
   }
 
   private void fixGotoStatements(CFG thisCFG) {
