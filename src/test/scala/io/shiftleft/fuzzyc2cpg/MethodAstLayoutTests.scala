@@ -7,225 +7,177 @@ import org.scalatest.{Matchers, WordSpec}
 class MethodAstLayoutTests extends WordSpec with Matchers {
   val fixture = CpgTestFixture("methodastlayout")
 
+  private def getMethod(name: String): List[Vertex] = {
+    val result = fixture.V
+      .hasLabel(NodeTypes.METHOD)
+      .has(NodeKeys.NAME -> name)
+      .l
+
+    result.size shouldBe 1
+    result
+  }
+
+  implicit class VertexListWrapper(vertexList: List[Vertex]) {
+    def expandAst(filterLabels: String*): List[Vertex] = {
+      if (filterLabels.nonEmpty) {
+        vertexList.flatMap(_.start.out(EdgeTypes.AST).hasLabel(filterLabels.head, filterLabels.tail: _*).l)
+      } else {
+        vertexList.flatMap(_.start.out(EdgeTypes.AST).l)
+      }
+    }
+
+    def filterOrder(order: Int): List[Vertex] = {
+      vertexList.filter(_.value2(NodeKeys.ORDER) == order)
+    }
+
+    def checkForSingle(name: String): Unit = {
+      vertexList.size shouldBe 1
+      vertexList.head.value2(NodeKeys.NAME) shouldBe name
+    }
+
+    def checkForSingle(): Unit = {
+      vertexList.size shouldBe 1
+    }
+
+    def check[A](count: Int,
+                 mapFunc: Vertex => A,
+                 expectations: A*): Unit = {
+      vertexList.size shouldBe count
+      vertexList.map(mapFunc).toSet shouldBe expectations.toSet
+    }
+
+  }
+
   "AST layout" should {
-    "have one BLOCK below METHOD in method1" in {
-      val result = fixture.V
-        .hasLabel(NodeTypes.METHOD)
-        .has(NodeKeys.NAME -> "method1")
-        .out(EdgeTypes.AST)
-        .hasLabel(NodeTypes.BLOCK)
-        .l
-
-      result.size shouldBe 1
+    "be correct for empty method1" in {
+      val method = getMethod("method1")
+      method.expandAst(NodeTypes.BLOCK).checkForSingle()
     }
 
-    "have LOCAL below BLOCK in method2" in {
-      val result = fixture.V
-        .hasLabel(NodeTypes.METHOD)
-        .has(NodeKeys.NAME -> "method2")
-        .out(EdgeTypes.AST)
-        .hasLabel(NodeTypes.BLOCK)
-        .out(EdgeTypes.AST)
-        .hasLabel(NodeTypes.LOCAL)
-        .l
+    "be correct for decl assignment in method2" in {
+      val method = getMethod("method2")
+      val block= method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
 
-      result.size shouldBe 1
-      result.head.value2(NodeKeys.NAME) shouldBe "local"
+      block.expandAst(NodeTypes.LOCAL).checkForSingle("local")
+
+      val assignment = block.expandAst(NodeTypes.CALL)
+      assignment.checkForSingle(Operators.assignment)
+
+      val arguments = assignment.expandAst()
+      arguments.check(2,
+        arg =>
+          (arg.label,
+            arg.value2(NodeKeys.CODE),
+            arg.value2(NodeKeys.ORDER),
+            arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        expectations =
+          (NodeTypes.IDENTIFIER, "local", 1, 1),
+        (NodeTypes.LITERAL, "1", 2, 2))
     }
 
-    "have an assignment in method2" in {
-      val result = fixture.V
-        .hasLabel(NodeTypes.METHOD)
-        .has(NodeKeys.NAME -> "method2")
-        .out(EdgeTypes.AST)
-        .hasLabel(NodeTypes.BLOCK)
-        .out(EdgeTypes.AST)
-        .hasLabel(NodeTypes.CALL)
-        .l
 
-      result.size shouldBe 1
-      result.head.value2(NodeKeys.NAME) shouldBe Operators.assignment
-    }
+    "be correct for nested expression in method3" in {
+      val method = getMethod("method3")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+      val locals = block.expandAst(NodeTypes.LOCAL)
+      locals.check(3, local => local.value2(NodeKeys.NAME),
+        expectations = "x", "y", "z")
 
-    "have two arguments for assignment in method2" in {
-      val result = fixture.V
-        .hasLabel(NodeTypes.METHOD)
-        .has(NodeKeys.NAME -> "method2")
-        .out(EdgeTypes.AST)
-        .hasLabel(NodeTypes.BLOCK)
-        .out(EdgeTypes.AST)
-        .hasLabel(NodeTypes.CALL)
-        .out(EdgeTypes.AST)
-        .l
+      val assignment = block.expandAst(NodeTypes.CALL)
+      assignment.checkForSingle(Operators.assignment)
 
-      result.size shouldBe 2
-      result.toSet.map { arg: Vertex =>
+      val rightHandSide = assignment.expandAst(NodeTypes.CALL).filterOrder(2)
+      rightHandSide.checkForSingle(Operators.addition)
+
+      val arguments = rightHandSide.expandAst()
+      arguments.check(2, arg =>
         (arg.label,
           arg.value2(NodeKeys.CODE),
           arg.value2(NodeKeys.ORDER),
-          arg.value2(NodeKeys.ARGUMENT_INDEX))
-      } shouldBe
-      Set((NodeTypes.IDENTIFIER, "local", 1, 1),
-        (NodeTypes.LITERAL, "1", 2, 2))
+          arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        expectations = (NodeTypes.IDENTIFIER, "y", 1, 1),
+          (NodeTypes.IDENTIFIER, "z", 2, 2)
+      )
+    }
+
+    "be correct for nested block method4" in {
+      val method = getMethod("method4")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+      val locals = block.expandAst(NodeTypes.LOCAL)
+      locals.checkForSingle("x")
+
+      val nestedBlock = block.expandAst(NodeTypes.BLOCK)
+      nestedBlock.checkForSingle()
+      val nestedLocals = nestedBlock.expandAst(NodeTypes.LOCAL)
+      nestedLocals.checkForSingle("y")
+    }
+
+    "be correct for while in method5" in {
+      val method = getMethod("method5")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      val whileStmt = block.expandAst(NodeTypes.UNKNOWN)
+      whileStmt.check(1, whileStmt => whileStmt.value2(NodeKeys.PARSER_TYPE_NAME),
+        expectations = "WhileStatement")
+
+      val lessThan = whileStmt.expandAst(NodeTypes.CALL)
+      lessThan.checkForSingle(Operators.lessThan)
+
+      val whileBlock = whileStmt.expandAst(NodeTypes.BLOCK)
+      whileBlock.checkForSingle()
+
+      val assignPlus = whileBlock.expandAst(NodeTypes.CALL)
+      assignPlus.filterOrder(1).checkForSingle(Operators.assignmentPlus)
+    }
+
+    "be correct for if in method6" in {
+      val method = getMethod("method6")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+      val ifStmt = block.expandAst(NodeTypes.UNKNOWN)
+      ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
+        expectations = "IfStatement")
+
+      val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
+      greaterThan.checkForSingle(Operators.greaterThan)
+
+      val ifBlock = ifStmt.expandAst(NodeTypes.BLOCK)
+      ifBlock.checkForSingle()
+
+      val assignment = ifBlock.expandAst(NodeTypes.CALL)
+      assignment.checkForSingle(Operators.assignment)
+    }
+
+    "be correct for if-else in method7" in {
+      val method = getMethod("method7")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+      val ifStmt = block.expandAst(NodeTypes.UNKNOWN)
+      ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
+        expectations = "IfStatement")
+
+      val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
+      greaterThan.checkForSingle(Operators.greaterThan)
+
+      val ifBlock = ifStmt.expandAst(NodeTypes.BLOCK)
+      ifBlock.checkForSingle()
+
+      val assignment = ifBlock.expandAst(NodeTypes.CALL)
+      assignment.checkForSingle(Operators.assignment)
+
+      val elseStmt = ifStmt.expandAst(NodeTypes.UNKNOWN)
+      elseStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
+        expectations = "ElseStatement")
+
+      val elseBlock = elseStmt.expandAst(NodeTypes.BLOCK)
+      elseBlock.checkForSingle()
+
+      val assignmentInElse = elseBlock.expandAst(NodeTypes.CALL)
+      assignmentInElse.checkForSingle(Operators.assignment)
     }
   }
-
-  "have 3 LOCAL below BLOCK in method3" in {
-    val result = fixture.V
-      .hasLabel(NodeTypes.METHOD)
-      .has(NodeKeys.NAME -> "method3")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.LOCAL)
-      .l
-
-    result.size shouldBe 3
-    result.toSet.map { local: Vertex =>
-      local.value2(NodeKeys.NAME)
-    } shouldBe
-    Set("x", "y", "z")
-  }
-
-  "have addition below assignment in method3" in {
-    val result = fixture.V
-      .hasLabel(NodeTypes.METHOD)
-      .has(NodeKeys.NAME -> "method3")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.CALL)
-      .has(NodeKeys.NAME -> Operators.assignment)
-      .out(EdgeTypes.AST)
-      .has(NodeKeys.ORDER -> 2)
-      .hasLabel(NodeTypes.CALL)
-      .has(NodeKeys.NAME -> Operators.addition)
-      .l
-
-    result.size shouldBe 1
-  }
-
-  "have two arguments below addition in method3" in {
-    val result = fixture.V
-      .hasLabel(NodeTypes.METHOD)
-      .has(NodeKeys.NAME -> "method3")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.CALL)
-      .has(NodeKeys.NAME -> Operators.assignment)
-      .out(EdgeTypes.AST)
-      .has(NodeKeys.ORDER -> 2)
-      .hasLabel(NodeTypes.CALL)
-      .has(NodeKeys.NAME -> Operators.addition)
-      .out(EdgeTypes.AST)
-      .l
-
-    result.size shouldBe 2
-    result.toSet.map { arg: Vertex =>
-      (arg.label,
-        arg.value2(NodeKeys.CODE),
-        arg.value2(NodeKeys.ORDER),
-        arg.value2(NodeKeys.ARGUMENT_INDEX))
-    } shouldBe
-      Set((NodeTypes.IDENTIFIER, "y", 1, 1),
-        (NodeTypes.IDENTIFIER, "z", 2, 2))
-  }
-
-  "have LOCAL x below BLOCK in method4" in {
-    val result = fixture.V
-      .hasLabel(NodeTypes.METHOD)
-      .has(NodeKeys.NAME -> "method4")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.LOCAL)
-      .l
-
-    result.size shouldBe 1
-    result.head.value2(NodeKeys.NAME) shouldBe "x"
-  }
-
-  "have LOCAL y below nested BLOCK in method4" in {
-    val result = fixture.V
-      .hasLabel(NodeTypes.METHOD)
-      .has(NodeKeys.NAME -> "method4")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.LOCAL)
-      .l
-
-    result.size shouldBe 1
-    result.head.value2(NodeKeys.NAME) shouldBe "y"
-  }
-
-  "have UNKNOWN 'whileStatment' in method5" in {
-    val result = fixture.V
-      .hasLabel(NodeTypes.METHOD)
-      .has(NodeKeys.NAME -> "method5")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.UNKNOWN)
-      .l
-
-    result.size shouldBe 1
-  }
-
-  "have CALL to operator condition below 'whileStatment' in method5" in {
-    val result = fixture.V
-      .hasLabel(NodeTypes.METHOD)
-      .has(NodeKeys.NAME -> "method5")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.UNKNOWN)
-      .has(NodeKeys.PARSER_TYPE_NAME -> "WhileStatement")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.CALL)
-      .has(NodeKeys.NAME -> Operators.lessThan)
-      .l
-
-    result.size shouldBe 1
-  }
-
-   "have BLOCK below 'whileStatment' in method5" in {
-     val result = fixture.V
-       .hasLabel(NodeTypes.METHOD)
-       .has(NodeKeys.NAME -> "method5")
-       .out(EdgeTypes.AST)
-       .hasLabel(NodeTypes.BLOCK)
-       .out(EdgeTypes.AST)
-       .hasLabel(NodeTypes.UNKNOWN)
-       .has(NodeKeys.PARSER_TYPE_NAME -> "WhileStatement")
-       .out(EdgeTypes.AST)
-       .hasLabel(NodeTypes.BLOCK)
-       .l
-
-     result.size shouldBe 1
-   }
-
-  "have CALL to '+=' below BLOCK in method5" in {
-    val result = fixture.V
-      .hasLabel(NodeTypes.METHOD)
-      .has(NodeKeys.NAME -> "method5")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.UNKNOWN)
-      .has(NodeKeys.PARSER_TYPE_NAME -> "WhileStatement")
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.BLOCK)
-      .out(EdgeTypes.AST)
-      .hasLabel(NodeTypes.CALL)
-      .has(NodeKeys.NAME -> Operators.assignmentPlus)
-      .has(NodeKeys.ORDER -> 1)
-      .l
-
-    result.size shouldBe 1
-  }
-
 }
