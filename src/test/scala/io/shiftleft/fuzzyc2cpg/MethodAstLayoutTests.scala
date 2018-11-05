@@ -4,18 +4,8 @@ import gremlin.scala._
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes}
 import org.scalatest.{Matchers, WordSpec}
 
-class MethodAstLayoutTests extends WordSpec with Matchers {
+class MethodAstLayoutTests extends WordSpec with Matchers with TravesalUtils {
   val fixture = CpgTestFixture("methodastlayout")
-
-  private def getMethod(name: String): List[Vertex] = {
-    val result = fixture.V
-      .hasLabel(NodeTypes.METHOD)
-      .has(NodeKeys.NAME -> name)
-      .l
-
-    result.size shouldBe 1
-    result
-  }
 
   implicit class VertexListWrapper(vertexList: List[Vertex]) {
     def expandAst(filterLabels: String*): List[Vertex] = {
@@ -30,9 +20,9 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
       vertexList.filter(_.value2(NodeKeys.ORDER) == order)
     }
 
-    def checkForSingle(name: String): Unit = {
+    def checkForSingle[T](propertyName: Key[T], value: T): Unit = {
       vertexList.size shouldBe 1
-      vertexList.head.value2(NodeKeys.NAME) shouldBe name
+      vertexList.head.value2(propertyName) shouldBe value
     }
 
     def checkForSingle(): Unit = {
@@ -59,10 +49,10 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
       val block= method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      block.expandAst(NodeTypes.LOCAL).checkForSingle("local")
+      block.expandAst(NodeTypes.LOCAL).checkForSingle(NodeKeys.NAME, "local")
 
       val assignment = block.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(Operators.assignment)
+      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
       val arguments = assignment.expandAst()
       arguments.check(2,
@@ -86,10 +76,10 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
         expectations = "x", "y", "z")
 
       val assignment = block.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(Operators.assignment)
+      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
       val rightHandSide = assignment.expandAst(NodeTypes.CALL).filterOrder(2)
-      rightHandSide.checkForSingle(Operators.addition)
+      rightHandSide.checkForSingle(NodeKeys.NAME, Operators.addition)
 
       val arguments = rightHandSide.expandAst()
       arguments.check(2, arg =>
@@ -107,12 +97,12 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val locals = block.expandAst(NodeTypes.LOCAL)
-      locals.checkForSingle("x")
+      locals.checkForSingle(NodeKeys.NAME, "x")
 
       val nestedBlock = block.expandAst(NodeTypes.BLOCK)
       nestedBlock.checkForSingle()
       val nestedLocals = nestedBlock.expandAst(NodeTypes.LOCAL)
-      nestedLocals.checkForSingle("y")
+      nestedLocals.checkForSingle(NodeKeys.NAME, "y")
     }
 
     "be correct for while in method5" in {
@@ -125,13 +115,13 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
         expectations = "WhileStatement")
 
       val lessThan = whileStmt.expandAst(NodeTypes.CALL)
-      lessThan.checkForSingle(Operators.lessThan)
+      lessThan.checkForSingle(NodeKeys.NAME, Operators.lessThan)
 
       val whileBlock = whileStmt.expandAst(NodeTypes.BLOCK)
       whileBlock.checkForSingle()
 
       val assignPlus = whileBlock.expandAst(NodeTypes.CALL)
-      assignPlus.filterOrder(1).checkForSingle(Operators.assignmentPlus)
+      assignPlus.filterOrder(1).checkForSingle(NodeKeys.NAME, Operators.assignmentPlus)
     }
 
     "be correct for if in method6" in {
@@ -143,13 +133,13 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
         expectations = "IfStatement")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
-      greaterThan.checkForSingle(Operators.greaterThan)
+      greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
 
       val ifBlock = ifStmt.expandAst(NodeTypes.BLOCK)
       ifBlock.checkForSingle()
 
       val assignment = ifBlock.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(Operators.assignment)
+      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
     }
 
     "be correct for if-else in method7" in {
@@ -161,13 +151,13 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
         expectations = "IfStatement")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
-      greaterThan.checkForSingle(Operators.greaterThan)
+      greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
 
       val ifBlock = ifStmt.expandAst(NodeTypes.BLOCK)
       ifBlock.checkForSingle()
 
       val assignment = ifBlock.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(Operators.assignment)
+      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
       val elseStmt = ifStmt.expandAst(NodeTypes.UNKNOWN)
       elseStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
@@ -177,7 +167,7 @@ class MethodAstLayoutTests extends WordSpec with Matchers {
       elseBlock.checkForSingle()
 
       val assignmentInElse = elseBlock.expandAst(NodeTypes.CALL)
-      assignmentInElse.checkForSingle(Operators.assignment)
+      assignmentInElse.checkForSingle(NodeKeys.NAME, Operators.assignment)
     }
   }
 }
