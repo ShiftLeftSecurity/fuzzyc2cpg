@@ -101,7 +101,7 @@ public class MultiHashMap<K, V> implements Map<K, List<V>> {
 	}
 
 	@Override
-	public Set<Entry<K, List<V>>> entrySet() {
+	public Set<Map.Entry<K, List<V>>> entrySet() {
 		return this.hashMap.entrySet();
 	}
 
