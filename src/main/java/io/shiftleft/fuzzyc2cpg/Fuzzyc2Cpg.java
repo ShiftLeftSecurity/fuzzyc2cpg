@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg;
 
 import io.shiftleft.fuzzyc2cpg.filewalker.OrderedWalker;
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileWalker;
-import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule;
+import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
 import java.io.File;
 import java.io.IOException;
 
@@ -11,8 +11,8 @@ public class Fuzzyc2Cpg {
   private FileWalkerCallbacks parser;
   private SourceFileWalker sourceFileWalker = new OrderedWalker();
 
-  public Fuzzyc2Cpg(OutputModule outputModule) {
-    setupParser(outputModule);
+  public Fuzzyc2Cpg(CpgOutputModuleFactory<?> outputModuleFactory) {
+    setupParser(outputModuleFactory);
   }
 
   /**
@@ -20,7 +20,7 @@ public class Fuzzyc2Cpg {
    * for the source file walker, such that it can be
    * called for each source file.
    */
-  private void setupParser(OutputModule outputModule) {
+  private void setupParser(CpgOutputModuleFactory<?> outputModule) {
     parser = new FileWalkerCallbacks(outputModule);
     parser.initialize();
     sourceFileWalker.addListener(parser);

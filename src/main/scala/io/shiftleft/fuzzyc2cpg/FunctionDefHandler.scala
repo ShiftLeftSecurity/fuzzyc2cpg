@@ -1,26 +1,17 @@
 package io.shiftleft.fuzzyc2cpg
 
-import java.nio.file.Paths
-
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
-import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule
+import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 
 class FunctionDefHandler(astParentNode: Node,
-                         outputModule: OutputModule,
+                         outputModule: CpgOutputModule,
                          containingFileName: String) {
 
 
   def handle(ast: FunctionDefBase): Unit = {
     val methodCreator = new MethodCreator(ast, astParentNode, containingFileName)
     val bodyCpg = methodCreator.addMethodCpg()
-    val outputFilename = generateOutputFilename(ast)
-    outputModule.output(bodyCpg, outputFilename)
+    outputModule.persistCpg(bodyCpg)
   }
-
-  def generateOutputFilename(ast : FunctionDefBase) : String = {
-    val path = Paths.get(Config.outputDirectory, ast.getName() + ".proto");
-    return path.toString();
-  }
-
 }

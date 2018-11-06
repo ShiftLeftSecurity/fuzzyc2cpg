@@ -4,7 +4,7 @@ import java.nio.file.{Path, Paths}
 
 import io.shiftleft.fuzzyc2cpg.Utils.newEdge
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener
-import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule
+import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.{ModuleParser => ParserModuleParser}
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
@@ -12,7 +12,8 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
 
-class FileWalkerCallbacks(outputModule: OutputModule) extends SourceFileListener {
+class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
+  extends SourceFileListener {
   private val structureCpg = CpgStruct.newBuilder()
 
   /**
@@ -28,7 +29,7 @@ class FileWalkerCallbacks(outputModule: OutputModule) extends SourceFileListener
     structureCpg.addNode(namespaceBlock)
     structureCpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
 
-    val astVisitor = new AstVisitor(outputModule, structureCpg, namespaceBlock)
+    val astVisitor = new AstVisitor(outputModuleFactory, structureCpg, namespaceBlock)
     parser.addObserver(astVisitor)
 
     parser.parseFile(pathToFile.toString)
@@ -81,13 +82,16 @@ class FileWalkerCallbacks(outputModule: OutputModule) extends SourceFileListener
 
   override def shutdown(): Unit = {
     outputStructuralCpg()
+    outputModuleFactory.persist()
   }
 
   private def outputStructuralCpg(): Unit = {
     val outputFilename = Paths
       .get(Config.outputDirectory, "structural-cpg.proto")
       .toString();
-    outputModule.output(structureCpg, outputFilename);
+    val outputModule = outputModuleFactory.create()
+    outputModule.setClassAndMethodName("__structural__", "")
+    outputModule.persistCpg(structureCpg);
   }
 
   override def initialize(): Unit = {

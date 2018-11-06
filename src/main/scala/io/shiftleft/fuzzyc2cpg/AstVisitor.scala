@@ -7,13 +7,13 @@ import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
-import io.shiftleft.fuzzyc2cpg.outputmodules.OutputModule
+import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import org.antlr.v4.runtime.ParserRuleContext
 
-class AstVisitor(outputModule: OutputModule,
+class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
                  structureCpg: CpgStruct.Builder,
                  astRootNode: Node)
   extends ASTNodeVisitor with AntlrParserDriverObserver {
@@ -24,6 +24,8 @@ class AstVisitor(outputModule: OutputModule,
     * Callback triggered for each function definition
     * */
   override def visit(ast: FunctionDefBase): Unit =  {
+    val outputModule = outputModuleFactory.create()
+    outputModule.setClassAndMethodName(fileNameOption.get, ast.getName)
     new FunctionDefHandler(astParentStack.head, outputModule, fileNameOption.get).handle(ast)
   }
 
