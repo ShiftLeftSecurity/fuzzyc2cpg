@@ -8,7 +8,7 @@ import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, DispatchTypes, NodePropertyName}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import Utils._
-import io.shiftleft.codepropertygraph.generated.EvaluationStrategies
+import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, Operators}
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
@@ -169,7 +169,7 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
   override def visit(astAdd: AdditiveExpression): Unit = {
     val operatorMethod = astAdd.getOperator match {
       case "+" => Operators.addition
-      case "-" => Operators.substraction
+      case "-" => Operators.subtraction
     }
 
     val cpgAdd =

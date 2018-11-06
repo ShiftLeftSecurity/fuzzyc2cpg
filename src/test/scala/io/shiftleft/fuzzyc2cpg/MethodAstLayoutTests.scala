@@ -1,7 +1,7 @@
 package io.shiftleft.fuzzyc2cpg
 
 import gremlin.scala._
-import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes}
+import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
 import org.scalatest.{Matchers, WordSpec}
 
 class MethodAstLayoutTests extends WordSpec with Matchers with TravesalUtils {
