@@ -2,7 +2,8 @@ package io.shiftleft.fuzzyc2cpg
 
 import java.nio.file.{Path, Paths}
 
-import io.shiftleft.fuzzyc2cpg.Utils.newEdge
+import io.shiftleft.codepropertygraph.generated.Languages
+import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.{ModuleParser => ParserModuleParser}
@@ -79,8 +80,16 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
       .build()
   }
 
+  private def addMetaDataNode(): Unit = {
+    val metaNode = newNode(NodeType.META_DATA)
+      .addStringProperty(NodePropertyName.LANGUAGE, Languages.FUZZYC)
+      .build
+
+    structureCpg.addNode(metaNode)
+  }
 
   override def shutdown(): Unit = {
+    addMetaDataNode()
     outputStructuralCpg()
     outputModuleFactory.persist()
   }
