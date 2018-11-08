@@ -1,10 +1,11 @@
 package io.shiftleft.fuzzyc2cpg
 
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
-import io.shiftleft.fuzzyc2cpg.cfg.{CAstToCfgConverter, CFG}
+import io.shiftleft.fuzzyc2cpg.cfg.CAstToCfgConverter
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
+import io.shiftleft.fuzzyc2cpg.cfgnew.AstToCfgConverter
 
 class MethodCreator(functionDef: FunctionDefBase,
                     astParentNode: Node,

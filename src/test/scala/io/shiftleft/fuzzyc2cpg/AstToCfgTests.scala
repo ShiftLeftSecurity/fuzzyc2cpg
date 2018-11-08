@@ -1,11 +1,11 @@
 package io.shiftleft.fuzzyc2cpg
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
-import io.shiftleft.fuzzyc2cpg.cfg.AstToCfgConverter
 import io.shiftleft.fuzzyc2cpg.parsetreetoast.FunctionContentTestUtil
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import Utils._
+import io.shiftleft.fuzzyc2cpg.cfgnew.AstToCfgConverter
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.scalatest.{Matchers, WordSpec}
 

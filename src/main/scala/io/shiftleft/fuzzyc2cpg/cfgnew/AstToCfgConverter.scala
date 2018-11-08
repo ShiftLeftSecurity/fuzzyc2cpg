@@ -1,15 +1,15 @@
-package io.shiftleft.fuzzyc2cpg
+package io.shiftleft.fuzzyc2cpg.cfgnew
 
+import io.shiftleft.fuzzyc2cpg.Utils.newEdge
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.expressions.{BinaryExpression, Constant}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
-import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
-import io.shiftleft.proto.cpg.Cpg.CpgStruct
-import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
-import Utils._
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.WhileStatement
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
+import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 
 class AstToCfgConverter(entryNode: Node,
                         exitNode: Node,
