@@ -1,36 +1,26 @@
 package io.shiftleft.fuzzyc2cpg.cfgnew
 
-import io.shiftleft.fuzzyc2cpg.Utils.newEdge
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.expressions.{BinaryExpression, Constant}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.WhileStatement
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
-import io.shiftleft.proto.cpg.Cpg.CpgStruct
-import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
-import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 
-class AstToCfgConverter(entryNode: Node,
-                        exitNode: Node,
-                        astToProtoMapping: Map[AstNode, Node],
-                        targetCpg: CpgStruct.Builder) extends ASTNodeVisitor {
+class AstToCfgConverter[NodeType](entryNode: NodeType,
+                                  exitNode: NodeType,
+                                  adapter: DestinationGraphAdapter[NodeType] = null) extends ASTNodeVisitor {
 
-  trait CfgEdgeType
-  object TrueEdge extends CfgEdgeType
-  object FalseEdge extends CfgEdgeType
-  object AlwaysEdge extends CfgEdgeType
-
-  case class FringeElement(node: Node, cfgEdgeType: CfgEdgeType)
+  case class FringeElement(node: NodeType, cfgEdgeType: CfgEdgeType)
 
   private def extendCfg(astDstNode: AstNode): Unit = {
-    val dstNode = astToProtoMapping(astDstNode)
+    val dstNode = adapter.mapNode(astDstNode)
     extendCfg(dstNode)
   }
 
-  private def extendCfg(dstNode: Node): Unit = {
+  private def extendCfg(dstNode: NodeType): Unit = {
     fringe.foreach { case FringeElement(srcNode, cfgEdgeType) =>
-      targetCpg.addEdge(newEdge(EdgeType.CFG, dstNode, srcNode))
+      adapter.newCfgEdge(dstNode, srcNode, cfgEdgeType)
     }
     fringe = Seq(FringeElement(dstNode, AlwaysEdge))
 
@@ -49,7 +39,7 @@ class AstToCfgConverter(entryNode: Node,
 
   private var fringe = Seq(FringeElement(entryNode, AlwaysEdge))
   private var markNextCfgNode = false
-  private var markedCfgNode: Node = _
+  private var markedCfgNode: NodeType = _
 
   def convert(astNode: AstNode): Unit = {
     astNode.accept(this)

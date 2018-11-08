@@ -5,7 +5,7 @@ import io.shiftleft.fuzzyc2cpg.cfg.CAstToCfgConverter
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
-import io.shiftleft.fuzzyc2cpg.cfgnew.AstToCfgConverter
+import io.shiftleft.fuzzyc2cpg.cfgnew.{AstToCfgConverter, ProtoGraphAdapter}
 
 class MethodCreator(functionDef: FunctionDefBase,
                     astParentNode: Node,
@@ -38,7 +38,8 @@ class MethodCreator(functionDef: FunctionDefBase,
   private def addMethodBodyCfgNew(methodNode: Node,
                                methodExitNode: Node,
                                astToProtoMapping: Map[AstNode, Node]): Unit = {
-    val astToCfgConverter = new AstToCfgConverter(methodNode, methodExitNode, astToProtoMapping, bodyCpg)
+    val graphAdapter = new ProtoGraphAdapter(bodyCpg, astToProtoMapping)
+    val astToCfgConverter = new AstToCfgConverter(methodNode, methodExitNode, graphAdapter)
     astToCfgConverter.convert(functionDef)
 
   }
