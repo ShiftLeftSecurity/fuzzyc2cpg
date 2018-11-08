@@ -1,17 +1,10 @@
 package io.shiftleft.fuzzyc2cpg
 
-import io.shiftleft.codepropertygraph.generated.EvaluationStrategies
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.{FunctionDefBase, ParameterBase, ReturnType}
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.fuzzyc2cpg.cfg.{CAstToCfgConverter, CFG}
-import io.shiftleft.fuzzyc2cpg.cfg.nodes._
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
-import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
-import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
-import io.shiftleft.fuzzyc2cpg.Utils._
+import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
-import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
-
-import scala.collection.JavaConverters._
 
 class MethodCreator(functionDef: FunctionDefBase,
                     astParentNode: Node,
@@ -22,7 +15,7 @@ class MethodCreator(functionDef: FunctionDefBase,
     val bodyVisitor = new AstToProtoConverter(functionDef, containingFileName, bodyCpg)
     bodyVisitor.convert()
 
-    addMethodBodyCfg(bodyVisitor.getMethodNode.get,
+    addMethodBodyCfgNew(bodyVisitor.getMethodNode.get,
       bodyVisitor.getMethodReturnNode.get,
       bodyVisitor.getAstToProtoMapping)
 
@@ -38,6 +31,14 @@ class MethodCreator(functionDef: FunctionDefBase,
     val cfgToProtoConverter =
       new CfgToProtoConverter(cfg, methodNode, methodExitNode, astToProtoMapping, bodyCpg)
     cfgToProtoConverter.convert()
+
+  }
+
+  private def addMethodBodyCfgNew(methodNode: Node,
+                               methodExitNode: Node,
+                               astToProtoMapping: Map[AstNode, Node]): Unit = {
+    val astToCfgConverter = new AstToCfgConverter(methodNode, methodExitNode, astToProtoMapping, bodyCpg)
+    astToCfgConverter.convert(functionDef)
 
   }
 }
