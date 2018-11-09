@@ -3,17 +3,23 @@ package io.shiftleft.fuzzyc2cpg.cfgnew
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Label}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionHolder, ExpressionStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{DoStatement, ForStatement, WhileStatement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, GotoStatement}
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
+
+object AstToCfgConverter {
+  private val logger = LoggerFactory.getLogger(getClass)
+}
 
 class AstToCfgConverter[NodeType](entryNode: NodeType,
                                   exitNode: NodeType,
                                   adapter: DestinationGraphAdapter[NodeType] = null) extends ASTNodeVisitor {
+  import AstToCfgConverter._
 
   case class FringeElement(node: NodeType, cfgEdgeType: CfgEdgeType)
 
@@ -40,16 +46,36 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
       markedCfgNode = dstNode
       markNextCfgNode = false
     }
+
+    pendingLabels.foreach { label =>
+      labeledNodes = labeledNodes + (label  -> dstNode)
+    }
+
   }
 
   private var fringe = Seq(FringeElement(entryNode, AlwaysEdge))
   private var markNextCfgNode = false
   private var markedCfgNode: NodeType = _
   private var nonGotoJumpStack = new NonGotoJumpStack[NodeType]()
+  private var gotos = List[(NodeType, String)]()
+  private var labeledNodes = Map[String, NodeType]()
+  private var pendingLabels = List[String]()
+
+  private def connectGotosAndLabels(): Unit = {
+    gotos.foreach { case (goto, label) =>
+      labeledNodes.get(label) match {
+        case Some(labeledNode) =>
+          adapter.newCfgEdge(labeledNode, goto, AlwaysEdge)
+        case None =>
+          logger.warn("Unable to wire goto statement. Missing label {}.", label)
+      }
+    }
+  }
 
   def convert(astNode: AstNode): Unit = {
     astNode.accept(this)
     extendCfg(exitNode)
+    connectGotosAndLabels()
   }
 
   // TODO This also handles || and && for which we do not correctly model the lazyness.
@@ -160,8 +186,19 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     functionDef.getContent.accept(this)
   }
 
+  override def visit(gotoStatement: GotoStatement): Unit = {
+    val mappedGoto = adapter.mapNode(gotoStatement)
+    extendCfg(mappedGoto)
+    fringe = Seq()
+    gotos = (mappedGoto, gotoStatement.getTargetName) :: gotos
+  }
+
   override def visit(identifier: Identifier): Unit = {
     extendCfg(identifier)
+  }
+
+  override def visit(label: Label): Unit = {
+    pendingLabels = label.getLabelName :: pendingLabels
   }
 
   override def visit(whileStatement: WhileStatement): Unit = {

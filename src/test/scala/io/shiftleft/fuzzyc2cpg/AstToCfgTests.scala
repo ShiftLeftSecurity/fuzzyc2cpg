@@ -162,4 +162,27 @@ class AstToCfgTests extends WordSpec with Matchers {
       succOf("x < 1") shouldBe expected(("continue ;", TrueEdge), ("EXIT", FalseEdge))
     }
   }
+
+  "Cfg for goto" should {
+    "be correct for single label" in new Fixture("x; goto l1; y; l1:") {
+      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("goto l1 ;", AlwaysEdge))
+      succOf("goto l1 ;") shouldBe expected(("EXIT", AlwaysEdge))
+      succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
+    }
+
+    "be correct for multiple labels" in new Fixture("x; goto l1; l2: y; l1:") {
+      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("goto l1 ;", AlwaysEdge))
+      succOf("goto l1 ;") shouldBe expected(("EXIT", AlwaysEdge))
+      succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
+    }
+
+    "be correct for multiple labels on same spot" in new Fixture("x; goto l2; y; l1:l2:") {
+      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("goto l2 ;", AlwaysEdge))
+      succOf("goto l2 ;") shouldBe expected(("EXIT", AlwaysEdge))
+      succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
+    }
+  }
 }
