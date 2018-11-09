@@ -4,7 +4,7 @@ import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
-import io.shiftleft.fuzzyc2cpg.cfgnew.{AstToCfgConverter, ProtoGraphAdapter}
+import io.shiftleft.fuzzyc2cpg.cfg.{AstToCfgConverter, ProtoGraphAdapter}
 
 class MethodCreator(functionDef: FunctionDefBase,
                     astParentNode: Node,

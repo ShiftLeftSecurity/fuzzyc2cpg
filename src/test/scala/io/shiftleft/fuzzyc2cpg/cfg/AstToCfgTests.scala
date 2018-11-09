@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.cfgnew
+package io.shiftleft.fuzzyc2cpg.cfg
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.parsetreetoast.FunctionContentTestUtil
