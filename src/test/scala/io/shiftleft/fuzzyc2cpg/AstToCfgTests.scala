@@ -79,26 +79,6 @@ class AstToCfgTests extends WordSpec with Matchers {
       succOf("x = y + 1") shouldBe expected(("EXIT", AlwaysEdge))
     }
 
-    "correct for while-loop" in new Fixture("while (x < 1) { y = 2; }") {
-      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
-      succOf("x") shouldBe expected(("1", AlwaysEdge))
-      succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
-      succOf("x < 1") shouldBe expected(("y", TrueEdge), ("EXIT", FalseEdge))
-      succOf("y") shouldBe expected(("2", AlwaysEdge))
-      succOf("2") shouldBe expected(("y = 2", AlwaysEdge))
-      succOf("y = 2") shouldBe expected(("x", AlwaysEdge))
-    }
-
-    "correct for do-while-loop" in new Fixture("do { y = 2; } while (x < 1);") {
-      succOf("ENTRY") shouldBe expected(("y", AlwaysEdge))
-      succOf("y") shouldBe expected(("2", AlwaysEdge))
-      succOf("2") shouldBe expected(("y = 2", AlwaysEdge))
-      succOf("y = 2") shouldBe expected(("x", AlwaysEdge))
-      succOf("x") shouldBe expected(("1", AlwaysEdge))
-      succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
-      succOf("x < 1") shouldBe expected(("y", TrueEdge), ("EXIT", FalseEdge))
-    }
-
     "correct for for-loop" in new Fixture("for (x = 0; y < 1; z += 2) { a = 3; }") {
       succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
       succOf("x") shouldBe expected(("0", AlwaysEdge))
@@ -120,6 +100,66 @@ class AstToCfgTests extends WordSpec with Matchers {
       succOf("a") shouldBe expected(("1", AlwaysEdge))
       succOf("1") shouldBe expected(("a = 1", AlwaysEdge))
       succOf("a = 1") shouldBe expected(("a", AlwaysEdge))
+    }
+  }
+
+  "Cfg for while-loop" should {
+    "be correct" in new Fixture("while (x < 1) { y = 2; }") {
+      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
+      succOf("x < 1") shouldBe expected(("y", TrueEdge), ("EXIT", FalseEdge))
+      succOf("y") shouldBe expected(("2", AlwaysEdge))
+      succOf("2") shouldBe expected(("y = 2", AlwaysEdge))
+      succOf("y = 2") shouldBe expected(("x", AlwaysEdge))
+    }
+
+    "be correct with break" in new Fixture("while (x < 1) { break; y; }") {
+      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
+      succOf("x < 1") shouldBe expected(("break ;", TrueEdge), ("EXIT", FalseEdge))
+      succOf("break ;") shouldBe expected(("EXIT", AlwaysEdge))
+      succOf("y") shouldBe expected(("x", AlwaysEdge))
+    }
+
+    "be correct with continue" in new Fixture("while (x < 1) { continue; y; }") {
+      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
+      succOf("x < 1") shouldBe expected(("continue ;", TrueEdge), ("EXIT", FalseEdge))
+      succOf("continue ;") shouldBe expected(("x", AlwaysEdge))
+      succOf("y") shouldBe expected(("x", AlwaysEdge))
+    }
+  }
+
+  "Cfg for do-while-loop" should {
+    "be correct" in new Fixture("do { y = 2; } while (x < 1);") {
+      succOf("ENTRY") shouldBe expected(("y", AlwaysEdge))
+      succOf("y") shouldBe expected(("2", AlwaysEdge))
+      succOf("2") shouldBe expected(("y = 2", AlwaysEdge))
+      succOf("y = 2") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
+      succOf("x < 1") shouldBe expected(("y", TrueEdge), ("EXIT", FalseEdge))
+    }
+
+    "be correct with break" in new Fixture("do { break; y; } while (x < 1);") {
+      succOf("ENTRY") shouldBe expected(("break ;", AlwaysEdge))
+      succOf("break ;") shouldBe expected(("EXIT", AlwaysEdge))
+      succOf("y") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
+      succOf("x < 1") shouldBe expected(("break ;", TrueEdge), ("EXIT", FalseEdge))
+    }
+
+    "be correct with continue" in new Fixture("do { continue; y; } while (x < 1);") {
+      succOf("ENTRY") shouldBe expected(("continue ;", AlwaysEdge))
+      succOf("continue ;") shouldBe expected(("x", AlwaysEdge))
+      succOf("y") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
+      succOf("x < 1") shouldBe expected(("continue ;", TrueEdge), ("EXIT", FalseEdge))
     }
   }
 }
