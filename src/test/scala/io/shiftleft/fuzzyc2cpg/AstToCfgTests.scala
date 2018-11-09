@@ -78,29 +78,6 @@ class AstToCfgTests extends WordSpec with Matchers {
       succOf("y + 1") shouldBe expected(("x = y + 1", AlwaysEdge))
       succOf("x = y + 1") shouldBe expected(("EXIT", AlwaysEdge))
     }
-
-    "correct for for-loop" in new Fixture("for (x = 0; y < 1; z += 2) { a = 3; }") {
-      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
-      succOf("x") shouldBe expected(("0", AlwaysEdge))
-      succOf("0") shouldBe expected(("x = 0", AlwaysEdge))
-      succOf("x = 0") shouldBe expected(("y", AlwaysEdge))
-      succOf("y") shouldBe expected(("1", AlwaysEdge))
-      succOf("1") shouldBe expected(("y < 1", AlwaysEdge))
-      succOf("y < 1") shouldBe expected(("a", TrueEdge), ("EXIT", FalseEdge))
-      succOf("a") shouldBe expected(("3", AlwaysEdge))
-      succOf("3") shouldBe expected(("a = 3", AlwaysEdge))
-      succOf("a = 3") shouldBe expected(("z", AlwaysEdge))
-      succOf("z") shouldBe expected(("2", AlwaysEdge))
-      succOf("2") shouldBe expected(("z += 2", AlwaysEdge))
-      succOf("z += 2") shouldBe expected(("y", AlwaysEdge))
-    }
-
-    "correct for empty for-loop" in new Fixture("for (;;) { a = 1; }") {
-      succOf("ENTRY") shouldBe expected(("a", AlwaysEdge))
-      succOf("a") shouldBe expected(("1", AlwaysEdge))
-      succOf("1") shouldBe expected(("a = 1", AlwaysEdge))
-      succOf("a = 1") shouldBe expected(("a", AlwaysEdge))
-    }
   }
 
   "Cfg for while-loop" should {
@@ -163,6 +140,76 @@ class AstToCfgTests extends WordSpec with Matchers {
     }
   }
 
+  "Cfg for for-loop" should {
+    "be correct" in new Fixture("for (x = 0; y < 1; z += 2) { a = 3; }") {
+      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("0", AlwaysEdge))
+      succOf("0") shouldBe expected(("x = 0", AlwaysEdge))
+      succOf("x = 0") shouldBe expected(("y", AlwaysEdge))
+      succOf("y") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("y < 1", AlwaysEdge))
+      succOf("y < 1") shouldBe expected(("a", TrueEdge), ("EXIT", FalseEdge))
+      succOf("a") shouldBe expected(("3", AlwaysEdge))
+      succOf("3") shouldBe expected(("a = 3", AlwaysEdge))
+      succOf("a = 3") shouldBe expected(("z", AlwaysEdge))
+      succOf("z") shouldBe expected(("2", AlwaysEdge))
+      succOf("2") shouldBe expected(("z += 2", AlwaysEdge))
+      succOf("z += 2") shouldBe expected(("y", AlwaysEdge))
+    }
+
+    "be correct with break" in new Fixture("for (x = 0; y < 1; z += 2) { break; a = 3; }") {
+      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("0", AlwaysEdge))
+      succOf("x = 0") shouldBe expected(("y", AlwaysEdge))
+      succOf("y") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("y < 1", AlwaysEdge))
+      succOf("y < 1") shouldBe expected(("break ;", TrueEdge), ("EXIT", FalseEdge))
+      succOf("break ;") shouldBe expected(("EXIT", AlwaysEdge))
+      succOf("a") shouldBe expected(("3", AlwaysEdge))
+      succOf("3") shouldBe expected(("a = 3", AlwaysEdge))
+      succOf("a = 3") shouldBe expected(("z", AlwaysEdge))
+      succOf("z") shouldBe expected(("2", AlwaysEdge))
+      succOf("2") shouldBe expected(("z += 2", AlwaysEdge))
+      succOf("z += 2") shouldBe expected(("y", AlwaysEdge))
+    }
+
+    "be correct with continue" in new Fixture("for (x = 0; y < 1; z += 2) { continue; a = 3; }") {
+      succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+      succOf("x") shouldBe expected(("0", AlwaysEdge))
+      succOf("0") shouldBe expected(("x = 0", AlwaysEdge))
+      succOf("x = 0") shouldBe expected(("y", AlwaysEdge))
+      succOf("y") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("y < 1", AlwaysEdge))
+      succOf("y < 1") shouldBe expected(("continue ;", TrueEdge), ("EXIT", FalseEdge))
+      succOf("continue ;") shouldBe expected(("z", AlwaysEdge))
+      succOf("a") shouldBe expected(("3", AlwaysEdge))
+      succOf("3") shouldBe expected(("a = 3", AlwaysEdge))
+      succOf("a = 3") shouldBe expected(("z", AlwaysEdge))
+      succOf("z") shouldBe expected(("2", AlwaysEdge))
+      succOf("2") shouldBe expected(("z += 2", AlwaysEdge))
+      succOf("z += 2") shouldBe expected(("y", AlwaysEdge))
+    }
+
+    "be correct for with empty condition" in new Fixture("for (;;) { a = 1; }") {
+      succOf("ENTRY") shouldBe expected(("a", AlwaysEdge))
+      succOf("a") shouldBe expected(("1", AlwaysEdge))
+      succOf("1") shouldBe expected(("a = 1", AlwaysEdge))
+      succOf("a = 1") shouldBe expected(("a", AlwaysEdge))
+    }
+
+    "be correct for with empty condition with break" in
+      new Fixture("for (;;) { break; }") {
+      succOf("ENTRY") shouldBe expected(("break ;", AlwaysEdge))
+      succOf("break ;") shouldBe expected(("EXIT", AlwaysEdge))
+    }
+
+    "be correct for with empty condition with continue" in
+      new Fixture("for (;;) { continue ; }") {
+        succOf("ENTRY") shouldBe expected(("continue ;", AlwaysEdge))
+        succOf("continue ;") shouldBe expected(("continue ;", AlwaysEdge))
+      }
+  }
+
   "Cfg for goto" should {
     "be correct for single label" in new Fixture("x; goto l1; y; l1:") {
       succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
@@ -185,4 +232,5 @@ class AstToCfgTests extends WordSpec with Matchers {
       succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
     }
   }
+
 }

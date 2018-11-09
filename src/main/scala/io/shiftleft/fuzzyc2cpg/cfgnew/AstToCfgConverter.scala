@@ -173,13 +173,21 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
           Seq()
       }
 
+    nonGotoJumpStack.pushLayer()
     forStatement.getStatement.accept(this)
+    val breaks = nonGotoJumpStack.getTopBreaks
+    val continues = nonGotoJumpStack.getTopContinues
+    nonGotoJumpStack.popLayer()
+
+    fringe = fringe ++
+      continues.map(continue => FringeElement(continue, AlwaysEdge))
 
     Option(forStatement.getForLoopExpression).foreach(_.accept(this))
 
     extendCfg(markedCfgNode)
 
-    fringe = conditionFringe.setCfgEdgeType(FalseEdge)
+    fringe = conditionFringe.setCfgEdgeType(FalseEdge) ++
+      breaks.map(break => FringeElement(break, AlwaysEdge))
   }
 
   override def visit(functionDef: FunctionDef): Unit = {
