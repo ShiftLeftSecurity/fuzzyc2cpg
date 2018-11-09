@@ -18,7 +18,7 @@ class LayeredStack[ElementType] {
   }
 
   def store(node: ElementType): Unit = {
-    stack = stack.head.addNode(node) :: stack
+    stack = stack.head.addNode(node) :: stack.tail
   }
 
   def getTopElements: List[ElementType] = {

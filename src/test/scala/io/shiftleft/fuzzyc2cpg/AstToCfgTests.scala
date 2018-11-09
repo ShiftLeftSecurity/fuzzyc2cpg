@@ -112,11 +112,20 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("continue ;") shouldBe expected(("x", AlwaysEdge))
         succOf("y") shouldBe expected(("x", AlwaysEdge))
       }
+
+    "be correct with nested while-loop" in
+      new Fixture("while (x) { while (y) { z; }}") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", TrueEdge), ("EXIT", FalseEdge))
+        succOf("y") shouldBe expected(("z", TrueEdge), ("x", FalseEdge))
+        succOf("z") shouldBe expected(("y", AlwaysEdge))
+      }
   }
 
   "Cfg for do-while-loop" should {
     "be correct" in
       new Fixture("do { y = 2; } while (x < 1);") {
+        succOf("ENTRY") shouldBe expected(("y", AlwaysEdge))
         succOf("ENTRY") shouldBe expected(("y", AlwaysEdge))
         succOf("y") shouldBe expected(("2", AlwaysEdge))
         succOf("2") shouldBe expected(("y = 2", AlwaysEdge))
