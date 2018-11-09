@@ -6,6 +6,7 @@ trait CfgEdgeType
 object TrueEdge extends CfgEdgeType
 object FalseEdge extends CfgEdgeType
 object AlwaysEdge extends CfgEdgeType
+object CaseEdge extends CfgEdgeType
 
 trait DestinationGraphAdapter[NodeType] {
   def mapNode(astNode: AstNode): NodeType

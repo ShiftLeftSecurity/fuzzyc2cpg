@@ -233,4 +233,43 @@ class AstToCfgTests extends WordSpec with Matchers {
     }
   }
 
+  "Cfg for switch" should {
+    "be correct with one case" in
+      new Fixture("switch (x) { case 1: y; }") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("EXIT", CaseEdge))
+        succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
+    }
+
+    "be correct with multiple cases" in
+      new Fixture("switch (x) { case 1: y; case 2: z;}") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("z", CaseEdge), ("EXIT", CaseEdge))
+        succOf("y") shouldBe expected(("z", AlwaysEdge))
+        succOf("z") shouldBe expected(("EXIT", AlwaysEdge))
+    }
+
+    "be correct with multiple cases on same spot" in
+      new Fixture("switch (x) { case 1: case 2: y; }") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("EXIT", CaseEdge))
+        succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct with multiple cases and multiple cases on same spot" in
+      new Fixture("switch (x) { case 1: case 2: y; case 3: z;}") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("z", CaseEdge), ("EXIT", CaseEdge))
+        succOf("y") shouldBe expected(("z", AlwaysEdge))
+        succOf("z") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct with default case" in
+      new Fixture("switch (x) { default: y; }") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge))
+        succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+  }
+
 }

@@ -5,7 +5,7 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Label}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionHolder, ExpressionStatement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{DoStatement, ForStatement, WhileStatement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{DoStatement, ForStatement, SwitchStatement, WhileStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, GotoStatement}
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import org.slf4j.LoggerFactory
@@ -47,8 +47,18 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
       markNextCfgNode = false
     }
 
-    pendingLabels.foreach { label =>
-      labeledNodes = labeledNodes + (label  -> dstNode)
+    if (pendingGotoLabels.nonEmpty) {
+      pendingGotoLabels.foreach { label =>
+        labeledNodes = labeledNodes + (label  -> dstNode)
+      }
+      pendingGotoLabels = List()
+    }
+
+    // TODO at the moment we discard the case labels
+    if (pendingCaseLabels.nonEmpty) {
+      val containsDefaultLabel = pendingCaseLabels.contains("default")
+      caseStack.store(dstNode, containsDefaultLabel)
+      pendingCaseLabels = List()
     }
 
   }
@@ -56,10 +66,13 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   private var fringe = Seq(FringeElement(entryNode, AlwaysEdge))
   private var markNextCfgNode = false
   private var markedCfgNode: NodeType = _
-  private var nonGotoJumpStack = new NonGotoJumpStack[NodeType]()
+  private var breakStack = new LayeredStack[NodeType]()
+  private var continueStack = new LayeredStack[NodeType]()
+  private var caseStack = new LayeredStack[(NodeType, Boolean)]()
   private var gotos = List[(NodeType, String)]()
   private var labeledNodes = Map[String, NodeType]()
-  private var pendingLabels = List[String]()
+  private var pendingGotoLabels = List[String]()
+  private var pendingCaseLabels = List[String]()
 
   private def connectGotosAndLabels(): Unit = {
     gotos.foreach { case (goto, label) =>
@@ -89,7 +102,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     val mappedBreak = adapter.mapNode(breakStatement)
     extendCfg(mappedBreak)
     fringe = Seq()
-    nonGotoJumpStack.storeBreak(mappedBreak)
+    breakStack.store(mappedBreak)
   }
 
   override def visit(compoundStatement: CompoundStatement): Unit = {
@@ -102,7 +115,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     val mappedContinue = adapter.mapNode(continueStatement)
     extendCfg(mappedContinue)
     fringe = Seq()
-    nonGotoJumpStack.storeContinue(mappedContinue)
+    continueStack.store(mappedContinue)
   }
 
   override def visit(constant: Constant): Unit = {
@@ -111,11 +124,13 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
   override def visit(doStatement: DoStatement): Unit = {
     markNextCfgNode = true
-    nonGotoJumpStack.pushLayer()
+    breakStack.pushLayer()
+    continueStack.pushLayer()
     doStatement.getStatement.accept(this)
-    val breaks = nonGotoJumpStack.getTopBreaks
-    val continues = nonGotoJumpStack.getTopContinues
-    nonGotoJumpStack.popLayer()
+    val breaks = breakStack.getTopElements
+    val continues = continueStack.getTopElements
+    breakStack.popLayer()
+    continueStack.popLayer()
 
     fringe = fringe ++
       continues.map(continue => FringeElement(continue, AlwaysEdge))
@@ -173,11 +188,13 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
           Seq()
       }
 
-    nonGotoJumpStack.pushLayer()
+    breakStack.pushLayer()
+    continueStack.pushLayer()
     forStatement.getStatement.accept(this)
-    val breaks = nonGotoJumpStack.getTopBreaks
-    val continues = nonGotoJumpStack.getTopContinues
-    nonGotoJumpStack.popLayer()
+    val breaks = breakStack.getTopElements
+    val continues = continueStack.getTopElements
+    breakStack.popLayer()
+    continueStack.popLayer()
 
     fringe = fringe ++
       continues.map(continue => FringeElement(continue, AlwaysEdge))
@@ -206,7 +223,41 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   }
 
   override def visit(label: Label): Unit = {
-    pendingLabels = label.getLabelName :: pendingLabels
+    val labelName = label.getLabelName
+    if (labelName.startsWith("case") || labelName.startsWith("default")) {
+      pendingCaseLabels = labelName :: pendingCaseLabels
+    } else {
+      pendingGotoLabels = labelName :: pendingGotoLabels
+    }
+  }
+
+  override def visit(switchStatement: SwitchStatement): Unit = {
+    switchStatement.getCondition.accept(this)
+    val conditionFringe = fringe.setCfgEdgeType(CaseEdge)
+    fringe = Seq()
+
+    breakStack.pushLayer()
+    caseStack.pushLayer()
+
+    switchStatement.getStatement.accept(this)
+    val switchFringe = fringe
+
+    val hasDefaultCase =
+      caseStack.getTopElements.exists { case (caseNode, isDefault) =>
+        fringe = conditionFringe
+        extendCfg(caseNode)
+        isDefault
+      }
+
+    fringe = switchFringe ++
+      breakStack.getTopElements.map(break => FringeElement(break, AlwaysEdge))
+
+    if (!hasDefaultCase) {
+      fringe ++= conditionFringe
+    }
+
+    breakStack.popLayer()
+    caseStack.popLayer()
   }
 
   override def visit(whileStatement: WhileStatement): Unit = {
@@ -215,18 +266,20 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     val conditionFringe = fringe
     fringe = fringe.setCfgEdgeType(TrueEdge)
 
-    nonGotoJumpStack.pushLayer()
+    breakStack.pushLayer()
+    continueStack.pushLayer()
 
     whileStatement.getStatement.accept(this)
 
     fringe = fringe ++
-      nonGotoJumpStack.getTopContinues.map(continue => FringeElement(continue, AlwaysEdge))
+      continueStack.getTopElements.map(continue => FringeElement(continue, AlwaysEdge))
 
     extendCfg(markedCfgNode)
 
     fringe = conditionFringe.setCfgEdgeType(FalseEdge) ++
-      nonGotoJumpStack.getTopBreaks.map(break => FringeElement(break, AlwaysEdge))
+      breakStack.getTopElements.map(break => FringeElement(break, AlwaysEdge))
 
-    nonGotoJumpStack.popLayer()
+    breakStack.popLayer()
+    continueStack.popLayer()
   }
 }
