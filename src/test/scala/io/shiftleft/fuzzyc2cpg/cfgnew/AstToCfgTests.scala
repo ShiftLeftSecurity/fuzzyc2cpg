@@ -1,7 +1,6 @@
-package io.shiftleft.fuzzyc2cpg
+package io.shiftleft.fuzzyc2cpg.cfgnew
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
-import io.shiftleft.fuzzyc2cpg.cfgnew._
 import io.shiftleft.fuzzyc2cpg.parsetreetoast.FunctionContentTestUtil
 import org.scalatest.{Matchers, WordSpec}
 
