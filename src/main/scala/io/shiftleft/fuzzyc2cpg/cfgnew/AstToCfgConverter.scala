@@ -23,11 +23,27 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
   case class FringeElement(node: NodeType, cfgEdgeType: CfgEdgeType)
 
-  implicit class FringeWrapper(fringe: Seq[FringeElement]) {
-    def setCfgEdgeType(cfgEdgeType: CfgEdgeType): Seq[FringeElement] = {
+  implicit class FringeWrapper(fringe: List[FringeElement]) {
+    def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[FringeElement] = {
       fringe.map { case FringeElement(node, _) =>
         FringeElement(node, cfgEdgeType)
       }
+    }
+
+    def empty(): List[FringeElement] = {
+      List()
+    }
+
+    def add(node: NodeType, cfgEdgeType: CfgEdgeType): List[FringeElement] = {
+      FringeElement(node, cfgEdgeType) :: fringe
+    }
+
+    def add(nodes: List[NodeType], cfgEdgeType: CfgEdgeType): List[FringeElement] = {
+      nodes.map(node => FringeElement(node, cfgEdgeType)) ++ fringe
+    }
+
+    def add(otherFringe: List[FringeElement]): List[FringeElement] = {
+      otherFringe ++ fringe
     }
   }
 
@@ -40,7 +56,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     fringe.foreach { case FringeElement(srcNode, cfgEdgeType) =>
       adapter.newCfgEdge(dstNode, srcNode, cfgEdgeType)
     }
-    fringe = Seq(FringeElement(dstNode, AlwaysEdge))
+    fringe = fringe.empty().add(dstNode, AlwaysEdge)
 
     if (markNextCfgNode) {
       markedCfgNode = dstNode
@@ -63,7 +79,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
   }
 
-  private var fringe = Seq(FringeElement(entryNode, AlwaysEdge))
+  private var fringe = List[FringeElement]().add(entryNode, AlwaysEdge)
   private var markNextCfgNode = false
   private var markedCfgNode: NodeType = _
   private var breakStack = new LayeredStack[NodeType]()
@@ -101,7 +117,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(breakStatement: BreakStatement): Unit = {
     val mappedBreak = adapter.mapNode(breakStatement)
     extendCfg(mappedBreak)
-    fringe = Seq()
+    fringe = fringe.empty()
     breakStack.store(mappedBreak)
   }
 
@@ -114,7 +130,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(continueStatement: ContinueStatement): Unit = {
     val mappedContinue = adapter.mapNode(continueStatement)
     extendCfg(mappedContinue)
-    fringe = Seq()
+    fringe = fringe.empty()
     continueStack.store(mappedContinue)
   }
 
@@ -132,8 +148,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     breakStack.popLayer()
     continueStack.popLayer()
 
-    fringe = fringe ++
-      continues.map(continue => FringeElement(continue, AlwaysEdge))
+    fringe = fringe.add(continues, AlwaysEdge)
 
     doStatement.getCondition.accept(this)
     val conditionFringe = fringe
@@ -141,8 +156,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
     extendCfg(markedCfgNode)
 
-    fringe = conditionFringe.setCfgEdgeType(FalseEdge) ++
-      breaks.map(break => FringeElement(break, AlwaysEdge))
+    fringe = conditionFringe.setCfgEdgeType(FalseEdge).add(breaks, AlwaysEdge)
   }
 
   override def visit(expression: Expression): Unit = {
@@ -185,7 +199,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
           fringe = fringe.setCfgEdgeType(TrueEdge)
           storedFringe
         case None =>
-          Seq()
+          fringe.empty()
       }
 
     breakStack.pushLayer()
@@ -196,15 +210,13 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     breakStack.popLayer()
     continueStack.popLayer()
 
-    fringe = fringe ++
-      continues.map(continue => FringeElement(continue, AlwaysEdge))
+    fringe = fringe.add(continues, AlwaysEdge)
 
     Option(forStatement.getForLoopExpression).foreach(_.accept(this))
 
     extendCfg(markedCfgNode)
 
-    fringe = conditionFringe.setCfgEdgeType(FalseEdge) ++
-      breaks.map(break => FringeElement(break, AlwaysEdge))
+    fringe = conditionFringe.setCfgEdgeType(FalseEdge).add(breaks, AlwaysEdge)
   }
 
   override def visit(functionDef: FunctionDef): Unit = {
@@ -214,7 +226,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(gotoStatement: GotoStatement): Unit = {
     val mappedGoto = adapter.mapNode(gotoStatement)
     extendCfg(mappedGoto)
-    fringe = Seq()
+    fringe = fringe.empty()
     gotos = (mappedGoto, gotoStatement.getTargetName) :: gotos
   }
 
@@ -234,7 +246,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(switchStatement: SwitchStatement): Unit = {
     switchStatement.getCondition.accept(this)
     val conditionFringe = fringe.setCfgEdgeType(CaseEdge)
-    fringe = Seq()
+    fringe = fringe.empty()
 
     breakStack.pushLayer()
     caseStack.pushLayer()
@@ -249,11 +261,10 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
         isDefault
       }
 
-    fringe = switchFringe ++
-      breakStack.getTopElements.map(break => FringeElement(break, AlwaysEdge))
+    fringe = switchFringe.add(breakStack.getTopElements, AlwaysEdge)
 
     if (!hasDefaultCase) {
-      fringe ++= conditionFringe
+      fringe = fringe.add(conditionFringe)
     }
 
     breakStack.popLayer()
@@ -271,13 +282,11 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
     whileStatement.getStatement.accept(this)
 
-    fringe = fringe ++
-      continueStack.getTopElements.map(continue => FringeElement(continue, AlwaysEdge))
+    fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
 
     extendCfg(markedCfgNode)
 
-    fringe = conditionFringe.setCfgEdgeType(FalseEdge) ++
-      breakStack.getTopElements.map(break => FringeElement(break, AlwaysEdge))
+    fringe = conditionFringe.setCfgEdgeType(FalseEdge).add(breakStack.getTopElements, AlwaysEdge)
 
     breakStack.popLayer()
     continueStack.popLayer()
