@@ -1,12 +1,13 @@
 package io.shiftleft.fuzzyc2cpg.cfg
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
+import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Label}
-import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionHolder, ExpressionStatement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionHolder, ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{DoStatement, ForStatement, SwitchStatement, WhileStatement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, GotoStatement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, GotoStatement, ReturnStatement}
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import org.slf4j.LoggerFactory
 
@@ -236,6 +237,19 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     extendCfg(identifier)
   }
 
+  override def visit(identifierDecl: IdentifierDecl): Unit = {
+    val assignment = identifierDecl.getAssignment
+    if (assignment != null) {
+      assignment.accept(this)
+    }
+  }
+
+  override def visit(identifierDeclStatement: IdentifierDeclStatement): Unit = {
+    identifierDeclStatement.getIdentifierDeclList.asScala.foreach { identifierDecl =>
+      identifierDecl.accept(this)
+    }
+  }
+
   override def visit(label: Label): Unit = {
     val labelName = label.getLabelName
     if (labelName.startsWith("case") || labelName.startsWith("default")) {
@@ -243,6 +257,11 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     } else {
       pendingGotoLabels = labelName :: pendingGotoLabels
     }
+  }
+
+  override def visit(returnStatement: ReturnStatement): Unit = {
+    Option(returnStatement.getReturnExpression).foreach(_.accept(this))
+    extendCfg(returnStatement)
   }
 
   override def visit(switchStatement: SwitchStatement): Unit = {

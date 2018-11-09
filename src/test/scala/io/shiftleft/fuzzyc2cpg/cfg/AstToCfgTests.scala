@@ -68,7 +68,15 @@ class AstToCfgTests extends WordSpec with Matchers {
     }
   }
 
-  "Cfg for expression" should {
+  "Cfg" should {
+    "be correct for decl statement with assignment" in
+      new Fixture("int x = 1;") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("1", AlwaysEdge))
+        succOf("1") shouldBe expected(("x = 1", AlwaysEdge))
+        succOf("x = 1") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
     "be correct for nested expression" in
       new Fixture("x = y + 1;") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
@@ -77,6 +85,19 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("1") shouldBe expected(("y + 1", AlwaysEdge))
         succOf("y + 1") shouldBe expected(("x = y + 1", AlwaysEdge))
         succOf("x = y + 1") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct for return statement" in
+      new Fixture("return x;") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("return x ;", AlwaysEdge))
+        succOf("return x ;") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct for void return statement" in
+      new Fixture("return;") {
+        succOf("ENTRY") shouldBe expected(("return ;", AlwaysEdge))
+        succOf("return ;") shouldBe expected(("EXIT", AlwaysEdge))
       }
   }
 

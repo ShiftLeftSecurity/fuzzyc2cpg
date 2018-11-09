@@ -353,7 +353,7 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     addAstChild(cpgReturn)
 
     pushContext(cpgReturn, 1)
-    astReturn.getReturnExpression.accept(this)
+    Option(astReturn.getReturnExpression).foreach(_.accept(this))
     popContext()
   }
 
