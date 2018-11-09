@@ -4,6 +4,7 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
+import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.{ElseStatement, IfStatement}
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Label}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionHolder, ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{DoStatement, ForStatement, SwitchStatement, WhileStatement}
@@ -161,6 +162,12 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     continueStack.popLayer()
   }
 
+  override def visit(elseStatement: ElseStatement): Unit = {
+    elseStatement.getChildIterator.asScala.foreach { child =>
+      child.accept(this)
+    }
+  }
+
   override def visit(expression: Expression): Unit = {
     // We only end up here for expressions chained by ','.
     // Those expressions are than the children of the expression
@@ -247,6 +254,24 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(identifierDeclStatement: IdentifierDeclStatement): Unit = {
     identifierDeclStatement.getIdentifierDeclList.asScala.foreach { identifierDecl =>
       identifierDecl.accept(this)
+    }
+  }
+
+  override def visit(ifStatment: IfStatement): Unit = {
+    ifStatment.getCondition.accept(this)
+    val conditionFringe = fringe
+    fringe = fringe.setCfgEdgeType(TrueEdge)
+
+    ifStatment.getStatement.accept(this)
+
+    Option(ifStatment.getElseNode) match {
+      case Some(elseStatement) =>
+        val ifBlockFringe = fringe
+        fringe = conditionFringe.setCfgEdgeType(FalseEdge)
+        elseStatement.accept(this)
+        fringe = fringe.add(ifBlockFringe)
+      case None =>
+        fringe = fringe.add(conditionFringe.setCfgEdgeType(FalseEdge))
     }
   }
 

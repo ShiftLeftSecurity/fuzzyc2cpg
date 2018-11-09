@@ -341,4 +341,39 @@ class AstToCfgTests extends WordSpec with Matchers {
       }
   }
 
+  "Cfg for if" should {
+    "be correct" in
+      new Fixture("if (x) { y; }") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", TrueEdge), ("EXIT", FalseEdge))
+        succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct with else block" in
+      new Fixture("if (x) { y; } else { z; }") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", TrueEdge), ("z", FalseEdge))
+        succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("z") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct with nested if" in
+      new Fixture("if (x) { if (y) { z; } }") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", TrueEdge), ("EXIT", FalseEdge))
+        succOf("y") shouldBe expected(("z", TrueEdge), ("EXIT", FalseEdge))
+        succOf("z") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct with else if chain" in
+      new Fixture("if (a) { b; } else if (c) { d;} else { e; }") {
+        succOf("ENTRY") shouldBe expected(("a", AlwaysEdge))
+        succOf("a") shouldBe expected(("b", TrueEdge), ("c", FalseEdge))
+        succOf("b") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("c") shouldBe expected(("d", TrueEdge), ("e", FalseEdge))
+        succOf("d") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("e") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+  }
+
 }
