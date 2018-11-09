@@ -154,6 +154,14 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
         succOf("x < 1") shouldBe expected(("continue ;", TrueEdge), ("EXIT", FalseEdge))
       }
+
+    "be correct with nested do-while-loop" in
+      new Fixture("do { do { x; } while (y); } while (z);") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", AlwaysEdge))
+        succOf("y") shouldBe expected(("x", TrueEdge), ("z", FalseEdge))
+        succOf("z") shouldBe expected(("x", TrueEdge), ("EXIT", FalseEdge))
+      }
   }
 
   "Cfg for for-loop" should {
@@ -209,7 +217,19 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("z += 2") shouldBe expected(("y", AlwaysEdge))
       }
 
-    "be correct for with empty condition" in
+    "be correct with nested for-loop" in
+      new Fixture("for (x; y; z) { for (a; b; c) { u; } }") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", AlwaysEdge))
+        succOf("y") shouldBe expected(("a", TrueEdge), ("EXIT", FalseEdge))
+        succOf("z") shouldBe expected(("y", AlwaysEdge))
+        succOf("a") shouldBe expected(("b", AlwaysEdge))
+        succOf("b") shouldBe expected(("u", TrueEdge), ("z", FalseEdge))
+        succOf("c") shouldBe expected(("b", AlwaysEdge))
+        succOf("u") shouldBe expected(("c", AlwaysEdge))
+      }
+
+    "be correct with empty condition" in
       new Fixture("for (;;) { a = 1; }") {
         succOf("ENTRY") shouldBe expected(("a", AlwaysEdge))
         succOf("a") shouldBe expected(("1", AlwaysEdge))
@@ -217,16 +237,22 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("a = 1") shouldBe expected(("a", AlwaysEdge))
       }
 
-    "be correct for with empty condition with break" in
+    "be correct with empty condition with break" in
       new Fixture("for (;;) { break; }") {
         succOf("ENTRY") shouldBe expected(("break ;", AlwaysEdge))
         succOf("break ;") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
-    "be correct for with empty condition with continue" in
+    "be correct with empty condition with continue" in
       new Fixture("for (;;) { continue ; }") {
         succOf("ENTRY") shouldBe expected(("continue ;", AlwaysEdge))
         succOf("continue ;") shouldBe expected(("continue ;", AlwaysEdge))
+      }
+
+    "be correct with empty condition with nested empty for-loop" in
+      new Fixture("for (;;) { for (;;) { x; } }") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("x", AlwaysEdge))
       }
   }
 
