@@ -1,20 +1,21 @@
 package io.shiftleft.fuzzyc2cpg.cfgnew
 
 class NonGotoJumpStack[NodeType] {
-  private case class StackElement(breaks: Seq[NodeType] = Seq(), continues: Seq[NodeType] = Seq()) {
+  private case class StackElement(breaks: List[NodeType] = List(),
+                                  continues: List[NodeType] = List()) {
     def addBreak(break: NodeType): StackElement = {
-      StackElement(breaks :+ break, continues)
+      StackElement(break :: breaks, continues)
     }
 
     def addContinue(continue: NodeType): StackElement = {
-      StackElement(breaks, continues :+ continue)
+      StackElement(breaks, continue :: continues)
     }
   }
 
-  private var stack = Seq[StackElement]()
+  private var stack = List[StackElement]()
 
   def pushLayer(): Unit = {
-    stack = StackElement() +: stack
+    stack = StackElement() :: stack
   }
 
   def popLayer(): Unit = {
@@ -22,18 +23,18 @@ class NonGotoJumpStack[NodeType] {
   }
 
   def storeBreak(break: NodeType): Unit = {
-    stack = stack.head.addBreak(break) +: stack
+    stack = stack.head.addBreak(break) :: stack
   }
 
   def storeContinue(continue: NodeType): Unit = {
-    stack = stack.head.addContinue(continue) +: stack
+    stack = stack.head.addContinue(continue) :: stack
   }
 
-  def getTopBreaks: Seq[NodeType] = {
+  def getTopBreaks: List[NodeType] = {
     stack.head.breaks
   }
 
-  def getTopContinues: Seq[NodeType] = {
+  def getTopContinues: List[NodeType] = {
     stack.head.continues
   }
 
