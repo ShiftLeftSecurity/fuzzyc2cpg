@@ -15,7 +15,7 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, BlockStarterWithStmtAndCnd, CompoundStatement, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.jump.ReturnStatement
+import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, ReturnStatement}
 import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
@@ -259,6 +259,18 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     addAstChild(cpgConstant)
   }
 
+  override def visit(astBreak: BreakStatement): Unit = {
+    val cpgBreak = newUnknownNode(astBreak)
+
+    addAstChild(cpgBreak)
+  }
+
+  override def visit(astContinue: ContinueStatement): Unit = {
+    val cpgContinue = newUnknownNode(astContinue)
+
+    addAstChild(cpgContinue)
+  }
+
   override def visit(astIdentifier: Identifier): Unit = {
     val identifierName = astIdentifier.getEscapedCodeStr
 
@@ -286,11 +298,7 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
   }
 
   override def visit(astBlockStarter: BlockStarter): Unit = {
-    val cpgBlockStarter =
-      newNode(NodeType.UNKNOWN)
-        .addStringProperty(NodePropertyName.PARSER_TYPE_NAME, astBlockStarter.getClass.getSimpleName)
-        .addCommons(astBlockStarter, context)
-        .buildAndUpdateMapping(astBlockStarter)
+    val cpgBlockStarter = newUnknownNode(astBlockStarter)
 
     addAstChild(cpgBlockStarter)
 
@@ -302,11 +310,7 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
   }
 
   override def visit(astIfStmt: IfStatement): Unit = {
-    val cpgIfStmt =
-      newNode(NodeType.UNKNOWN)
-        .addStringProperty(NodePropertyName.PARSER_TYPE_NAME, astIfStmt.getClass.getSimpleName)
-        .addCommons(astIfStmt, context)
-        .buildAndUpdateMapping(astIfStmt)
+    val cpgIfStmt = newUnknownNode(astIfStmt)
 
     addAstChild(cpgIfStmt)
 
@@ -398,5 +402,12 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     targetCpg.addNode(child)
     targetCpg.addEdge(EdgeType.AST, child, context.parent)
     context.childNum += 1
+  }
+
+  private def newUnknownNode(astNode: AstNode): Node = {
+    newNode(NodeType.UNKNOWN)
+      .addStringProperty(NodePropertyName.PARSER_TYPE_NAME, astNode.getClass.getSimpleName)
+      .addCommons(astNode, context)
+      .buildAndUpdateMapping(astNode)
   }
 }
