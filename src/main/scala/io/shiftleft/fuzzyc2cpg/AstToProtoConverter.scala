@@ -147,6 +147,10 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     addAstChild(cpgParameter)
   }
 
+  override def visit(argument: Argument): Unit = {
+    argument.getExpression.accept(this)
+  }
+
   override def visit(argumentList: ArgumentList): Unit = {
     argumentList.getChildIterator.asScala.foreach { argument =>
       argument.accept(this)
