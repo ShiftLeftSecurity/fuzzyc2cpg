@@ -99,6 +99,16 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("ENTRY") shouldBe expected(("return ;", AlwaysEdge))
         succOf("return ;") shouldBe expected(("EXIT", AlwaysEdge))
       }
+
+    "be correct for call expression" in
+      new Fixture("foo(a + 1, b);") {
+        succOf("ENTRY") shouldBe expected(("a", AlwaysEdge))
+        succOf("a") shouldBe expected(("1", AlwaysEdge))
+        succOf("1") shouldBe expected(("a + 1", AlwaysEdge))
+        succOf("a + 1") shouldBe expected(("b", AlwaysEdge))
+        succOf("b") shouldBe expected(("foo ( a + 1 , b )", AlwaysEdge))
+        succOf("foo ( a + 1 , b )") shouldBe expected(("EXIT", AlwaysEdge))
+      }
   }
 
   "Cfg for while-loop" should {

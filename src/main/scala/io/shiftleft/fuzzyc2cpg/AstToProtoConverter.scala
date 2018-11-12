@@ -147,6 +147,12 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     addAstChild(cpgParameter)
   }
 
+  override def visit(argumentList: ArgumentList): Unit = {
+    argumentList.getChildIterator.asScala.foreach { argument =>
+      argument.accept(this)
+    }
+  }
+
   override def visit(astAssignment: AssignmentExpression): Unit = {
     val operatorMethod = astAssignment.getOperator match {
       case "=" => Operators.assignment
@@ -242,9 +248,7 @@ class AstToProtoConverter(originalFunctionAst: FunctionDefBase,
     addAstChild(cpgCall)
 
     pushContext(cpgCall, 1)
-    astCall.getArgumentList.iterator().asScala.foreach { argument =>
-      argument.accept(this)
-    }
+    astCall.getArgumentList.accept(this)
     popContext()
   }
 

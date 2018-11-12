@@ -109,6 +109,12 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     connectGotosAndLabels()
   }
 
+  override def visit(argumentList: ArgumentList): Unit = {
+    argumentList.getChildIterator.asScala.foreach { argument =>
+      argument.accept(this)
+    }
+  }
+
   // TODO This also handles || and && for which we do not correctly model the lazyness.
   override def visit(binaryExpression: BinaryExpression): Unit = {
     binaryExpression.getLeft.accept(this)
@@ -121,6 +127,14 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     extendCfg(mappedBreak)
     fringe = fringe.empty()
     breakStack.store(mappedBreak)
+  }
+
+  // TODO we do not handle the 'targetFunc' field of callExpression yet.
+  // This leads to not correctly handling calls via function pointers.
+  // Fix this once we change CALL side representation for this.
+  override def visit(callExpression: CallExpressionBase): Unit = {
+    callExpression.getArgumentList.accept(this)
+    extendCfg(callExpression)
   }
 
   override def visit(compoundStatement: CompoundStatement): Unit = {
@@ -172,7 +186,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     // We only end up here for expressions chained by ','.
     // Those expressions are than the children of the expression
     // given as parameter.
-    if (!expression.isInstanceOf[Expression]) {
+    if (expression.getClass != classOf[Expression]) {
       throw new RuntimeException("Only direct instances of Expressions expected.")
     }
 
