@@ -6,7 +6,6 @@ import io.shiftleft.codepropertygraph.generated.Languages
 import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
-import io.shiftleft.fuzzyc2cpg.parser.{ModuleParser => ParserModuleParser}
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
@@ -22,7 +21,6 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
     * */
   override def visitFile(pathToFile: Path): Unit = {
     val driver = new AntlrCModuleParserDriver()
-    val parser = new ParserModuleParser(driver)
 
     val fileNode = createFileNode(pathToFile)
     val namespaceBlock = createNamespaceBlockNode(pathToFile)
@@ -31,9 +29,9 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
     structureCpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
 
     val astVisitor = new AstVisitor(outputModuleFactory, structureCpg, namespaceBlock)
-    parser.addObserver(astVisitor)
+    driver.addObserver(astVisitor)
 
-    parser.parseFile(pathToFile.toString)
+    driver.parseAndWalkFile(pathToFile.toString)
   }
 
   /**
