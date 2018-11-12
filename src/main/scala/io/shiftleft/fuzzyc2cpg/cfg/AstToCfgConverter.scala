@@ -109,6 +109,10 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     connectGotosAndLabels()
   }
 
+  override def visit(argument: Argument): Unit = {
+    argument.getExpression.accept(this)
+  }
+
   override def visit(argumentList: ArgumentList): Unit = {
     argumentList.getChildIterator.asScala.foreach { argument =>
       argument.accept(this)
@@ -141,6 +145,10 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     compoundStatement.getStatements.asScala.foreach { statement =>
       statement.accept(this)
     }
+  }
+
+  override def visit(condition: Condition): Unit = {
+    condition.getExpression.accept(this)
   }
 
   override def visit(continueStatement: ContinueStatement): Unit = {
@@ -186,17 +194,15 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     // We only end up here for expressions chained by ','.
     // Those expressions are than the children of the expression
     // given as parameter.
-    if (expression.getClass != classOf[Expression]) {
-      throw new RuntimeException("Only direct instances of Expressions expected.")
+    val classOfExression = expression.getClass
+    if (classOfExression != classOf[Expression]) {
+      throw new RuntimeException(s"Only direct instances of Expressions expected " +
+        s"but ${classOfExression.getSimpleName} found")
     }
 
     expression.getChildIterator.asScala.foreach { child =>
       child.accept(this)
     }
-  }
-
-  override def visit(expressionHolder: ExpressionHolder): Unit = {
-    expressionHolder.getExpression.accept(this)
   }
 
   override def visit(expressionStatement: ExpressionStatement): Unit = {
