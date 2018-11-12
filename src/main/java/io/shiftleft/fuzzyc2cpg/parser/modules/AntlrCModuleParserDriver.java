@@ -18,6 +18,7 @@ public class AntlrCModuleParserDriver extends AntlrParserDriver {
   @Override
   public ParseTree parseTokenStreamImpl(TokenSubStream tokens) {
     ModuleParser parser = new ModuleParser(tokens);
+    setAntlrParser(parser);
     ParseTree tree = null;
 
     try {

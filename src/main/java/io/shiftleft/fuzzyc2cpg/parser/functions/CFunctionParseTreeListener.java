@@ -13,7 +13,7 @@ public class CFunctionParseTreeListener extends FunctionBaseListener {
 
   AntlrParserDriver p;
 
-  public void setDriver(AntlrParserDriver aP) {
+  public CFunctionParseTreeListener(AntlrParserDriver aP) {
     p = aP;
   }
 
