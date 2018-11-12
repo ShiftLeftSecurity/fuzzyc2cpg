@@ -23,9 +23,9 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
                                   adapter: DestinationGraphAdapter[NodeType] = null) extends ASTNodeVisitor {
   import AstToCfgConverter._
 
-  case class FringeElement(node: NodeType, cfgEdgeType: CfgEdgeType)
+  private case class FringeElement(node: NodeType, cfgEdgeType: CfgEdgeType)
 
-  implicit class FringeWrapper(fringe: List[FringeElement]) {
+  private implicit class FringeWrapper(fringe: List[FringeElement]) {
     def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[FringeElement] = {
       fringe.map { case FringeElement(node, _) =>
         FringeElement(node, cfgEdgeType)
