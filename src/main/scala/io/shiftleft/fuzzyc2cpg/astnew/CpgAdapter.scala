@@ -1,0 +1,60 @@
+package io.shiftleft.fuzzyc2cpg.astnew
+
+import io.shiftleft.fuzzyc2cpg.astnew.EdgeKind.EdgeKind
+import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
+import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
+
+object NodeProperty extends Enumeration {
+  type NodeProperty = Value
+  val
+  ORDER,
+  ARGUMENT_INDEX,
+  NAME,
+  FULL_NAME,
+  CODE,
+  EVALUATION_STRATEGY,
+  TYPE_FULL_NAME,
+  SIGNATURE,
+  DISPATCH_TYPE,
+  METHOD_INST_FULL_NAME,
+  PARSER_TYPE_NAME,
+  LINE_NUMBER,
+  COLUMN_NUMBER
+  = Value
+}
+
+object NodeKind extends Enumeration {
+  type NodeKind = Value
+  val
+  METHOD,
+  METHOD_RETURN,
+  METHOD_PARAMETER_IN,
+  CALL,
+  LITERAL,
+  IDENTIFIER,
+  BLOCK,
+  RETURN,
+  LOCAL,
+  UNKNOWN
+    = Value
+}
+
+object EdgeKind extends Enumeration {
+  type EdgeKind = Value
+  val
+  AST,
+  REF
+    = Value
+}
+
+trait CpgAdapter[NodeBuilderType, NodeType] {
+  def createNodeBuilder(kind: NodeKind): NodeBuilderType
+
+  def createNode(nodeBuilder: NodeBuilderType): NodeType
+
+  def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: String)
+
+  def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: Int)
+
+  def addEdge(edgeKind: EdgeKind, dstNode: NodeType, srcNode: NodeType)
+}

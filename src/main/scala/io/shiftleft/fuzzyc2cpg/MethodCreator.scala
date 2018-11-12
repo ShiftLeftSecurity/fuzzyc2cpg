@@ -5,6 +5,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.cfg.{AstToCfgConverter, ProtoGraphAdapter}
+import io.shiftleft.fuzzyc2cpg.astnew.{AstToCpgConverter, ProtoCpgAdapter}
 
 class MethodCreator(functionDef: FunctionDefBase,
                     astParentNode: Node,
@@ -12,8 +13,9 @@ class MethodCreator(functionDef: FunctionDefBase,
   private val bodyCpg = CpgStruct.newBuilder()
 
   def addMethodCpg(): CpgStruct.Builder = {
-    val bodyVisitor = new AstToProtoConverter(functionDef, containingFileName, bodyCpg)
-    bodyVisitor.convert()
+    val cpgAdapter = new ProtoCpgAdapter(bodyCpg)
+    val bodyVisitor = new AstToCpgConverter(containingFileName, cpgAdapter)
+    bodyVisitor.convert(functionDef)
 
     addMethodBodyCfg(bodyVisitor.getMethodNode.get,
       bodyVisitor.getMethodReturnNode.get,
