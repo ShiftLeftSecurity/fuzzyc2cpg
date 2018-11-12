@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg.antlrparsers.functionparser;
 
 import static org.junit.Assert.assertTrue;
 
-import io.shiftleft.fuzzyc2cpg.parser.FunctionParser;
+import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriver;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ public class FunctionCallTests extends FunctionParserTestBase
 	public void testFunctionCall()
 	{
 		String input = "foo(x);";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("function_argument_list"));
@@ -23,7 +23,7 @@ public class FunctionCallTests extends FunctionParserTestBase
 	public void testTwoParameters()
 	{
 		String input = "foo(x,y);";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains(", (function_argument"));
@@ -33,7 +33,7 @@ public class FunctionCallTests extends FunctionParserTestBase
 	public void testCallViaPtr()
 	{
 		String input = "ptr->foo(x);";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("function_argument_list"));
@@ -43,7 +43,7 @@ public class FunctionCallTests extends FunctionParserTestBase
 	public void testCallWithExprInArg()
 	{
 		String input = "foo(x == 1, x++);";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("function_argument_list"));

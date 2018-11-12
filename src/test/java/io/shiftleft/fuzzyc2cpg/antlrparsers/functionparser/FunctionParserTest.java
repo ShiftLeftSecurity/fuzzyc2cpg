@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg.antlrparsers.functionparser;
 
 import static org.junit.Assert.assertTrue;
 
-import io.shiftleft.fuzzyc2cpg.parser.FunctionParser;
+import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriver;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ public class FunctionParserTest extends FunctionParserTestBase
 	public void testIf()
 	{
 		String input = "if(foo){}";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("(selection_or_iteration if"));
@@ -23,7 +23,7 @@ public class FunctionParserTest extends FunctionParserTestBase
 	public void testStructInFunc()
 	{
 		String input = "class foo{ int x; };";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("class_def"));
@@ -33,7 +33,7 @@ public class FunctionParserTest extends FunctionParserTestBase
 	public void testSizeofStruct()
 	{
 		String input = "while((buffer + len) > (tmp + sizeof(struct stun_attrib))) {}";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("selection_or_iteration while"));

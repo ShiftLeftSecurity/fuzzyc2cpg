@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg.antlrparsers.functionparser;
 
 import static org.junit.Assert.assertTrue;
 
-import io.shiftleft.fuzzyc2cpg.parser.FunctionParser;
+import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriver;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ public class ForLoopTests extends FunctionParserTestBase
 	public void testEmptyFor()
 	{
 		String input = "for(; ;){}";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("selection_or_iteration"));
@@ -23,7 +23,7 @@ public class ForLoopTests extends FunctionParserTestBase
 	public void testDeclInFor()
 	{
 		String input = "for(int k = 0; k < 10; k++ ){}";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains(
@@ -34,7 +34,7 @@ public class ForLoopTests extends FunctionParserTestBase
 	public void testComplexFor()
 	{
 		String input = "for(int k = 0; k < 10; ( k += ((c = text[k]) >= sBMHCharSetSize) ? patlen : skip[c]) ){}";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("assign_expr"));

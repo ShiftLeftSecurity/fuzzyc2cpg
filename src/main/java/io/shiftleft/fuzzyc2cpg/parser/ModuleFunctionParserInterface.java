@@ -18,17 +18,16 @@ public class ModuleFunctionParserInterface {
     String text = getCompoundStmtAsString(ctx);
 
     AntlrCFunctionParserDriver driver = new AntlrCFunctionParserDriver();
-    FunctionParser parser = new FunctionParser(driver);
 
     try {
-      parser.parseAndWalkString(text);
+      driver.parseAndWalkString(text);
     } catch (RuntimeException ex) {
       System.err.println("Error parsing function "
           + ctx.function_name().getText() + ". skipping.");
 
       // ex.printStackTrace();
     }
-    CompoundStatement result = parser.getResult();
+    CompoundStatement result = driver.getResult();
     Compound_statementContext statementContext = ctx.compound_statement();
     AstNodeFactory.initializeFromContext(result, statementContext);
     return result;

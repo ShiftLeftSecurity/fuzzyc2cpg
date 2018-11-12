@@ -3,7 +3,7 @@ package io.shiftleft.fuzzyc2cpg.antlrparsers.functionparser;
 
 import static org.junit.Assert.assertTrue;
 
-import io.shiftleft.fuzzyc2cpg.parser.FunctionParser;
+import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriver;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
@@ -14,7 +14,7 @@ public class AssignmentTests extends FunctionParserTestBase
 	public void testAssignmentExpr()
 	{
 		String input = "x = y + 1;";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("assign_expr"));
@@ -24,7 +24,7 @@ public class AssignmentTests extends FunctionParserTestBase
 	public void testComplexAssignment()
 	{
 		String input = "k += ((c = text[k]) >= sBMHCharSetSize) ? patlen : skip[c];";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("assign_expr"));
@@ -34,7 +34,7 @@ public class AssignmentTests extends FunctionParserTestBase
 	public void testPrivateInName()
 	{
 		String input = "struct acpi_battery *battery = m->private;";
-		FunctionParser functionParser = createFunctionParser();
+		AntlrParserDriver functionParser = createFunctionDriver();
 		ParseTree tree = functionParser.parseString(input);
 		String output = tree.toStringTree(functionParser.getAntlrParser());
 		assertTrue(output.contains("simple_decl"));
