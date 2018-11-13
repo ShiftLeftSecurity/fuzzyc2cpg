@@ -390,7 +390,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     context.astParent match {
       case _: ClassDefStatement =>
         val cpgMember = adapter.createNodeBuilder(NodeKind.MEMBER)
-          .addProperty(NodeProperty.CODE, identifierDecl.getName.getEscapedCodeStr)
+          .addProperty(NodeProperty.CODE, identifierDecl.getEscapedCodeStr)
           .addProperty(NodeProperty.NAME, identifierDecl.getName.getEscapedCodeStr)
           .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
           .createNode(identifierDecl)

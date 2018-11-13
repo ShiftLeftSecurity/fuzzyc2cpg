@@ -7,6 +7,8 @@ import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
+import io.shiftleft.fuzzyc2cpg.astnew.{AstToCpgConverter, ProtoCpgAdapter}
+import io.shiftleft.fuzzyc2cpg.cfg.{AstToCfgConverter, ProtoGraphAdapter}
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
@@ -22,17 +24,32 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
   /**
     * Callback triggered for each function definition
     * */
-  override def visit(ast: FunctionDef): Unit =  {
+  override def visit(functionDef: FunctionDef): Unit =  {
     val outputModule = outputModuleFactory.create()
-    outputModule.setClassAndMethodName(fileNameOption.get, ast.getName)
-    new FunctionDefHandler(outputModule, fileNameOption.get).handle(ast)
+    outputModule.setClassAndMethodName(fileNameOption.get, functionDef.getName)
+
+    val bodyCpg = CpgStruct.newBuilder()
+    val cpgAdapter = new ProtoCpgAdapter(bodyCpg)
+    val astToCpgConverter = new AstToCpgConverter(fileNameOption.get, cpgAdapter)
+    astToCpgConverter.convert(functionDef)
+
+    val graphAdapter = new ProtoGraphAdapter(bodyCpg, astToCpgConverter.getAstToProtoMapping)
+    val astToCfgConverter = new AstToCfgConverter(
+      astToCpgConverter.getMethodNode.get,
+      astToCpgConverter.getMethodReturnNode.get,
+      graphAdapter)
+    astToCfgConverter.convert(functionDef)
+
+    outputModule.persistCpg(bodyCpg)
   }
 
   /**
     * Callback triggered for every class/struct
     * */
-  override def visit(ast: ClassDefStatement): Unit = {
-    new ClassDefHandler(structureCpg).handle(ast)
+  override def visit(classDefStatement: ClassDefStatement): Unit = {
+    val cpgAdapter = new ProtoCpgAdapter(structureCpg)
+    val astToCpgConverter = new AstToCpgConverter(fileNameOption.get, cpgAdapter)
+    astToCpgConverter.convert(classDefStatement)
   }
 
   /**
