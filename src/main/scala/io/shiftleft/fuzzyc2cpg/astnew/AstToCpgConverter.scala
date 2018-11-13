@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg.astnew
 
 import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, Operators}
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
-import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
+import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
@@ -34,10 +34,10 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   private var methodNode = Option.empty[NodeType]
   private var methodReturnNode = Option.empty[NodeType]
 
-  private class Context(val parent: NodeType, var childNum: Int)
+  private class Context(val astParent: AstNode, val cpgParent: NodeType, var childNum: Int)
 
-  private def pushContext(parent: NodeType, startChildNum: Int): Unit = {
-    contextStack = new Context(parent, startChildNum) :: contextStack
+  private def pushContext(astParent: AstNode, cpgParent: NodeType, startChildNum: Int): Unit = {
+    contextStack = new Context(astParent, cpgParent, startChildNum) :: contextStack
   }
 
   private def popContext(): Unit = {
@@ -57,6 +57,10 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       nodeBuilder
     }
     def addProperty(property: NodeProperty, value: Int): NodeBuilderType = {
+      adapter.addProperty(nodeBuilder, property, value)
+      nodeBuilder
+    }
+    def addProperty(property: NodeProperty, value: Boolean): NodeBuilderType = {
       adapter.addProperty(nodeBuilder, property, value)
       nodeBuilder
     }
@@ -116,7 +120,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
           */
     methodNode = Some(cpgMethod)
 
-    pushContext(cpgMethod, 1)
+    pushContext(astFunction, cpgMethod, 1)
     scope.pushNewScope(cpgMethod)
 
     astFunction.getParameterList.asScala.foreach { parameter =>
@@ -255,7 +259,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     addAstChild(cpgCall)
 
-    pushContext(cpgCall, 1)
+    pushContext(astCall, cpgCall, 1)
     astCall.getArgumentList.accept(this)
     popContext()
   }
@@ -312,7 +316,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     addAstChild(cpgBlockStarter)
 
-    pushContext(cpgBlockStarter, 1)
+    pushContext(astBlockStarter, cpgBlockStarter, 1)
     astBlockStarter.getChildIterator.asScala.foreach { child =>
       child.accept(this)
     }
@@ -324,7 +328,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     addAstChild(cpgIfStmt)
 
-    pushContext(cpgIfStmt, 1)
+    pushContext(astIfStmt, cpgIfStmt, 1)
     astIfStmt.getCondition.accept(this)
     astIfStmt.getStatement.accept(this)
     val astElseStmt = astIfStmt.getElseNode
@@ -339,22 +343,29 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astBlock: CompoundStatement): Unit = {
-    val cpgBlock = adapter.createNodeBuilder(NodeKind.BLOCK)
-        .addProperty(NodeProperty.ORDER, context.childNum)
-        .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
-        .addProperty(NodeProperty.LINE_NUMBER, astBlock.getLocation.startLine)
-        .addProperty(NodeProperty.COLUMN_NUMBER, astBlock.getLocation.startPos)
-        .createNode(astBlock)
+    context.astParent match {
+      case _: ClassDefStatement =>
+        astBlock.getStatements.asScala.foreach { statement =>
+          statement.accept(this)
+        }
+      case _ =>
+        val cpgBlock = adapter.createNodeBuilder(NodeKind.BLOCK)
+          .addProperty(NodeProperty.ORDER, context.childNum)
+          .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
+          .addProperty(NodeProperty.LINE_NUMBER, astBlock.getLocation.startLine)
+          .addProperty(NodeProperty.COLUMN_NUMBER, astBlock.getLocation.startPos)
+          .createNode(astBlock)
 
-    addAstChild(cpgBlock)
+        addAstChild(cpgBlock)
 
-    pushContext(cpgBlock, 1)
-    scope.pushNewScope(cpgBlock)
-    astBlock.getStatements.asScala.foreach { statement =>
-      statement.accept(this)
+        pushContext(astBlock, cpgBlock, 1)
+        scope.pushNewScope(cpgBlock)
+        astBlock.getStatements.asScala.foreach { statement =>
+          statement.accept(this)
+        }
+        popContext()
+        scope.popScope()
     }
-    popContext()
-    scope.popScope()
   }
 
   override def visit(astReturn: ReturnStatement): Unit = {
@@ -364,7 +375,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     addAstChild(cpgReturn)
 
-    pushContext(cpgReturn, 1)
+    pushContext(astReturn, cpgReturn, 1)
     Option(astReturn.getReturnExpression).foreach(_.accept(this))
     popContext()
   }
@@ -376,36 +387,66 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(identifierDecl: IdentifierDecl): Unit = {
-    val localName = identifierDecl.getName.getEscapedCodeStr
-    val cpgLocal = adapter.createNodeBuilder(NodeKind.LOCAL)
-        .addProperty(NodeProperty.CODE, localName)
-        .addProperty(NodeProperty.NAME, localName)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
-        .createNode(identifierDecl)
+    context.astParent match {
+      case _: ClassDefStatement =>
+        val cpgMember = adapter.createNodeBuilder(NodeKind.MEMBER)
+          .addProperty(NodeProperty.CODE, identifierDecl.getName.getEscapedCodeStr)
+          .addProperty(NodeProperty.NAME, identifierDecl.getName.getEscapedCodeStr)
+          .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+          .createNode(identifierDecl)
+        addAstChild(cpgMember)
+      case _ =>
+        val localName = identifierDecl.getName.getEscapedCodeStr
+        val cpgLocal = adapter.createNodeBuilder(NodeKind.LOCAL)
+          .addProperty(NodeProperty.CODE, localName)
+          .addProperty(NodeProperty.NAME, localName)
+          .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+          .createNode(identifierDecl)
 
-    val scopeParentNode = scope.addToScope(localName, cpgLocal)
-    // Here we on purpose do not use addAstChild because the LOCAL nodes
-    // are not really in the AST (they also have no ORDER property).
-    // So do not be confused that the format still demands an AST edge.
-    adapter.addEdge(EdgeKind.AST, cpgLocal, scopeParentNode)
+        val scopeParentNode = scope.addToScope(localName, cpgLocal)
+        // Here we on purpose do not use addAstChild because the LOCAL nodes
+        // are not really in the AST (they also have no ORDER property).
+        // So do not be confused that the format still demands an AST edge.
+        adapter.addEdge(EdgeKind.AST, cpgLocal, scopeParentNode)
 
-    val assignmentExpression = identifierDecl.getAssignment
-    if (assignmentExpression != null) {
-      assignmentExpression.accept(this)
+        val assignmentExpression = identifierDecl.getAssignment
+        if (assignmentExpression != null) {
+          assignmentExpression.accept(this)
+        }
     }
+  }
+
+  override def visit(astClassDef: ClassDefStatement): Unit = {
+    // TODO: currently NAME and FULL_NAME are the same, since
+    // the parser does not detect C++ namespaces. Change that,
+    // once the parser handles namespaces.
+    var name = astClassDef.identifier.toString
+    name = name.substring(1, name.length - 1)
+
+    val cpgTypeDecl = adapter.createNodeBuilder(NodeKind.TYPE_DECL)
+      .addProperty(NodeProperty.NAME, name)
+      .addProperty(NodeProperty.FULL_NAME, name)
+      .addProperty(NodeProperty.IS_EXTERNAL, false)
+      //.addProperty(NodeProperty.AST_PARENT_TYPE, "TODO")
+      //.addProperty(NodeProperty.AST_PARENT_FULL_NAME, "TODO")
+      .createNode(astClassDef)
+
+    pushContext(astClassDef, cpgTypeDecl, 0)
+    astClassDef.content.accept(this)
+    popContext()
   }
 
   private def visitBinaryExpr(astBinaryExpr: BinaryExpression, cpgBinaryExpr: NodeType): Unit = {
     addAstChild(cpgBinaryExpr)
 
-    pushContext(cpgBinaryExpr, 1)
+    pushContext(astBinaryExpr, cpgBinaryExpr, 1)
     astBinaryExpr.getLeft.accept(this)
     astBinaryExpr.getRight.accept(this)
     popContext()
   }
 
   private def addAstChild(child: NodeType): Unit = {
-    adapter.addEdge(EdgeKind.AST, child, context.parent)
+    adapter.addEdge(EdgeKind.AST, child, context.cpgParent)
     context.childNum += 1
   }
 

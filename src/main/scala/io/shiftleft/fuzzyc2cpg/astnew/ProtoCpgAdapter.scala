@@ -31,6 +31,10 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
     nodeBuilder.addIntProperty(translateNodeProperty(property), value)
   }
 
+  override def addProperty(nodeBuilder: Node.Builder, property: NodeProperty, value: Boolean): Unit = {
+    nodeBuilder.addBooleanProperty(translateNodeProperty(property), value)
+  }
+
   override def addEdge(edgeKind: EdgeKind, dstNode: Node, srcNode: Node): Unit = {
     targetCpg.addEdge(newEdge(translateEdgeKind(edgeKind), dstNode, srcNode))
   }
@@ -47,6 +51,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
       case NodeProperty.SIGNATURE => NodePropertyName.SIGNATURE
       case NodeProperty.DISPATCH_TYPE => NodePropertyName.DISPATCH_TYPE
       case NodeProperty.METHOD_INST_FULL_NAME => NodePropertyName.METHOD_INST_FULL_NAME
+      case NodeProperty.IS_EXTERNAL => NodePropertyName.IS_EXTERNAL
       case NodeProperty.PARSER_TYPE_NAME => NodePropertyName.PARSER_TYPE_NAME
       case NodeProperty.LINE_NUMBER => NodePropertyName.LINE_NUMBER
       case NodeProperty.COLUMN_NUMBER => NodePropertyName.COLUMN_NUMBER
@@ -64,6 +69,8 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
       case NodeKind.BLOCK => Node.NodeType.BLOCK
       case NodeKind.RETURN => Node.NodeType.RETURN
       case NodeKind.LOCAL => Node.NodeType.LOCAL
+      case NodeKind.TYPE_DECL => Node.NodeType.TYPE_DECL
+      case NodeKind.MEMBER => Node.NodeType.MEMBER
       case NodeKind.UNKNOWN => Node.NodeType.UNKNOWN
     }
   }

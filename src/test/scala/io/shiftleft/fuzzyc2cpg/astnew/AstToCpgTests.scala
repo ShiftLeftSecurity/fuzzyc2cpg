@@ -13,7 +13,7 @@ import org.antlr.v4.runtime.{CharStreams, ParserRuleContext}
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
 import org.scalatest.{Matchers, WordSpec}
 
-class MethodAstTests extends WordSpec with Matchers {
+class AstToCpgTests extends WordSpec with Matchers {
 
   private class GraphAdapter(graph: ScalaGraph) extends CpgAdapter[Vertex, Vertex] {
     override def createNodeBuilder(kind: NodeKind): Vertex = {
@@ -29,6 +29,10 @@ class MethodAstTests extends WordSpec with Matchers {
     }
 
     override def addProperty(vertex: Vertex, property: NodeProperty, value: Int): Unit = {
+      vertex.property(property.toString, value)
+    }
+
+    override def addProperty(vertex: Vertex, property: NodeProperty, value: Boolean): Unit = {
       vertex.property(property.toString, value)
     }
 
@@ -111,9 +115,19 @@ class MethodAstTests extends WordSpec with Matchers {
       result.size shouldBe 1
       result
     }
+
+    def getTypeDecl(name: String): List[Vertex] = {
+      val result = graph.V
+        .hasLabel(NodeTypes.TYPE_DECL)
+        .has(NodeKeys.NAME -> name)
+        .l
+
+      result.size shouldBe 1
+      result
+    }
   }
 
-  "AST layout" should {
+  "Method AST layout" should {
     "be correct for empty method" in new Fixture(
       """
         |void method() {
@@ -293,6 +307,65 @@ class MethodAstTests extends WordSpec with Matchers {
 
       val assignmentInElse = elseBlock.expandAst(NodeTypes.CALL)
       assignmentInElse.checkForSingle(NodeKeys.NAME, Operators.assignment)
+    }
+  }
+
+  "Structural AST layout" should {
+    "be correct for empty named struct" in new Fixture(
+      """
+        | struct foo {
+        | };
+      """.stripMargin) {
+      val typeDecl = getTypeDecl("foo")
+      typeDecl.checkForSingle()
+    }
+
+    "be correct for named struct with single field" in new Fixture(
+      """
+        | struct foo {
+        |   int x;
+        | };
+      """.stripMargin) {
+      val typeDecl = getTypeDecl("foo")
+      typeDecl.checkForSingle()
+      val member = typeDecl.expandAst(NodeTypes.MEMBER)
+      member.checkForSingle(NodeKeys.CODE, "x")
+      member.checkForSingle(NodeKeys.NAME, "x")
+    }
+
+    "be correct for named struct with multiple fields" in new Fixture(
+      """
+        | struct foo {
+        |   int x;
+        |   int y;
+        |   int z;
+        | };
+      """.stripMargin) {
+      val typeDecl = getTypeDecl("foo")
+      typeDecl.checkForSingle()
+      val member = typeDecl.expandAst(NodeTypes.MEMBER)
+      member.check(3, member => member.value2(NodeKeys.CODE),
+        expectations = "x", "y", "z")
+    }
+
+    "be correct for named struct with nested struct" in new Fixture(
+      """
+        | struct foo {
+        |   int x;
+        |   struct bar {
+        |     int x;
+        |   };
+        | };
+      """.stripMargin) {
+      val typeDeclFoo = getTypeDecl("foo")
+      typeDeclFoo.checkForSingle()
+      val memberFoo = typeDeclFoo.expandAst(NodeTypes.MEMBER)
+      memberFoo.checkForSingle(NodeKeys.CODE, "x")
+
+      val typeDeclBar = getTypeDecl("bar")
+      typeDeclBar.checkForSingle()
+      val memberBar = typeDeclBar.expandAst(NodeTypes.MEMBER)
+      memberBar.checkForSingle(NodeKeys.CODE, "x")
     }
   }
 }

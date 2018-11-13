@@ -17,6 +17,7 @@ object NodeProperty extends Enumeration {
   SIGNATURE,
   DISPATCH_TYPE,
   METHOD_INST_FULL_NAME,
+  IS_EXTERNAL,
   PARSER_TYPE_NAME,
   LINE_NUMBER,
   COLUMN_NUMBER
@@ -35,6 +36,8 @@ object NodeKind extends Enumeration {
   BLOCK,
   RETURN,
   LOCAL,
+  TYPE_DECL,
+  MEMBER,
   UNKNOWN
     = Value
 }
@@ -55,6 +58,8 @@ trait CpgAdapter[NodeBuilderType, NodeType] {
   def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: String)
 
   def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: Int)
+
+  def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: Boolean)
 
   def addEdge(edgeKind: EdgeKind, dstNode: NodeType, srcNode: NodeType)
 }

@@ -20,6 +20,12 @@ object Utils {
       .setValue(PropertyValue.newBuilder.setIntValue(value).build)
   }
 
+  def newBooleanProperty(name: Cpg.NodePropertyName, value: Boolean): Property.Builder = {
+    Property.newBuilder
+      .setName(name)
+      .setValue(PropertyValue.newBuilder.setBoolValue(value).build)
+  }
+
   def newNode(nodeType: NodeType): Node.Builder = {
     Node.newBuilder()
       .setType(nodeType)
@@ -44,6 +50,9 @@ object Utils {
     }
     def addIntProperty(name: Cpg.NodePropertyName, value: Int): Node.Builder = {
       nodeBuilder.addProperty(newIntProperty(name, value))
+    }
+    def addBooleanProperty(name: Cpg.NodePropertyName, value: Boolean): Node.Builder = {
+      nodeBuilder.addProperty(newBooleanProperty(name, value))
     }
   }
 
