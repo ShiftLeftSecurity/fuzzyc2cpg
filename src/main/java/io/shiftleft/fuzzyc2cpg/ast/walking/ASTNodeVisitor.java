@@ -37,14 +37,8 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions.MemberAccess;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.MultiplicativeExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.NewExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.OrExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PostDecOperationExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.PostIncDecOperationExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PostIncOperationExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.PostfixExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PreDecOperationExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PreIncDecOperationExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PreIncOperationExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PrefixExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.PrimaryExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.PropertyExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.PtrMemberAccess;
@@ -247,36 +241,12 @@ public interface ASTNodeVisitor {
     visit((BinaryOperationExpression)expression);
   }
 
-  default void visit(PostDecOperationExpression expression) {
-    visit((PostIncDecOperationExpression)expression);
-  }
-
   default void visit(PostfixExpression expression) {
     visit((Expression)expression);
   }
 
   default void visit(PostIncDecOperationExpression expression) {
     visit((PostfixExpression)expression);
-  }
-
-  default void visit(PostIncOperationExpression expression) {
-    visit((PostIncDecOperationExpression)expression);
-  }
-
-  default void visit(PreDecOperationExpression expression) {
-    visit((PreIncDecOperationExpression)expression);
-  }
-
-  default void visit(PrefixExpression expression) {
-    visit((Expression)expression);
-  }
-
-  default void visit(PreIncDecOperationExpression expression) {
-    visit((PrefixExpression)expression);
-  }
-
-  default void visit(PreIncOperationExpression expression) {
-    visit((PreIncDecOperationExpression)expression);
   }
 
   default void visit(PrimaryExpression expression) {
