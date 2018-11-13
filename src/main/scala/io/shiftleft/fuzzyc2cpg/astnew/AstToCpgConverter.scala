@@ -5,7 +5,7 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
-import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression
+import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpression}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement}
@@ -245,6 +245,24 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     visitBinaryExpr(astRelation, cpgRelation)
   }
 
+  override def visit(astShift: ShiftExpression): Unit = {
+    val operatorMethod = astShift.getOperator match {
+      case "<<" => Operators.shiftLeft
+      case ">>" => Operators.arithmeticShiftRight
+    }
+
+    val cpgShift = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, operatorMethod)
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
+      .addCommons(astShift, context)
+      .createNode(astShift)
+
+    visitBinaryExpr(astShift, cpgShift)
+  }
+
   override def visit(astCall: CallExpression): Unit = {
     val cpgCall = adapter.createNodeBuilder(NodeKind.CALL)
         .addProperty(NodeProperty.NAME, astCall.getTargetFunc.getEscapedCodeStr)
@@ -413,6 +431,38 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
         if (assignmentExpression != null) {
           assignmentExpression.accept(this)
         }
+    }
+  }
+
+  override def visit(astSizeof: SizeofExpression): Unit = {
+    // TODO use define from cpg definition once it is defined there.
+    val cpgSizeof = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, "<operator>.sizeof")
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, "<operator>.sizeof")
+      .addCommons(astSizeof, context)
+      .createNode(astSizeof)
+
+    addAstChild(cpgSizeof)
+
+    pushContext(astSizeof, cpgSizeof, 1)
+    // Child 0 is just the keyword 'sizeof' which at this point is duplicate
+    // information for us.
+    astSizeof.getChild(1).accept(this)
+    popContext()
+  }
+
+  override def visit(astSizeofOperand: SizeofOperand): Unit = {
+    astSizeofOperand.getChildCount match {
+      case 0 =>
+        // Operand is a type.
+        val cpgTypeRef = adapter.createNodeBuilder(NodeKind.UNKNOWN)
+          .addCommons(astSizeofOperand, context)
+          .createNode(astSizeofOperand)
+
+        addAstChild(cpgTypeRef)
     }
   }
 
