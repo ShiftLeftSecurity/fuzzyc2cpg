@@ -165,9 +165,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(argumentList: ArgumentList): Unit = {
-    argumentList.getChildIterator.asScala.foreach { argument =>
-      argument.accept(this)
-    }
+    acceptChildren(argumentList)
   }
 
   override def visit(astAssignment: AssignmentExpression): Unit = {
@@ -363,9 +361,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     addAstChild(cpgBlockStarter)
 
     pushContext(astBlockStarter, cpgBlockStarter, 1)
-    astBlockStarter.getChildIterator.asScala.foreach { child =>
-      child.accept(this)
-    }
+    acceptChildren(astBlockStarter)
     popContext()
   }
 

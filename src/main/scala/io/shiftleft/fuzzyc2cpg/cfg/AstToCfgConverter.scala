@@ -114,9 +114,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   }
 
   override def visit(argumentList: ArgumentList): Unit = {
-    argumentList.getChildIterator.asScala.foreach { argument =>
-      argument.accept(this)
-    }
+    acceptChildren(argumentList)
   }
 
   // TODO This also handles || and && for which we do not correctly model the lazyness.
@@ -185,9 +183,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   }
 
   override def visit(elseStatement: ElseStatement): Unit = {
-    elseStatement.getChildIterator.asScala.foreach { child =>
-      child.accept(this)
-    }
+    acceptChildren(elseStatement)
   }
 
   override def visit(expression: Expression): Unit = {
@@ -200,9 +196,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
         s"but ${classOfExression.getSimpleName} found")
     }
 
-    expression.getChildIterator.asScala.foreach { child =>
-      child.accept(this)
-    }
+    acceptChildren(expression)
   }
 
   override def visit(expressionStatement: ExpressionStatement): Unit = {
@@ -210,9 +204,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   }
 
   override def visit(forInit: ForInit): Unit = {
-    forInit.getChildIterator.asScala.foreach { child =>
-      child.accept(this)
-    }
+    acceptChildren(forInit)
   }
 
   override def visit(forStatement: ForStatement): Unit = {
