@@ -329,6 +329,12 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     caseStack.popLayer()
   }
 
+  override def visit(unaryOperationExpression: UnaryOperationExpression): Unit = {
+    // Child 0 is the operator child 1 is the operand.
+    unaryOperationExpression.getChild(1).accept(this)
+    extendCfg(unaryOperationExpression)
+  }
+
   override def visit(whileStatement: WhileStatement): Unit = {
     breakStack.pushLayer()
     continueStack.pushLayer()

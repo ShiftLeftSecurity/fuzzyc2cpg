@@ -261,6 +261,32 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     visitBinaryExpr(astShift, cpgShift)
   }
 
+  override def visit(astUnaryOperation: UnaryOperationExpression): Unit = {
+    val operatorMethod = astUnaryOperation.getChild(0).getEscapedCodeStr match {
+      case "+" => Operators.plus
+      case "-" => Operators.minus
+      case "*" => Operators.indirection
+      case "&" => "<operator>.address" // TODO use define from cpg.
+      case "~" => Operators.not
+      case "!" => Operators.logicalNot
+    }
+
+    val cpgUnaryOperation = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, operatorMethod)
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
+      .addCommons(astUnaryOperation, context)
+      .createNode(astUnaryOperation)
+
+    addAstChild(cpgUnaryOperation)
+
+    pushContext(astUnaryOperation, cpgUnaryOperation, 1)
+    astUnaryOperation.getChild(1).accept(this)
+    popContext()
+  }
+
   override def visit(astCall: CallExpression): Unit = {
     val cpgCall = adapter.createNodeBuilder(NodeKind.CALL)
         .addProperty(NodeProperty.NAME, astCall.getTargetFunc.getEscapedCodeStr)

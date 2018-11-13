@@ -342,6 +342,22 @@ class AstToCpgTests extends WordSpec with Matchers {
       forBlock.checkForSingle()
     }
 
+    "be correct for unary expression" in new Fixture(
+      """
+        |void method(int x) {
+        |  +x;
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      val plusCall = block.expandAst(NodeTypes.CALL)
+      plusCall.checkForSingle(NodeKeys.NAME, Operators.plus)
+
+      val identifierX = plusCall.expandAst(NodeTypes.IDENTIFIER)
+      identifierX.checkForSingle(NodeKeys.NAME, "x")
+    }
   }
 
   "Structural AST layout" should {
