@@ -79,8 +79,9 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
   }
 
   private def addMetaDataNode(): Unit = {
+    // TODO replace FUZZYC through define from CPG.
     val metaNode = newNode(NodeType.META_DATA)
-      .addStringProperty(NodePropertyName.LANGUAGE, Languages.FUZZYC)
+      .addStringProperty(NodePropertyName.LANGUAGE, "FUZZYC")
       .build
 
     structureCpg.addNode(metaNode)
