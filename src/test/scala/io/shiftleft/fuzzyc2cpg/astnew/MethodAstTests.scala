@@ -1,13 +1,43 @@
-package io.shiftleft.fuzzyc2cpg
+package io.shiftleft.fuzzyc2cpg.astnew
 
 import gremlin.scala._
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
+import io.shiftleft.fuzzyc2cpg.ModuleLexer
+import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
+import io.shiftleft.fuzzyc2cpg.astnew.EdgeKind.EdgeKind
+import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
+import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
+import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
+import io.shiftleft.fuzzyc2cpg.parser.{AntlrParserDriverObserver, TokenSubStream}
+import org.antlr.v4.runtime.{CharStreams, ParserRuleContext}
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
 import org.scalatest.{Matchers, WordSpec}
 
-class MethodAstLayoutTests extends WordSpec with Matchers with TravesalUtils {
-  val fixture = CpgTestFixture("methodastlayout")
+class MethodAstTests extends WordSpec with Matchers {
 
-  implicit class VertexListWrapper(vertexList: List[Vertex]) {
+  private class GraphAdapter(graph: ScalaGraph) extends CpgAdapter[Vertex, Vertex] {
+    override def createNodeBuilder(kind: NodeKind): Vertex = {
+      graph.addVertex(kind.toString)
+    }
+
+    override def createNode(vertex: Vertex): Vertex = {
+      vertex
+    }
+
+    override def addProperty(vertex: Vertex, property: NodeProperty, value: String): Unit = {
+      vertex.property(property.toString, value)
+    }
+
+    override def addProperty(vertex: Vertex, property: NodeProperty, value: Int): Unit = {
+      vertex.property(property.toString, value)
+    }
+
+    override def addEdge(edgeKind: EdgeKind, dstNode: Vertex, srcNode: Vertex): Unit = {
+      srcNode.addEdge(edgeKind.toString, dstNode)
+    }
+  }
+
+  private implicit class VertexListWrapper(vertexList: List[Vertex]) {
     def expandAst(filterLabels: String*): List[Vertex] = {
       if (filterLabels.nonEmpty) {
         vertexList.flatMap(_.start.out(EdgeTypes.AST).hasLabel(filterLabels.head, filterLabels.tail: _*).l)
@@ -38,14 +68,68 @@ class MethodAstLayoutTests extends WordSpec with Matchers with TravesalUtils {
 
   }
 
+  private class Fixture(code: String) {
+
+    private class DriverObserver extends AntlrParserDriverObserver {
+      override def begin(): Unit = {}
+
+      override def end(): Unit = {}
+
+      override def startOfUnit(ctx: ParserRuleContext, filename: String): Unit = {}
+
+      override def endOfUnit(ctx: ParserRuleContext, filename: String): Unit = {}
+
+      override def processItem(node: AstNode, builderStack: java.util.Stack[AstNodeBuilder]): Unit = {
+        nodes = node :: nodes
+      }
+    }
+
+    private var nodes = List[AstNode]()
+
+    private val driver = new AntlrCModuleParserDriver()
+    driver.addObserver(new DriverObserver())
+
+    private val inputStream = CharStreams.fromString(code)
+    private val lex = new ModuleLexer(inputStream)
+    private val tokens = new TokenSubStream(lex)
+
+    driver.parseAndWalkTokenStream(tokens)
+
+    private val graph = TinkerGraph.open()
+    private val cpgAdapter = new GraphAdapter(graph)
+    private val astToProtoConverter = new AstToCpgConverter("codeFromString", cpgAdapter)
+
+    nodes.size shouldBe 1
+    astToProtoConverter.convert(nodes.head)
+
+    def getMethod(name: String): List[Vertex] = {
+      val result = graph.V
+        .hasLabel(NodeTypes.METHOD)
+        .has(NodeKeys.NAME -> name)
+        .l
+
+      result.size shouldBe 1
+      result
+    }
+  }
+
   "AST layout" should {
-    "be correct for empty method1" in {
-      val method = getMethod("method1")
+    "be correct for empty method" in new Fixture(
+      """
+        |void method() {
+        |}"
+      """.stripMargin) {
+      val method = getMethod("method")
       method.expandAst(NodeTypes.BLOCK).checkForSingle()
     }
 
-    "be correct for decl assignment in method2" in {
-      val method = getMethod("method2")
+    "be correct for decl assignment" in new Fixture(
+      """
+        |void method() {
+        |  int local = 1;
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
       val block= method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
@@ -66,9 +150,17 @@ class MethodAstLayoutTests extends WordSpec with Matchers with TravesalUtils {
         (NodeTypes.LITERAL, "1", 2, 2))
     }
 
-
-    "be correct for nested expression in method3" in {
-      val method = getMethod("method3")
+    "be correct for nested expression" in new Fixture(
+      """
+        |void method() {
+        |  int x;
+        |  int y;
+        |  int z;
+        |
+        |  x = y + z;
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val locals = block.expandAst(NodeTypes.LOCAL)
@@ -88,12 +180,20 @@ class MethodAstLayoutTests extends WordSpec with Matchers with TravesalUtils {
           arg.value2(NodeKeys.ORDER),
           arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations = (NodeTypes.IDENTIFIER, "y", 1, 1),
-          (NodeTypes.IDENTIFIER, "z", 2, 2)
+        (NodeTypes.IDENTIFIER, "z", 2, 2)
       )
     }
 
-    "be correct for nested block method4" in {
-      val method = getMethod("method4")
+    "be correct for nested block" in new Fixture (
+      """
+        |void method() {
+        |  int x;
+        |  {
+        |    int y;
+        |  }
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val locals = block.expandAst(NodeTypes.LOCAL)
@@ -105,8 +205,15 @@ class MethodAstLayoutTests extends WordSpec with Matchers with TravesalUtils {
       nestedLocals.checkForSingle(NodeKeys.NAME, "y")
     }
 
-    "be correct for while in method5" in {
-      val method = getMethod("method5")
+    "be correct for while" in new Fixture(
+      """
+        |void method(int x) {
+        |  while (x < 1) {
+        |    x += 1;
+        |  }
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
@@ -124,8 +231,16 @@ class MethodAstLayoutTests extends WordSpec with Matchers with TravesalUtils {
       assignPlus.filterOrder(1).checkForSingle(NodeKeys.NAME, Operators.assignmentPlus)
     }
 
-    "be correct for if in method6" in {
-      val method = getMethod("method6")
+    "be correct for if" in new Fixture(
+      """
+        |void method(int x) {
+        |  int y;
+        |  if (x > 0) {
+        |    y = 0;
+        |  }
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val ifStmt = block.expandAst(NodeTypes.UNKNOWN)
@@ -142,8 +257,18 @@ class MethodAstLayoutTests extends WordSpec with Matchers with TravesalUtils {
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
     }
 
-    "be correct for if-else in method7" in {
-      val method = getMethod("method7")
+    "be correct for if-else" in new Fixture(
+      """
+        |void method(int x) {
+        |  int y;
+        |  if (x > 0) {
+        |    y = 0;
+        |  } else {
+        |    y = 1;
+        |  }
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val ifStmt = block.expandAst(NodeTypes.UNKNOWN)
