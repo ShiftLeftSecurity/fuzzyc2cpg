@@ -8,7 +8,7 @@ object FalseEdge extends CfgEdgeType
 object AlwaysEdge extends CfgEdgeType
 object CaseEdge extends CfgEdgeType
 
-trait DestinationGraphAdapter[NodeType] {
+trait CfgAdapter[NodeType] {
   def mapNode(astNode: AstNode): NodeType
   def newCfgEdge(dstNode: NodeType, srcNode: NodeType, cfgEdgeType: CfgEdgeType)
 }

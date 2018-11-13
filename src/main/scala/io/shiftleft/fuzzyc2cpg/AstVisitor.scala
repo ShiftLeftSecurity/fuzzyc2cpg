@@ -8,7 +8,7 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.fuzzyc2cpg.astnew.{AstToCpgConverter, ProtoCpgAdapter}
-import io.shiftleft.fuzzyc2cpg.cfg.{AstToCfgConverter, ProtoGraphAdapter}
+import io.shiftleft.fuzzyc2cpg.cfg.{AstToCfgConverter, ProtoCfgAdapter}
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
@@ -33,7 +33,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
     val astToCpgConverter = new AstToCpgConverter(fileNameOption.get, cpgAdapter)
     astToCpgConverter.convert(functionDef)
 
-    val graphAdapter = new ProtoGraphAdapter(bodyCpg, astToCpgConverter.getAstToProtoMapping)
+    val graphAdapter = new ProtoCfgAdapter(bodyCpg, astToCpgConverter.getAstToProtoMapping)
     val astToCfgConverter = new AstToCfgConverter(
       astToCpgConverter.getMethodNode.get,
       astToCpgConverter.getMethodReturnNode.get,

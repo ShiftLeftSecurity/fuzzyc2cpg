@@ -20,7 +20,7 @@ object AstToCfgConverter {
 
 class AstToCfgConverter[NodeType](entryNode: NodeType,
                                   exitNode: NodeType,
-                                  adapter: DestinationGraphAdapter[NodeType] = null) extends ASTNodeVisitor {
+                                  adapter: CfgAdapter[NodeType] = null) extends ASTNodeVisitor {
   import AstToCfgConverter._
 
   private case class FringeElement(node: NodeType, cfgEdgeType: CfgEdgeType)
