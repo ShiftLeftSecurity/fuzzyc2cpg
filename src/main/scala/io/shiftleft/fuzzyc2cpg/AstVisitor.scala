@@ -4,7 +4,7 @@ import java.util
 
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
@@ -22,7 +22,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
   /**
     * Callback triggered for each function definition
     * */
-  override def visit(ast: FunctionDefBase): Unit =  {
+  override def visit(ast: FunctionDef): Unit =  {
     val outputModule = outputModuleFactory.create()
     outputModule.setClassAndMethodName(fileNameOption.get, ast.getName)
     new FunctionDefHandler(outputModule, fileNameOption.get).handle(ast)
