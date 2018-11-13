@@ -11,8 +11,7 @@ import io.shiftleft.fuzzyc2cpg.Utils.{children, newStringProperty, newEdge}
 
 import scala.collection.JavaConverters._
 
-class ClassDefHandler(structureCpg: CpgStruct.Builder,
-                      astParentNode: Node) {
+class ClassDefHandler(structureCpg: CpgStruct.Builder) {
 
   def handle(ast: ClassDefStatement): Unit = {
     val typeDeclNode = createTypeDeclNode(ast)

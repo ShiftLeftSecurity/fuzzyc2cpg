@@ -17,7 +17,6 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
                  structureCpg: CpgStruct.Builder,
                  astRootNode: Node)
   extends ASTNodeVisitor with AntlrParserDriverObserver {
-  private var astParentStack = List(astRootNode)
   private var fileNameOption = Option.empty[String]
 
   /**
@@ -26,14 +25,14 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
   override def visit(ast: FunctionDefBase): Unit =  {
     val outputModule = outputModuleFactory.create()
     outputModule.setClassAndMethodName(fileNameOption.get, ast.getName)
-    new FunctionDefHandler(astParentStack.head, outputModule, fileNameOption.get).handle(ast)
+    new FunctionDefHandler(outputModule, fileNameOption.get).handle(ast)
   }
 
   /**
     * Callback triggered for every class/struct
     * */
   override def visit(ast: ClassDefStatement): Unit = {
-    new ClassDefHandler(structureCpg, astParentStack.head).handle(ast)
+    new ClassDefHandler(structureCpg).handle(ast)
   }
 
   /**

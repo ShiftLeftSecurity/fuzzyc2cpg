@@ -8,7 +8,6 @@ import io.shiftleft.fuzzyc2cpg.cfg.{AstToCfgConverter, ProtoGraphAdapter}
 import io.shiftleft.fuzzyc2cpg.astnew.{AstToCpgConverter, ProtoCpgAdapter}
 
 class MethodCreator(functionDef: FunctionDefBase,
-                    astParentNode: Node,
                     containingFileName: String) {
   private val bodyCpg = CpgStruct.newBuilder()
 
