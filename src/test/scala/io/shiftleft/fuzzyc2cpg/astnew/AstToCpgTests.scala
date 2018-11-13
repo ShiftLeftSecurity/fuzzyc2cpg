@@ -219,7 +219,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       nestedLocals.checkForSingle(NodeKeys.NAME, "y")
     }
 
-    "be correct for while" in new Fixture(
+    "be correct for while-loop" in new Fixture(
       """
         |void method(int x) {
         |  while (x < 1) {
@@ -308,6 +308,40 @@ class AstToCpgTests extends WordSpec with Matchers {
       val assignmentInElse = elseBlock.expandAst(NodeTypes.CALL)
       assignmentInElse.checkForSingle(NodeKeys.NAME, Operators.assignment)
     }
+
+    "be correct for for-loop with multiple initalizations" in new Fixture(
+      """
+        |void method(int x, int y) {
+        |  for ( x = 0, y = 0; x < 1; x += 1) {
+        |    int z = 0;
+        |  }
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      val forLoop = block.expandAst(NodeTypes.UNKNOWN)
+      forLoop.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
+        expectations = "ForStatement")
+
+      val initBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(1)
+      initBlock.checkForSingle()
+
+      val assignments = initBlock.expandAst(NodeTypes.CALL)
+      assignments.check(2, _.value2(NodeKeys.NAME),
+        expectations = Operators.assignment)
+
+      val condition = forLoop.expandAst(NodeTypes.CALL).filterOrder(2)
+      condition.checkForSingle(NodeKeys.NAME, Operators.lessThan)
+
+      val increment = forLoop.expandAst(NodeTypes.CALL).filterOrder(3)
+      increment.checkForSingle(NodeKeys.NAME, Operators.assignmentPlus)
+
+      val forBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(4)
+      forBlock.checkForSingle()
+    }
+
   }
 
   "Structural AST layout" should {

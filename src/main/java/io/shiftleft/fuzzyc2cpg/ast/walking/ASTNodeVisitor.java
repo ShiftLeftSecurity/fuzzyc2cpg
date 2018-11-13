@@ -483,4 +483,8 @@ public interface ASTNodeVisitor {
     throw new RuntimeException("Unhandled node type: " + node.getClass());
   }
 
+  default void acceptChildren(AstNode node) {
+    node.getChildIterator().forEachRemaining(child -> child.accept(this));
+  }
+
 }

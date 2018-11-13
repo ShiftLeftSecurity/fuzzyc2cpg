@@ -329,6 +329,34 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     condition.getExpression.accept(this)
   }
 
+  override def visit(expression: Expression): Unit = {
+    // We only end up here for expressions chained by ','.
+    // Those expressions are than the children of the expression
+    // given as parameter.
+    val classOfExression = expression.getClass
+    if (classOfExression != classOf[Expression]) {
+      throw new RuntimeException(s"Only direct instances of Expressions expected " +
+        s"but ${classOfExression.getSimpleName} found")
+    }
+
+    val cpgBlock = adapter.createNodeBuilder(NodeKind.BLOCK)
+      .addProperty(NodeProperty.ORDER, context.childNum)
+      .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
+      .addProperty(NodeProperty.LINE_NUMBER, expression.getLocation.startLine)
+      .addProperty(NodeProperty.COLUMN_NUMBER, expression.getLocation.startPos)
+      .createNode(expression)
+
+    addAstChild(cpgBlock)
+
+    pushContext(expression, cpgBlock, 1)
+    acceptChildren(expression)
+    popContext()
+  }
+
+  override def visit(forInit: ForInit): Unit = {
+    acceptChildren(forInit)
+  }
+
   override def visit(astBlockStarter: BlockStarter): Unit = {
     val cpgBlockStarter = newUnknownNode(astBlockStarter)
 
