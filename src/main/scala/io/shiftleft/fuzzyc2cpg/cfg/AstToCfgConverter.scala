@@ -3,6 +3,7 @@ package io.shiftleft.fuzzyc2cpg.cfg
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
+import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.SizeofExpression
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.{ElseStatement, IfStatement}
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Label}
@@ -314,6 +315,21 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(returnStatement: ReturnStatement): Unit = {
     Option(returnStatement.getReturnExpression).foreach(_.accept(this))
     extendCfg(returnStatement)
+  }
+
+  override def visit(sizeofExpression: SizeofExpression): Unit = {
+    sizeofExpression.getChild(1).accept(this)
+    extendCfg(sizeofExpression)
+  }
+
+  override def visit(sizeofOperand: SizeofOperand): Unit = {
+    sizeofOperand.getChildCount match {
+      case 0 =>
+        // Operand is a type. We do not add the type to the CFG.
+      case 1 =>
+        // Operand is an expression.
+        sizeofOperand.getChild(0).accept(this)
+    }
   }
 
   override def visit(switchStatement: SwitchStatement): Unit = {

@@ -526,6 +526,9 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
           .createNode(astSizeofOperand)
 
         addAstChild(cpgTypeRef)
+      case 1 =>
+        // Operand is an expression.
+        astSizeofOperand.getChild(1).accept(this)
     }
   }
 
