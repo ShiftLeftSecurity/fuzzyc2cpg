@@ -123,6 +123,17 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("x") shouldBe expected(("++ x", AlwaysEdge))
         succOf("++ x") shouldBe expected(("EXIT", AlwaysEdge))
       }
+
+     // TODO This is wrong but intention, see comment on
+     // visitor function for ConditionExpression.
+    "be correct for conditional expression" in
+      new Fixture("x ? y : z;") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", AlwaysEdge))
+        succOf("y") shouldBe expected(("z", AlwaysEdge))
+        succOf("z") shouldBe expected(("x ? y : z", AlwaysEdge))
+        succOf("x ? y : z") shouldBe expected(("EXIT", AlwaysEdge))
+      }
   }
 
   "Cfg for while-loop" should {

@@ -149,6 +149,21 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     condition.getExpression.accept(this)
   }
 
+  // TODO We for now intentionally represent the control flow wrong
+  // in order to be able to get the data flow right, but with the
+  // drawback of always assuming that both branches are executed.
+  // Fix once we can represent this correctly.
+  override def visit(conditionalExpression: ConditionalExpression): Unit = {
+    val condition = conditionalExpression.getChild(0)
+    val trueExpression = conditionalExpression.getChild(1)
+    val falseExpression = conditionalExpression.getChild(2)
+
+    condition.accept(this)
+    trueExpression.accept(this)
+    falseExpression.accept(this)
+    extendCfg(conditionalExpression)
+  }
+
   override def visit(continueStatement: ContinueStatement): Unit = {
     val mappedContinue = adapter.mapNode(continueStatement)
     extendCfg(mappedContinue)

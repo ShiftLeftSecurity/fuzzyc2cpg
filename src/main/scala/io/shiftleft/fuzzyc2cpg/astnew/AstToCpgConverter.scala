@@ -355,6 +355,25 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     condition.getExpression.accept(this)
   }
 
+  override def visit(astConditionalExpr: ConditionalExpression): Unit = {
+    val cpgConditionalExpr = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, "<operator>.conditionalExpression")
+      // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
+      // At the moment we use STATIC_DISPATCH also for calls of function pointers.
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, "<operator>.conditionalExpression")
+      .addCommons(astConditionalExpr, context)
+      .createNode(astConditionalExpr)
+
+    addAstChild(cpgConditionalExpr)
+
+    pushContext(astConditionalExpr, cpgConditionalExpr, 1)
+    acceptChildren(astConditionalExpr)
+    popContext()
+  }
+
   override def visit(expression: Expression): Unit = {
     // We only end up here for expressions chained by ','.
     // Those expressions are than the children of the expression
