@@ -314,6 +314,10 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     }
   }
 
+  override def visit(initializerList: InitializerList): Unit = {
+    // TODO figure out how to represent.
+  }
+
   override def visit(label: Label): Unit = {
     val labelName = label.getLabelName
     if (labelName.startsWith("case") || labelName.startsWith("default")) {

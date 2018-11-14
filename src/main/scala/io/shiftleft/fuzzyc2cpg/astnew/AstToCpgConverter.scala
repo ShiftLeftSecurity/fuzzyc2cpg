@@ -102,7 +102,12 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   override def visit(astFunction: FunctionDefBase): Unit = {
     val name = astFunction.getName
-    val signature = astFunction.getReturnType.getEscapedCodeStr +
+    val returnType = if (astFunction.getReturnType != null) {
+      astFunction.getReturnType.getEscapedCodeStr
+    } else {
+      "int"
+    }
+    val signature = returnType +
       astFunction.getParameterList.asScala.map(_.getType.getEscapedCodeStr).mkString("(", ",", ")")
     val cpgMethod = adapter.createNodeBuilder(NodeKind.METHOD)
       .addProperty(NodeProperty.NAME, astFunction.getName)
@@ -127,12 +132,18 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       parameter.accept(this)
     }
 
+    val methodReturnLocation =
+      if (astFunction.getReturnType != null) {
+        astFunction.getReturnType.getLocation
+      } else {
+        astFunction.getLocation
+      }
     val cpgMethodReturn = adapter.createNodeBuilder(NodeKind.METHOD_RETURN)
       .addProperty(NodeProperty.CODE, "RET")
       .addProperty(NodeProperty.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
       .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO")
-      .addProperty(NodeProperty.LINE_NUMBER, astFunction.getReturnType.getLocation.startLine)
-      .addProperty(NodeProperty.COLUMN_NUMBER, astFunction.getReturnType.getLocation.startPos)
+      .addProperty(NodeProperty.LINE_NUMBER, methodReturnLocation.startLine)
+      .addProperty(NodeProperty.COLUMN_NUMBER, methodReturnLocation.startPos)
       .createNode()
 
     methodReturnNode = Some(cpgMethodReturn)
@@ -594,6 +605,10 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   override def visit(astCastTarget: CastTarget): Unit = {
     val cpgCastTarget = newUnknownNode(astCastTarget)
     addAstChild(cpgCastTarget)
+  }
+
+  override def visit(astInitializerList: InitializerList): Unit = {
+    // TODO figure out how to represent.
   }
 
   override def visit(astClassDef: ClassDefStatement): Unit = {
