@@ -222,7 +222,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   }
 
   override def visit(expressionStatement: ExpressionStatement): Unit = {
-    expressionStatement.getExpression.accept(this)
+    Option(expressionStatement.getExpression).foreach(_.accept(this))
   }
 
   override def visit(forInit: ForInit): Unit = {

@@ -441,7 +441,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(statement: ExpressionStatement): Unit = {
-    statement.getExpression.accept(this)
+    Option(statement.getExpression).foreach(_.accept(this))
   }
 
   override def visit(astBlock: CompoundStatement): Unit = {
