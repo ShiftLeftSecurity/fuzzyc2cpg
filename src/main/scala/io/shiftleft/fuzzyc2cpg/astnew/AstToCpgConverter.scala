@@ -261,29 +261,31 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     visitBinaryExpr(astShift, cpgShift)
   }
 
-  override def visit(astUnaryOperation: UnaryOperationExpression): Unit = {
-    val operatorMethod = astUnaryOperation.getChild(0).getEscapedCodeStr match {
+  override def visit(astUnary: UnaryExpression): Unit = {
+    val operatorMethod = astUnary.getChild(0).getEscapedCodeStr match {
       case "+" => Operators.plus
       case "-" => Operators.minus
       case "*" => Operators.indirection
       case "&" => "<operator>.address" // TODO use define from cpg.
       case "~" => Operators.not
       case "!" => Operators.logicalNot
+      case "++" => Operators.preIncrement
+      case "--" => Operators.preDecrement
     }
 
-    val cpgUnaryOperation = adapter.createNodeBuilder(NodeKind.CALL)
+    val cpgUnary = adapter.createNodeBuilder(NodeKind.CALL)
       .addProperty(NodeProperty.NAME, operatorMethod)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
       .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
-      .addCommons(astUnaryOperation, context)
-      .createNode(astUnaryOperation)
+      .addCommons(astUnary, context)
+      .createNode(astUnary)
 
-    addAstChild(cpgUnaryOperation)
+    addAstChild(cpgUnary)
 
-    pushContext(astUnaryOperation, cpgUnaryOperation, 1)
-    astUnaryOperation.getChild(1).accept(this)
+    pushContext(astUnary, cpgUnary, 1)
+    astUnary.getChild(1).accept(this)
     popContext()
   }
 

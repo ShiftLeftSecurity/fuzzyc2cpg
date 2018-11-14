@@ -110,11 +110,18 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("foo ( a + 1 , b )") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
-    "be correct for unary expression" in
+    "be correct for unary expression '+'" in
       new Fixture("+x;") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("+ x", AlwaysEdge))
         succOf("+ x") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct for unary expression '++'" in
+      new Fixture("++x;") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("++ x", AlwaysEdge))
+        succOf("++ x") shouldBe expected(("EXIT", AlwaysEdge))
       }
   }
 
