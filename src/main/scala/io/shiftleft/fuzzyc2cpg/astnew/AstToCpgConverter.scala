@@ -8,7 +8,7 @@ import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpression}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement}
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label}
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, ReturnStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
@@ -530,6 +530,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
         // Operand is an expression.
         astSizeofOperand.getChild(1).accept(this)
     }
+  }
+
+  override def visit(astLabel: Label): Unit = {
+    val cpgLabel = adapter.createNodeBuilder(NodeKind.UNKNOWN)
+      .addCommons(astLabel, context)
+      .createNode(astLabel)
+
+    addAstChild(cpgLabel)
   }
 
   override def visit(astClassDef: ClassDefStatement): Unit = {
