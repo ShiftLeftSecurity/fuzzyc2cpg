@@ -171,19 +171,18 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   override def visit(astAssignment: AssignmentExpression): Unit = {
     val operatorMethod = astAssignment.getOperator match {
       case "=" => Operators.assignment
+      case "*=" => Operators.assignmentMultiplication
+      case "/=" => Operators.assignmentDivision
+      case "%=" => Operators.assignmentDivision
       case "+=" => Operators.assignmentPlus
+      case "-=" => Operators.assignmentMinus
+      case "<<=" => Operators.assignmentShiftLeft
+      case ">>=" => Operators.assignmentArithmeticShiftRight
+      case "&=" => Operators.assignmentAnd
+      case "^=" => Operators.assignmentXor
+      case "|=" => Operators.assignmentOr
     }
-
-    val cpgAssignment = adapter.createNodeBuilder(NodeKind.CALL)
-        .addProperty(NodeProperty.NAME, operatorMethod)
-        .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-        .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-        .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
-        .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
-        .addCommons(astAssignment, context)
-        .createNode(astAssignment)
-
-    visitBinaryExpr(astAssignment, cpgAssignment)
+    visitBinaryExpr(astAssignment, operatorMethod)
   }
 
   override def visit(astAdd: AdditiveExpression): Unit = {
@@ -192,16 +191,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       case "-" => Operators.subtraction
     }
 
-    val cpgAdd = adapter.createNodeBuilder(NodeKind.CALL)
-        .addProperty(NodeProperty.NAME, operatorMethod)
-        .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-        .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-        .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
-        .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
-        .addCommons(astAdd, context)
-        .createNode(astAdd)
-
-    visitBinaryExpr(astAdd, cpgAdd)
+    visitBinaryExpr(astAdd, operatorMethod)
   }
 
   override def visit(astMult: MultiplicativeExpression): Unit = {
@@ -211,16 +201,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       case "%" => Operators.modulo
     }
 
-    val cpgMult = adapter.createNodeBuilder(NodeKind.CALL)
-        .addProperty(NodeProperty.NAME, operatorMethod)
-        .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-        .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-        .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
-        .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
-        .addCommons(astMult, context)
-        .createNode(astMult)
-
-    visitBinaryExpr(astMult, cpgMult)
+    visitBinaryExpr(astMult, operatorMethod)
   }
 
   override def visit(astRelation: RelationalExpression): Unit = {
@@ -231,16 +212,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       case ">=" => Operators.greaterEqualsThan
     }
 
-    val cpgRelation = adapter.createNodeBuilder(NodeKind.CALL)
-        .addProperty(NodeProperty.NAME, operatorMethod)
-        .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-        .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-        .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
-        .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
-        .addCommons(astRelation, context)
-        .createNode(astRelation)
-
-    visitBinaryExpr(astRelation, cpgRelation)
+    visitBinaryExpr(astRelation, operatorMethod)
   }
 
   override def visit(astShift: ShiftExpression): Unit = {
@@ -249,16 +221,36 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       case ">>" => Operators.arithmeticShiftRight
     }
 
-    val cpgShift = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, operatorMethod)
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
-      .addCommons(astShift, context)
-      .createNode(astShift)
+    visitBinaryExpr(astShift, operatorMethod)
+  }
 
-    visitBinaryExpr(astShift, cpgShift)
+  override def visit(astEquality: EqualityExpression): Unit = {
+    val operatorMethod = astEquality.getOperator match {
+      case "==" => Operators.equals
+      case "!=" => Operators.notEquals
+    }
+
+    visitBinaryExpr(astEquality, operatorMethod)
+  }
+
+  override def visit(astBitAnd: BitAndExpression): Unit = {
+    visitBinaryExpr(astBitAnd, Operators.and)
+  }
+
+  override def visit(astInclOr: InclusiveOrExpression): Unit = {
+    visitBinaryExpr(astInclOr, Operators.or)
+  }
+
+  override def visit(astExclOr: ExclusiveOrExpression): Unit = {
+    visitBinaryExpr(astExclOr, Operators.or)
+  }
+
+  override def visit(astOr: OrExpression): Unit = {
+    visitBinaryExpr(astOr, Operators.logicalOr)
+  }
+
+  override def visit(astAnd: AndExpression): Unit = {
+    visitBinaryExpr(astAnd, Operators.logicalAnd)
   }
 
   override def visit(astUnary: UnaryExpression): Unit = {
@@ -557,7 +549,16 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     popContext()
   }
 
-  private def visitBinaryExpr(astBinaryExpr: BinaryExpression, cpgBinaryExpr: NodeType): Unit = {
+  private def visitBinaryExpr(astBinaryExpr: BinaryExpression, operatorMethod: String): Unit = {
+    val cpgBinaryExpr = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, operatorMethod)
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
+      .addCommons(astBinaryExpr, context)
+      .createNode(astBinaryExpr)
+
     addAstChild(cpgBinaryExpr)
 
     pushContext(astBinaryExpr, cpgBinaryExpr, 1)
