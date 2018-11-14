@@ -318,6 +318,13 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     }
   }
 
+  // TODO We here assume that the post inc/dec is executed like a normal operation
+  // and not at the end of the statement.
+  override def visit(postIncDecOperationExpression: PostIncDecOperationExpression): Unit = {
+    postIncDecOperationExpression.getChild(0).accept(this)
+    extendCfg(postIncDecOperationExpression)
+  }
+
   override def visit(returnStatement: ReturnStatement): Unit = {
     Option(returnStatement.getReturnExpression).foreach(_.accept(this))
     extendCfg(returnStatement)

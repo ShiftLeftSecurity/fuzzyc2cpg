@@ -281,6 +281,27 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     popContext()
   }
 
+  override def visit(astPostIncDecOp: PostIncDecOperationExpression): Unit = {
+    val operatorMethod = astPostIncDecOp.getChild(1).getEscapedCodeStr match {
+      case "++" => Operators.postIncrement
+      case "--" => Operators.postDecrement
+    }
+    val cpgPostIncDecOp = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, operatorMethod)
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
+      .addCommons(astPostIncDecOp, context)
+      .createNode(astPostIncDecOp)
+
+    addAstChild(cpgPostIncDecOp)
+
+    pushContext(astPostIncDecOp, cpgPostIncDecOp, 1)
+    astPostIncDecOp.getChild(0).accept(this)
+    popContext()
+  }
+
   override def visit(astCall: CallExpression): Unit = {
     val cpgCall = adapter.createNodeBuilder(NodeKind.CALL)
         .addProperty(NodeProperty.NAME, astCall.getTargetFunc.getEscapedCodeStr)
