@@ -138,6 +138,11 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     breakStack.store(mappedBreak)
   }
 
+  override def visit(castExpression: CastExpression): Unit = {
+    castExpression.getCastExpression.accept(this)
+    extendCfg(castExpression)
+  }
+
   // TODO we do not handle the 'targetFunc' field of callExpression yet.
   // This leads to not correctly handling calls via function pointers.
   // Fix this once we change CALL side representation for this.

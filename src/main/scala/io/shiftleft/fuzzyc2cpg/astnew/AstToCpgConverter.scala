@@ -579,6 +579,29 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     popContext()
   }
 
+  override def visit(astCast: CastExpression): Unit = {
+    val cpgCast = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, Operators.cast)
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.cast)
+      .addCommons(astCast, context)
+      .createNode(astCast)
+
+    addAstChild(cpgCast)
+
+    pushContext(astCast, cpgCast, 1)
+    astCast.getCastTarget.accept(this)
+    astCast.getCastExpression.accept(this)
+    popContext()
+  }
+
+  override def visit(astCastTarget: CastTarget): Unit = {
+    val cpgCastTarget = newUnknownNode(astCastTarget)
+    addAstChild(cpgCastTarget)
+  }
+
   override def visit(astClassDef: ClassDefStatement): Unit = {
     // TODO: currently NAME and FULL_NAME are the same, since
     // the parser does not detect C++ namespaces. Change that,
