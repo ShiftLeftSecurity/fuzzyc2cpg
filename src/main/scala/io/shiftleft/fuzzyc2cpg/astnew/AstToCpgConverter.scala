@@ -542,10 +542,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     astSizeofOperand.getChildCount match {
       case 0 =>
         // Operand is a type.
-        val cpgTypeRef = adapter.createNodeBuilder(NodeKind.UNKNOWN)
-          .addCommons(astSizeofOperand, context)
-          .createNode(astSizeofOperand)
-
+        val cpgTypeRef = newUnknownNode(astSizeofOperand)
         addAstChild(cpgTypeRef)
       case 1 =>
         // Operand is an expression.
@@ -554,10 +551,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astLabel: Label): Unit = {
-    val cpgLabel = adapter.createNodeBuilder(NodeKind.UNKNOWN)
-      .addCommons(astLabel, context)
-      .createNode(astLabel)
-
+    val cpgLabel = newUnknownNode(astLabel)
     addAstChild(cpgLabel)
   }
 
