@@ -118,6 +118,12 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     acceptChildren(argumentList)
   }
 
+  override def visit(arrayIndexing: ArrayIndexing): Unit = {
+    arrayIndexing.getArrayExpression.accept(this)
+    arrayIndexing.getIndexExpression.accept(this)
+    extendCfg(arrayIndexing)
+  }
+
   // TODO This also handles || and && for which we do not correctly model the lazyness.
   override def visit(binaryExpression: BinaryExpression): Unit = {
     binaryExpression.getLeft.accept(this)

@@ -540,6 +540,24 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     addAstChild(cpgLabel)
   }
 
+  override def visit(astArrayIndexing: ArrayIndexing): Unit = {
+    val cpgArrayIndexing = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, Operators.computedMemberAccess)
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.computedMemberAccess)
+      .addCommons(astArrayIndexing, context)
+      .createNode(astArrayIndexing)
+
+    addAstChild(cpgArrayIndexing)
+
+    pushContext(astArrayIndexing, cpgArrayIndexing, 1)
+    astArrayIndexing.getArrayExpression.accept(this)
+    astArrayIndexing.getIndexExpression.accept(this)
+    popContext()
+  }
+
   override def visit(astClassDef: ClassDefStatement): Unit = {
     // TODO: currently NAME and FULL_NAME are the same, since
     // the parser does not detect C++ namespaces. Change that,
