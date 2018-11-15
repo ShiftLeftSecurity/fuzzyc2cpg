@@ -9,7 +9,7 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpr
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label, Statement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, ReturnStatement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, GotoStatement, ReturnStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
@@ -356,6 +356,12 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     val cpgContinue = newUnknownNode(astContinue)
 
     addAstChild(cpgContinue)
+  }
+
+  override def visit(astGoto: GotoStatement): Unit = {
+    val cpgGoto = newUnknownNode(astGoto)
+
+    addAstChild(cpgGoto)
   }
 
   override def visit(astIdentifier: Identifier): Unit = {
