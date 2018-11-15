@@ -215,13 +215,22 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
     fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
 
-    doStatement.getCondition.accept(this)
-    val conditionFringe = fringe
-    fringe = fringe.setCfgEdgeType(TrueEdge)
+    Option(doStatement.getCondition) match {
+      case Some(condition) =>
+        condition.accept(this)
+        val conditionFringe = fringe
+        fringe = fringe.setCfgEdgeType(TrueEdge)
 
-    extendCfg(markerStack.head.get)
+        extendCfg(markerStack.head.get)
 
-    fringe = conditionFringe.setCfgEdgeType(FalseEdge).add(breakStack.getTopElements, AlwaysEdge)
+        fringe = conditionFringe.setCfgEdgeType(FalseEdge)
+      case None =>
+        // We only get here if the parser missed the condition.
+        // In this case doing nothing here means that we have
+        // no CFG edge to the loop start because we default
+        // to an always false condition.
+    }
+    fringe = fringe.add(breakStack.getTopElements, AlwaysEdge)
 
     markerStack = markerStack.tail
     breakStack.popLayer()
