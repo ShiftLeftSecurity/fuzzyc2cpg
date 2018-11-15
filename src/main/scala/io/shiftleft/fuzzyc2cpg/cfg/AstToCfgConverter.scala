@@ -1,7 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.cfg
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
-import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl
+import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.SizeofExpression
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
@@ -149,6 +149,10 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(callExpression: CallExpressionBase): Unit = {
     callExpression.getArgumentList.accept(this)
     extendCfg(callExpression)
+  }
+
+  override def visit(classDefStatement: ClassDefStatement): Unit = {
+    // Class defs are not put into the control flow in CPG format.
   }
 
   override def visit(compoundStatement: CompoundStatement): Unit = {
@@ -325,6 +329,16 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     } else {
       pendingGotoLabels = labelName :: pendingGotoLabels
     }
+  }
+
+  override def visit(memberAccess: MemberAccess): Unit = {
+    acceptChildren(memberAccess)
+    extendCfg(memberAccess)
+  }
+
+  override def visit(ptrMemberAccess: PtrMemberAccess): Unit = {
+    acceptChildren(ptrMemberAccess)
+    extendCfg(ptrMemberAccess)
   }
 
   // TODO We here assume that the post inc/dec is executed like a normal operation

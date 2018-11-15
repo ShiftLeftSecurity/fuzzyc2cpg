@@ -606,6 +606,40 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     popContext()
   }
 
+  override def visit(astMemberAccess: MemberAccess): Unit = {
+    val cpgMemberAccess = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, Operators.memberAccess)
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.memberAccess)
+      .addCommons(astMemberAccess, context)
+      .createNode(astMemberAccess)
+
+    addAstChild(cpgMemberAccess)
+
+    pushContext(astMemberAccess, cpgMemberAccess, 1)
+    acceptChildren(astMemberAccess)
+    popContext()
+  }
+
+  override def visit(astPtrMemberAccess: PtrMemberAccess): Unit = {
+    val cpgPtrMemberAccess = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, Operators.indirectMemberAccess)
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.indirectMemberAccess)
+      .addCommons(astPtrMemberAccess, context)
+      .createNode(astPtrMemberAccess)
+
+    addAstChild(cpgPtrMemberAccess)
+
+    pushContext(astPtrMemberAccess, cpgPtrMemberAccess, 1)
+    acceptChildren(astPtrMemberAccess)
+    popContext()
+  }
+
   override def visit(astCastTarget: CastTarget): Unit = {
     val cpgCastTarget = newUnknownNode(astCastTarget)
     addAstChild(cpgCastTarget)
