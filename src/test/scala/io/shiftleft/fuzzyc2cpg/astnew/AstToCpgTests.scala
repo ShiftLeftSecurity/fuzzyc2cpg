@@ -104,10 +104,11 @@ class AstToCpgTests extends WordSpec with Matchers {
     private val astParentNode = graph.addVertex("PARENT")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
-    private val astToProtoConverter = new AstToCpgConverter(fileName, astParentNode, cpgAdapter)
 
-    nodes.size shouldBe 1
-    astToProtoConverter.convert(nodes.head)
+    nodes.foreach { node =>
+      val astToProtoConverter = new AstToCpgConverter(fileName, astParentNode, cpgAdapter)
+      astToProtoConverter.convert(node)
+    }
 
     def getMethod(name: String): List[Vertex] = {
       val result = graph.V
@@ -402,7 +403,6 @@ class AstToCpgTests extends WordSpec with Matchers {
         |  (*funcPointer)(x);
         |}
       """.stripMargin) {
-
     }
   }
 
@@ -475,6 +475,24 @@ class AstToCpgTests extends WordSpec with Matchers {
       typeDeclBar.checkForSingle()
       val memberBar = typeDeclBar.expandAst(NodeTypes.MEMBER)
       memberBar.checkForSingle(NodeKeys.CODE, "x")
+    }
+  }
+
+  "AST" should {
+    "have correct line number for method content" in new Fixture(
+      """
+        | void method(int x) {
+        |   x = 1;
+        | }
+      """.stripMargin) {
+      val method = getMethod("method")
+      method.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 2)
+
+      val block = method.expandAst(NodeTypes.BLOCK)
+
+      val assignment = block.expandAst(NodeTypes.CALL)
+      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
+      assignment.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 3)
     }
   }
 }
