@@ -8,7 +8,7 @@ import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpression}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label}
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, ReturnStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
@@ -315,7 +315,11 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   override def visit(astCall: CallExpression): Unit = {
     val cpgCall = adapter.createNodeBuilder(NodeKind.CALL)
-        .addProperty(NodeProperty.NAME, astCall.getTargetFunc.getEscapedCodeStr)
+        // TODO For now we just take the code of the target. But this can be a complete
+        // expression and thus needs to be completley visited.
+        // Fix once we know how to represent this in a homogen way with
+        // calls to member methods.
+        .addProperty(NodeProperty.NAME, astCall.getChild(0).getEscapedCodeStr)
         // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
         // At the moment we use STATIC_DISPATCH also for calls of function pointers.
         .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
@@ -609,6 +613,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   override def visit(astInitializerList: InitializerList): Unit = {
     // TODO figure out how to represent.
+  }
+
+  override def visit(statement: Statement): Unit = {
+    if (statement.getChildCount != 0) {
+      throw new RuntimeException("Unhandled statement type: " + statement.getClass)
+    } else {
+      logger.info("Parse error. Code: {}", statement.getEscapedCodeStr)
+    }
   }
 
   override def visit(astClassDef: ClassDefStatement): Unit = {

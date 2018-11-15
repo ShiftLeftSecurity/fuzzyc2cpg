@@ -375,6 +375,32 @@ class AstToCpgTests extends WordSpec with Matchers {
       val identifierX = plusCall.expandAst(NodeTypes.IDENTIFIER)
       identifierX.checkForSingle(NodeKeys.NAME, "x")
     }
+
+    "be correct for call expression" in new Fixture(
+      """
+        |void method(int x) {
+        |  foo(x);
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      val call = block.expandAst(NodeTypes.CALL)
+      call.checkForSingle(NodeKeys.NAME, "foo")
+
+      val argumentX = call.expandAst(NodeTypes.IDENTIFIER)
+      argumentX.checkForSingle(NodeKeys.NAME, "x")
+    }
+
+    "be correct for pointer call expression" in new Fixture(
+      """
+        |void method(int x) {
+        |  (*funcPointer)(x);
+        |}
+      """.stripMargin) {
+
+    }
   }
 
   "Structural AST layout" should {

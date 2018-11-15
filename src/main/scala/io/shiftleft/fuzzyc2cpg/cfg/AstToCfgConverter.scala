@@ -6,7 +6,7 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.SizeofExpression
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.{ElseStatement, IfStatement}
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Label}
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Label, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionHolder, ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{DoStatement, ForStatement, SwitchStatement, WhileStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, GotoStatement, ReturnStatement}
@@ -351,6 +351,12 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
       case 1 =>
         // Operand is an expression.
         sizeofOperand.getChild(0).accept(this)
+    }
+  }
+
+  override def visit(statement: Statement): Unit = {
+    if (statement.getChildCount != 0) {
+      throw new RuntimeException("Unhandled statement type: " + statement.getClass)
     }
   }
 
