@@ -24,4 +24,8 @@ class LayeredStack[ElementType] {
   def getTopElements: List[ElementType] = {
     stack.head.elements
   }
+
+  def numberOfLayers: Int = {
+   stack.size
+  }
 }

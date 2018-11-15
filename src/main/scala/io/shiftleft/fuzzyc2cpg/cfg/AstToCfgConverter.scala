@@ -76,8 +76,13 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
     // TODO at the moment we discard the case labels
     if (pendingCaseLabels.nonEmpty) {
-      val containsDefaultLabel = pendingCaseLabels.contains("default")
-      caseStack.store(dstNode, containsDefaultLabel)
+      // Under normal conditions this is always true.
+      // But if the parser missed a switch statment, caseStack
+      // might by empty.
+      if (caseStack.numberOfLayers > 0) {
+        val containsDefaultLabel = pendingCaseLabels.contains("default")
+        caseStack.store(dstNode, containsDefaultLabel)
+      }
       pendingCaseLabels = List()
     }
 
@@ -134,8 +139,13 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(breakStatement: BreakStatement): Unit = {
     val mappedBreak = adapter.mapNode(breakStatement)
     extendCfg(mappedBreak)
-    fringe = fringe.empty()
-    breakStack.store(mappedBreak)
+    // Under normal conditions this is always true.
+    // But if the parser missed a loop or switch statement, breakStack
+    // might by empty.
+    if (breakStack.numberOfLayers > 0) {
+      fringe = fringe.empty()
+      breakStack.store(mappedBreak)
+    }
   }
 
   override def visit(castExpression: CastExpression): Unit = {
@@ -183,8 +193,13 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(continueStatement: ContinueStatement): Unit = {
     val mappedContinue = adapter.mapNode(continueStatement)
     extendCfg(mappedContinue)
-    fringe = fringe.empty()
-    continueStack.store(mappedContinue)
+    // Under normal conditions this is always true.
+    // But if the parser missed a loop statement, continueStack
+    // might by empty.
+    if (continueStack.numberOfLayers > 0) {
+      fringe = fringe.empty()
+      continueStack.store(mappedContinue)
+    }
   }
 
   override def visit(constant: Constant): Unit = {
