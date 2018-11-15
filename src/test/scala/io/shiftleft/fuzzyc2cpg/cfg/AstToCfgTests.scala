@@ -309,6 +309,11 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("x", AlwaysEdge))
       }
+
+    "be correct with empty condition with empty block" in
+      new Fixture("for (;;) ;") {
+        succOf("ENTRY") shouldBe expected()
+      }
   }
 
   "Cfg for goto" should {

@@ -287,7 +287,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
     Option(forStatement.getForLoopExpression).foreach(_.accept(this))
 
-    extendCfg(markerStack.head.get)
+    markerStack.head.foreach(extendCfg)
 
     fringe = conditionFringe.setCfgEdgeType(FalseEdge).add(breakStack.getTopElements, AlwaysEdge)
 
