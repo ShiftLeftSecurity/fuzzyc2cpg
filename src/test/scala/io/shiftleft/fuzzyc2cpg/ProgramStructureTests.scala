@@ -12,10 +12,9 @@ class ProgramStructureTests extends WordSpec with Matchers {
     "contain <global> namespace block node" in {
       val namespaceBlocks =
         fixture.V.hasLabel(NodeType.NAMESPACE_BLOCK.toString)
-        .value(NodeKeys.NAME).l
+        .has(NodeKeys.FULL_NAME -> Defines.globalNamespaceName).l
 
       namespaceBlocks.size shouldBe 1
-      namespaceBlocks.head shouldBe "<global>"
     }
 
     "contain one file node" in {
@@ -35,7 +34,7 @@ class ProgramStructureTests extends WordSpec with Matchers {
 
     "contain type-decl node" in {
       val nodes = fixture.V.hasLabel(NodeType.TYPE_DECL.toString).l
-      nodes.size shouldBe 1
+      nodes.size shouldBe 2
     }
 
 

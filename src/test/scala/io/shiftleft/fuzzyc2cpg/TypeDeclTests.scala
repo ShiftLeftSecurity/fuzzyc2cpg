@@ -10,9 +10,9 @@ class TypeDeclTests extends WordSpec with Matchers {
   "Type decl test project" should {
     "contain one internal type decl node for Foo" in {
       val typeDeclNodes = fixture.V.hasLabel(NodeType.TYPE_DECL.toString)
+        .has(NodeKeys.NAME -> "Foo")
         .l
       typeDeclNodes.size shouldBe 1
-      typeDeclNodes.head.value[String](NodeKeys.NAME.name) shouldBe "Foo"
       typeDeclNodes.head.value[Boolean](NodeKeys.IS_EXTERNAL.name) shouldBe false
     }
 

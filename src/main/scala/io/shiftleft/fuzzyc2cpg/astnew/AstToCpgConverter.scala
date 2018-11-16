@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
-import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, Operators}
+import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, NodeTypes, Operators}
+import io.shiftleft.fuzzyc2cpg.{Defines, Utils}
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
@@ -25,6 +26,7 @@ object AstToCpgConverter {
 
 class AstToCpgConverter[NodeBuilderType,NodeType]
 (containingFileName: String,
+ cpgParent: NodeType,
  adapter: CpgAdapter[NodeBuilderType, NodeType]) extends ASTNodeVisitor {
   import AstToCpgConverter._
 
@@ -34,10 +36,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   private var methodNode = Option.empty[NodeType]
   private var methodReturnNode = Option.empty[NodeType]
 
-  private class Context(val astParent: AstNode, val cpgParent: NodeType, var childNum: Int)
+  pushContext(cpgParent, 1)
 
-  private def pushContext(astParent: AstNode, cpgParent: NodeType, startChildNum: Int): Unit = {
-    contextStack = new Context(astParent, cpgParent, startChildNum) :: contextStack
+  private class Context(val cpgParent: NodeType, var childNum: Int, val parentIsClassDef: Boolean)
+
+  private def pushContext(cpgParent: NodeType,
+                          startChildNum: Int,
+                          parentIsClassDef: Boolean = false): Unit = {
+    contextStack = new Context(cpgParent, startChildNum, parentIsClassDef) :: contextStack
   }
 
   private def popContext(): Unit = {
@@ -117,15 +123,11 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.SIGNATURE, signature)
       .createNode(astFunction)
 
-      /*
-      .addProperty(newStringProperty(NodeProperty.AST_PARENT_TYPE, astParentNode.getType))
-      .addProperty(newStringProperty(NodeProperty.AST_PARENT_FULL_NAME,
-        astParentNode.getPropertyList.asScala.find(_.getName == NodeProperty.FULL_NAME)
-          .get.getValue.getStringValue))
-          */
     methodNode = Some(cpgMethod)
 
-    pushContext(astFunction, cpgMethod, 1)
+    addAstChild(cpgMethod)
+
+    pushContext(cpgMethod, 1)
     scope.pushNewScope(cpgMethod)
 
     astFunction.getParameterList.asScala.foreach { parameter =>
@@ -141,7 +143,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     val cpgMethodReturn = adapter.createNodeBuilder(NodeKind.METHOD_RETURN)
       .addProperty(NodeProperty.CODE, "RET")
       .addProperty(NodeProperty.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.LINE_NUMBER, methodReturnLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, methodReturnLocation.startPos)
       .createNode()
@@ -162,7 +164,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, astParameter.getName)
       .addProperty(NodeProperty.ORDER, astParameter.getChildNumber + 1)
       .addProperty(NodeProperty.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.LINE_NUMBER, astParameter.getLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, astParameter.getLocation.startPos)
       .createNode(astParameter)
@@ -280,14 +282,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, operatorMethod)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
       .addCommons(astUnary, context)
       .createNode(astUnary)
 
     addAstChild(cpgUnary)
 
-    pushContext(astUnary, cpgUnary, 1)
+    pushContext(cpgUnary, 1)
     astUnary.getChild(1).accept(this)
     popContext()
   }
@@ -301,14 +303,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, operatorMethod)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
       .addCommons(astPostIncDecOp, context)
       .createNode(astPostIncDecOp)
 
     addAstChild(cpgPostIncDecOp)
 
-    pushContext(astPostIncDecOp, cpgPostIncDecOp, 1)
+    pushContext(cpgPostIncDecOp, 1)
     astPostIncDecOp.getChild(0).accept(this)
     popContext()
   }
@@ -324,14 +326,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
         // At the moment we use STATIC_DISPATCH also for calls of function pointers.
         .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
         .addProperty(NodeProperty.SIGNATURE, "TODO signature")
-        .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
         .addProperty(NodeProperty.METHOD_INST_FULL_NAME, "<operator>.assignment")
         .addCommons(astCall, context)
         .createNode(astCall)
 
     addAstChild(cpgCall)
 
-    pushContext(astCall, cpgCall, 1)
+    pushContext(cpgCall, 1)
     astCall.getArgumentList.accept(this)
     popContext()
   }
@@ -339,7 +341,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   override def visit(astConstant: Constant): Unit = {
     val cpgConstant = adapter.createNodeBuilder(NodeKind.LITERAL)
         .addProperty(NodeProperty.NAME, astConstant.getEscapedCodeStr)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
         .addCommons(astConstant, context)
         .createNode(astConstant)
 
@@ -369,7 +371,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     val cpgIdentifier = adapter.createNodeBuilder(NodeKind.IDENTIFIER)
         .addProperty(NodeProperty.NAME, identifierName)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
         .addCommons(astIdentifier, context)
         .createNode(astIdentifier)
 
@@ -396,14 +398,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       // At the moment we use STATIC_DISPATCH also for calls of function pointers.
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, "<operator>.conditionalExpression")
       .addCommons(astConditionalExpr, context)
       .createNode(astConditionalExpr)
 
     addAstChild(cpgConditionalExpr)
 
-    pushContext(astConditionalExpr, cpgConditionalExpr, 1)
+    pushContext(cpgConditionalExpr, 1)
     acceptChildren(astConditionalExpr)
     popContext()
   }
@@ -427,7 +429,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     addAstChild(cpgBlock)
 
-    pushContext(expression, cpgBlock, 1)
+    pushContext(cpgBlock, 1)
     acceptChildren(expression)
     popContext()
   }
@@ -441,7 +443,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     addAstChild(cpgBlockStarter)
 
-    pushContext(astBlockStarter, cpgBlockStarter, 1)
+    pushContext(cpgBlockStarter, 1)
     acceptChildren(astBlockStarter)
     popContext()
   }
@@ -451,7 +453,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     addAstChild(cpgIfStmt)
 
-    pushContext(astIfStmt, cpgIfStmt, 1)
+    pushContext(cpgIfStmt, 1)
     astIfStmt.getCondition.accept(this)
     astIfStmt.getStatement.accept(this)
     val astElseStmt = astIfStmt.getElseNode
@@ -466,28 +468,27 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astBlock: CompoundStatement): Unit = {
-    context.astParent match {
-      case _: ClassDefStatement =>
-        astBlock.getStatements.asScala.foreach { statement =>
-          statement.accept(this)
-        }
-      case _ =>
-        val cpgBlock = adapter.createNodeBuilder(NodeKind.BLOCK)
-          .addProperty(NodeProperty.ORDER, context.childNum)
-          .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
-          .addProperty(NodeProperty.LINE_NUMBER, astBlock.getLocation.startLine)
-          .addProperty(NodeProperty.COLUMN_NUMBER, astBlock.getLocation.startPos)
-          .createNode(astBlock)
+    if (context.parentIsClassDef) {
+      astBlock.getStatements.asScala.foreach { statement =>
+        statement.accept(this)
+      }
+    } else {
+      val cpgBlock = adapter.createNodeBuilder(NodeKind.BLOCK)
+        .addProperty(NodeProperty.ORDER, context.childNum)
+        .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
+        .addProperty(NodeProperty.LINE_NUMBER, astBlock.getLocation.startLine)
+        .addProperty(NodeProperty.COLUMN_NUMBER, astBlock.getLocation.startPos)
+        .createNode(astBlock)
 
-        addAstChild(cpgBlock)
+      addAstChild(cpgBlock)
 
-        pushContext(astBlock, cpgBlock, 1)
-        scope.pushNewScope(cpgBlock)
-        astBlock.getStatements.asScala.foreach { statement =>
-          statement.accept(this)
-        }
-        popContext()
-        scope.popScope()
+      pushContext(cpgBlock, 1)
+      scope.pushNewScope(cpgBlock)
+      astBlock.getStatements.asScala.foreach { statement =>
+        statement.accept(this)
+      }
+      popContext()
+      scope.popScope()
     }
   }
 
@@ -498,7 +499,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     addAstChild(cpgReturn)
 
-    pushContext(astReturn, cpgReturn, 1)
+    pushContext(cpgReturn, 1)
     Option(astReturn.getReturnExpression).foreach(_.accept(this))
     popContext()
   }
@@ -510,32 +511,31 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(identifierDecl: IdentifierDecl): Unit = {
-    context.astParent match {
-      case _: ClassDefStatement =>
-        val cpgMember = adapter.createNodeBuilder(NodeKind.MEMBER)
-          .addProperty(NodeProperty.CODE, identifierDecl.getEscapedCodeStr)
-          .addProperty(NodeProperty.NAME, identifierDecl.getName.getEscapedCodeStr)
-          .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
-          .createNode(identifierDecl)
-        addAstChild(cpgMember)
-      case _ =>
-        val localName = identifierDecl.getName.getEscapedCodeStr
-        val cpgLocal = adapter.createNodeBuilder(NodeKind.LOCAL)
-          .addProperty(NodeProperty.CODE, localName)
-          .addProperty(NodeProperty.NAME, localName)
-          .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
-          .createNode(identifierDecl)
+    if (context.parentIsClassDef) {
+      val cpgMember = adapter.createNodeBuilder(NodeKind.MEMBER)
+        .addProperty(NodeProperty.CODE, identifierDecl.getEscapedCodeStr)
+        .addProperty(NodeProperty.NAME, identifierDecl.getName.getEscapedCodeStr)
+        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+        .createNode(identifierDecl)
+      addAstChild(cpgMember)
+    } else {
+      val localName = identifierDecl.getName.getEscapedCodeStr
+      val cpgLocal = adapter.createNodeBuilder(NodeKind.LOCAL)
+        .addProperty(NodeProperty.CODE, localName)
+        .addProperty(NodeProperty.NAME, localName)
+        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+        .createNode(identifierDecl)
 
-        val scopeParentNode = scope.addToScope(localName, cpgLocal)
-        // Here we on purpose do not use addAstChild because the LOCAL nodes
-        // are not really in the AST (they also have no ORDER property).
-        // So do not be confused that the format still demands an AST edge.
-        adapter.addEdge(EdgeKind.AST, cpgLocal, scopeParentNode)
+      val scopeParentNode = scope.addToScope(localName, cpgLocal)
+      // Here we on purpose do not use addAstChild because the LOCAL nodes
+      // are not really in the AST (they also have no ORDER property).
+      // So do not be confused that the format still demands an AST edge.
+      adapter.addEdge(EdgeKind.AST, cpgLocal, scopeParentNode)
 
-        val assignmentExpression = identifierDecl.getAssignment
-        if (assignmentExpression != null) {
-          assignmentExpression.accept(this)
-        }
+      val assignmentExpression = identifierDecl.getAssignment
+      if (assignmentExpression != null) {
+        assignmentExpression.accept(this)
+      }
     }
   }
 
@@ -545,14 +545,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, "<operator>.sizeof")
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, "<operator>.sizeof")
       .addCommons(astSizeof, context)
       .createNode(astSizeof)
 
     addAstChild(cpgSizeof)
 
-    pushContext(astSizeof, cpgSizeof, 1)
+    pushContext(cpgSizeof, 1)
     // Child 0 is just the keyword 'sizeof' which at this point is duplicate
     // information for us.
     astSizeof.getChild(1).accept(this)
@@ -581,14 +581,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, Operators.computedMemberAccess)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.computedMemberAccess)
       .addCommons(astArrayIndexing, context)
       .createNode(astArrayIndexing)
 
     addAstChild(cpgArrayIndexing)
 
-    pushContext(astArrayIndexing, cpgArrayIndexing, 1)
+    pushContext(cpgArrayIndexing, 1)
     astArrayIndexing.getArrayExpression.accept(this)
     astArrayIndexing.getIndexExpression.accept(this)
     popContext()
@@ -599,14 +599,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, Operators.cast)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.cast)
       .addCommons(astCast, context)
       .createNode(astCast)
 
     addAstChild(cpgCast)
 
-    pushContext(astCast, cpgCast, 1)
+    pushContext(cpgCast, 1)
     astCast.getCastTarget.accept(this)
     astCast.getCastExpression.accept(this)
     popContext()
@@ -617,14 +617,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, Operators.memberAccess)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.memberAccess)
       .addCommons(astMemberAccess, context)
       .createNode(astMemberAccess)
 
     addAstChild(cpgMemberAccess)
 
-    pushContext(astMemberAccess, cpgMemberAccess, 1)
+    pushContext(cpgMemberAccess, 1)
     acceptChildren(astMemberAccess)
     popContext()
   }
@@ -634,14 +634,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, Operators.indirectMemberAccess)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.indirectMemberAccess)
       .addCommons(astPtrMemberAccess, context)
       .createNode(astPtrMemberAccess)
 
     addAstChild(cpgPtrMemberAccess)
 
-    pushContext(astPtrMemberAccess, cpgPtrMemberAccess, 1)
+    pushContext(cpgPtrMemberAccess, 1)
     acceptChildren(astPtrMemberAccess)
     popContext()
   }
@@ -674,11 +674,11 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, name)
       .addProperty(NodeProperty.FULL_NAME, name)
       .addProperty(NodeProperty.IS_EXTERNAL, false)
-      //.addProperty(NodeProperty.AST_PARENT_TYPE, "TODO")
-      //.addProperty(NodeProperty.AST_PARENT_FULL_NAME, "TODO")
       .createNode(astClassDef)
 
-    pushContext(astClassDef, cpgTypeDecl, 0)
+    addAstChild(cpgTypeDecl)
+
+    pushContext(cpgTypeDecl, 1, parentIsClassDef = true)
     astClassDef.content.accept(this)
     popContext()
   }
@@ -688,14 +688,14 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, operatorMethod)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, "TODO ANY")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
       .addCommons(astBinaryExpr, context)
       .createNode(astBinaryExpr)
 
     addAstChild(cpgBinaryExpr)
 
-    pushContext(astBinaryExpr, cpgBinaryExpr, 1)
+    pushContext(cpgBinaryExpr, 1)
     astBinaryExpr.getLeft.accept(this)
     astBinaryExpr.getRight.accept(this)
     popContext()

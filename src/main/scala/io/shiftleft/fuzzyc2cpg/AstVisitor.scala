@@ -17,7 +17,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 
 class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
                  structureCpg: CpgStruct.Builder,
-                 astRootNode: Node)
+                 astParentNode: Node)
   extends ASTNodeVisitor with AntlrParserDriverObserver {
   private var fileNameOption = Option.empty[String]
 
@@ -30,7 +30,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
 
     val bodyCpg = CpgStruct.newBuilder()
     val cpgAdapter = new ProtoCpgAdapter(bodyCpg)
-    val astToCpgConverter = new AstToCpgConverter(fileNameOption.get, cpgAdapter)
+    val astToCpgConverter = new AstToCpgConverter(fileNameOption.get, astParentNode, cpgAdapter)
     astToCpgConverter.convert(functionDef)
 
     val graphAdapter = new ProtoCfgAdapter(bodyCpg, astToCpgConverter.getAstToProtoMapping)
@@ -48,7 +48,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
     * */
   override def visit(classDefStatement: ClassDefStatement): Unit = {
     val cpgAdapter = new ProtoCpgAdapter(structureCpg)
-    val astToCpgConverter = new AstToCpgConverter(fileNameOption.get, cpgAdapter)
+    val astToCpgConverter = new AstToCpgConverter(fileNameOption.get, astParentNode, cpgAdapter)
     astToCpgConverter.convert(classDefStatement)
   }
 

@@ -44,6 +44,16 @@ object Utils {
       .filterNot(_ == null)
       .toList
 
+  def getGlobalNamespaceBlockFullName(fileNameOption: Option[String]): String = {
+    fileNameOption match {
+      case Some(fileName) =>
+        s"$fileName:${Defines.globalNamespaceName}"
+      case None =>
+        Defines.globalNamespaceName
+    }
+  }
+
+
   implicit class NodeBuilderWrapper(nodeBuilder: Node.Builder) {
     def addStringProperty(name: Cpg.NodePropertyName, value: String): Node.Builder = {
       nodeBuilder.addProperty(newStringProperty(name, value))

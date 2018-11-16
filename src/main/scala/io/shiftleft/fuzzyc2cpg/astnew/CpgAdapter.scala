@@ -19,6 +19,8 @@ object NodeProperty extends Enumeration {
   METHOD_INST_FULL_NAME,
   IS_EXTERNAL,
   PARSER_TYPE_NAME,
+  AST_PARENT_TYPE,
+  AST_PARENT_FULL_NAME,
   LINE_NUMBER,
   COLUMN_NUMBER
   = Value
@@ -38,6 +40,7 @@ object NodeKind extends Enumeration {
   LOCAL,
   TYPE_DECL,
   MEMBER,
+  NAMESPACE_BLOCK,
   UNKNOWN
     = Value
 }

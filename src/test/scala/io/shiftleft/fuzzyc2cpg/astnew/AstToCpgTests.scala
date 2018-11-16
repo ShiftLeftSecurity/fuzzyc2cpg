@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg.astnew
 
 import gremlin.scala._
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
-import io.shiftleft.fuzzyc2cpg.ModuleLexer
+import io.shiftleft.fuzzyc2cpg.{ModuleLexer, Utils}
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.astnew.EdgeKind.EdgeKind
 import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
@@ -99,9 +99,12 @@ class AstToCpgTests extends WordSpec with Matchers {
 
     driver.parseAndWalkTokenStream(tokens)
 
-    private val graph = TinkerGraph.open()
+    private val fileName = "codeFromString"
+    private val graph = TinkerGraph.open().asScala()
+    private val astParentNode = graph.addVertex("PARENT")
+    protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
-    private val astToProtoConverter = new AstToCpgConverter("codeFromString", cpgAdapter)
+    private val astToProtoConverter = new AstToCpgConverter(fileName, astParentNode, cpgAdapter)
 
     nodes.size shouldBe 1
     astToProtoConverter.convert(nodes.head)
@@ -404,6 +407,17 @@ class AstToCpgTests extends WordSpec with Matchers {
   }
 
   "Structural AST layout" should {
+    "be correct for empty method" in new Fixture(
+      """
+        | void method() {
+        | };
+      """.stripMargin) {
+      val method = getMethod("method")
+      method.checkForSingle()
+
+      astParent.expandAst(NodeTypes.METHOD) shouldBe method
+    }
+
     "be correct for empty named struct" in new Fixture(
       """
         | struct foo {
@@ -411,6 +425,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       """.stripMargin) {
       val typeDecl = getTypeDecl("foo")
       typeDecl.checkForSingle()
+
+      astParent.expandAst(NodeTypes.TYPE_DECL) shouldBe typeDecl
     }
 
     "be correct for named struct with single field" in new Fixture(

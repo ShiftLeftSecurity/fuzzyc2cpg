@@ -53,6 +53,8 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
       case NodeProperty.METHOD_INST_FULL_NAME => NodePropertyName.METHOD_INST_FULL_NAME
       case NodeProperty.IS_EXTERNAL => NodePropertyName.IS_EXTERNAL
       case NodeProperty.PARSER_TYPE_NAME => NodePropertyName.PARSER_TYPE_NAME
+      case NodeProperty.AST_PARENT_TYPE => NodePropertyName.AST_PARENT_TYPE
+      case NodeProperty.AST_PARENT_FULL_NAME => NodePropertyName.AST_PARENT_FULL_NAME
       case NodeProperty.LINE_NUMBER => NodePropertyName.LINE_NUMBER
       case NodeProperty.COLUMN_NUMBER => NodePropertyName.COLUMN_NUMBER
     }
@@ -71,6 +73,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
       case NodeKind.LOCAL => Node.NodeType.LOCAL
       case NodeKind.TYPE_DECL => Node.NodeType.TYPE_DECL
       case NodeKind.MEMBER => Node.NodeType.MEMBER
+      case NodeKind.NAMESPACE_BLOCK => Node.NodeType.NAMESPACE_BLOCK
       case NodeKind.UNKNOWN => Node.NodeType.UNKNOWN
     }
   }
