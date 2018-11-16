@@ -15,6 +15,7 @@ import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
 class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
   extends SourceFileListener {
   private val structureCpg = CpgStruct.newBuilder()
+  private val globalNamespaceName = "<global>"
 
   /**
     * Callback invoked for each file
@@ -55,20 +56,10 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
   }
 
   private def createNamespaceBlockNode(pathToFile: Path): Node = {
-    val nameProperty = Property.newBuilder()
-      .setName(NodePropertyName.NAME)
-      .setValue(PropertyValue.newBuilder().setStringValue("<global>").build());
-
-    val fullNameProperty = Utils.newStringProperty(
-      NodePropertyName.FULL_NAME,
-        s"${pathToFile.toString}:<global>")
-
-    Node.newBuilder()
-      .setKey(IdPool.getNextId)
-      .setType(NodeType.NAMESPACE_BLOCK)
-      .addProperty(nameProperty)
-      .addProperty(fullNameProperty)
-      .build()
+    newNode(NodeType.NAMESPACE_BLOCK)
+      .addStringProperty(NodePropertyName.NAME, globalNamespaceName)
+      .addStringProperty(NodePropertyName.FULL_NAME, s"${pathToFile.toString}:$globalNamespaceName")
+      .build
   }
 
   private def addMetaDataNode(): Unit = {
