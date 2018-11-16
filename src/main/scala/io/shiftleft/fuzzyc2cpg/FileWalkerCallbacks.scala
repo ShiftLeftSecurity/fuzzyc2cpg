@@ -49,16 +49,9 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
   }
 
   private def createFileNode(pathToFile: Path): Node = {
-    val nodeBuilder = Node.newBuilder()
-      .setKey(IdPool.getNextId)
-    val nameValue = PropertyValue.newBuilder()
-      .setStringValue(pathToFile.toString)
-    val nameProperty = Property.newBuilder()
-      .setName(NodePropertyName.NAME)
-      .setValue(nameValue)
-    nodeBuilder.setType(NodeType.FILE)
-      .addProperty(nameProperty)
-    nodeBuilder.build()
+    newNode(NodeType.FILE)
+      .addStringProperty(NodePropertyName.NAME, pathToFile.toString)
+      .build()
   }
 
   private def createNamespaceBlockNode(pathToFile: Path): Node = {
