@@ -316,18 +316,19 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astCall: CallExpression): Unit = {
+    val targetMethodName = astCall.getChild(0).getEscapedCodeStr
     val cpgCall = adapter.createNodeBuilder(NodeKind.CALL)
         // TODO For now we just take the code of the target. But this can be a complete
         // expression and thus needs to be completley visited.
         // Fix once we know how to represent this in a homogen way with
         // calls to member methods.
-        .addProperty(NodeProperty.NAME, astCall.getChild(0).getEscapedCodeStr)
+        .addProperty(NodeProperty.NAME, targetMethodName)
         // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
         // At the moment we use STATIC_DISPATCH also for calls of function pointers.
         .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
         .addProperty(NodeProperty.SIGNATURE, "TODO signature")
         .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-        .addProperty(NodeProperty.METHOD_INST_FULL_NAME, "<operator>.assignment")
+        .addProperty(NodeProperty.METHOD_INST_FULL_NAME, targetMethodName)
         .addCommons(astCall, context)
         .createNode(astCall)
 
