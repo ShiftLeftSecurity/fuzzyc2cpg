@@ -10,7 +10,8 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpr
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label, Statement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, GotoStatement, ReturnStatement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.CatchList
+import io.shiftleft.fuzzyc2cpg.ast.statements.jump._
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
@@ -267,24 +268,32 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astUnary: UnaryExpression): Unit = {
-    val operatorMethod = astUnary.getChild(0).getEscapedCodeStr match {
-      case "+" => Operators.plus
-      case "-" => Operators.minus
-      case "*" => Operators.indirection
-      case "&" => "<operator>.address" // TODO use define from cpg.
-      case "~" => Operators.not
-      case "!" => Operators.logicalNot
-      case "++" => Operators.preIncrement
-      case "--" => Operators.preDecrement
+    Option(astUnary.getChild(0)) match {
+      case Some(child) =>
+        val operatorMethod = astUnary.getChild(0).getEscapedCodeStr match {
+          case "+" => Operators.plus
+          case "-" => Operators.minus
+          case "*" => Operators.indirection
+          case "&" => "<operator>.address" // TODO use define from cpg.
+          case "~" => Operators.not
+          case "!" => Operators.logicalNot
+          case "++" => Operators.preIncrement
+          case "--" => Operators.preDecrement
+        }
+
+        val cpgUnary = createCallNode(astUnary, operatorMethod)
+
+        addAstChild(cpgUnary)
+
+        pushContext(cpgUnary, 1)
+        astUnary.getChild(1).accept(this)
+        popContext()
+      case None =>
+        // We get here for `new` expression.
+        val cpgNew = newUnknownNode(astUnary)
+
+        addAstChild(cpgNew)
     }
-
-    val cpgUnary = createCallNode(astUnary, operatorMethod)
-
-    addAstChild(cpgUnary)
-
-    pushContext(cpgUnary, 1)
-    astUnary.getChild(1).accept(this)
-    popContext()
   }
 
   override def visit(astPostIncDecOp: PostIncDecOperationExpression): Unit = {
@@ -417,6 +426,27 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     pushContext(cpgBlockStarter, 1)
     acceptChildren(astBlockStarter)
+    popContext()
+  }
+
+  override def visit(astCatchList: CatchList): Unit = {
+    val cpgCatchList = newUnknownNode(astCatchList)
+    addAstChild(cpgCatchList)
+
+    pushContext(cpgCatchList, 1)
+    astCatchList.asScala.foreach { catchElement =>
+      catchElement.accept(this)
+    }
+    popContext()
+  }
+
+  override def visit(astThrow: ThrowStatement): Unit = {
+    val cpgThrow = newUnknownNode(astThrow)
+
+    addAstChild(cpgThrow)
+
+    pushContext(cpgThrow, 1)
+    astThrow.getThrowExpression.accept(this)
     popContext()
   }
 

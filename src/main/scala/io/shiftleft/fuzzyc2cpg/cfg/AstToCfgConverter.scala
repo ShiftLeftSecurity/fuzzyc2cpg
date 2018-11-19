@@ -8,8 +8,8 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.{ElseStatement, IfStatement}
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Label, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionHolder, ExpressionStatement, IdentifierDeclStatement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{DoStatement, ForStatement, SwitchStatement, WhileStatement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, GotoStatement, ReturnStatement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters._
+import io.shiftleft.fuzzyc2cpg.ast.statements.jump._
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import org.slf4j.LoggerFactory
 
@@ -426,9 +426,29 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     caseStack.popLayer()
   }
 
+  override def visit(throwStatement: ThrowStatement): Unit = {
+    throwStatement.getThrowExpression.accept(this)
+    // TODO at the moment we do not handle exception handling
+    // and thus simply ignore the influence of 'throw' on the
+    // cfg.
+  }
+
+  override def visit(tryStatement: TryStatement): Unit = {
+    // TODO at the moment we do not handle exception handling
+    // and thus pretend the try does not exist.
+    Option(tryStatement.getContent).foreach(_.accept(this))
+    Option(tryStatement.getFinallyContent).foreach(_.accept(this))
+  }
+
   override def visit(unaryExpression: UnaryExpression): Unit = {
-    // Child 0 is the operator child 1 is the operand.
-    unaryExpression.getChild(1).accept(this)
+    Option(unaryExpression.getChild(1)) match {
+      case Some(child) =>
+        // Child 0 is the operator child 1 is the operand.
+        child.accept(this)
+      case None =>
+        // We get here for `new` expression.
+    }
+
     extendCfg(unaryExpression)
   }
 
