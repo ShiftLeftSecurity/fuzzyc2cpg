@@ -117,7 +117,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       astFunction.getParameterList.asScala.map(_.getType.getEscapedCodeStr).mkString("(", ",", ")")
     val cpgMethod = adapter.createNodeBuilder(NodeKind.METHOD)
       .addProperty(NodeProperty.NAME, astFunction.getName)
-      .addProperty(NodeProperty.FULL_NAME, s"$containingFileName:${astFunction.getName}")
+      .addProperty(NodeProperty.FULL_NAME, s"${astFunction.getName}")
       .addProperty(NodeProperty.LINE_NUMBER, astFunction.getLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, astFunction.getLocation.startPos)
       .addProperty(NodeProperty.SIGNATURE, signature)

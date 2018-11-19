@@ -12,7 +12,7 @@ class MethodHeaderTests extends WordSpec with Matchers {
     "have correct METHOD node for method foo" in {
       val methods = fixture.V.hasLabel(NodeTypes.METHOD).has(NodeKeys.NAME -> "foo").l
       methods.size shouldBe 1
-      methods.head.value2(NodeKeys.FULL_NAME) shouldBe "src/test/resources/testcode/methodheader/methodheader.c:foo"
+      methods.head.value2(NodeKeys.FULL_NAME) shouldBe "foo"
       methods.head.value2(NodeKeys.SIGNATURE) shouldBe "int(int,int)"
       methods.head.value2(NodeKeys.LINE_NUMBER) shouldBe 1
       methods.head.value2(NodeKeys.COLUMN_NUMBER) shouldBe 0
