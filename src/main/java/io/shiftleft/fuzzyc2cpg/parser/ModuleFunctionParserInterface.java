@@ -6,6 +6,7 @@ import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 import io.shiftleft.fuzzyc2cpg.parser.functions.AntlrCFunctionParserDriver;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.misc.Interval;
+import org.apache.commons.lang3.StringUtils;
 
 public class ModuleFunctionParserInterface {
   // Extracts compound statement from input stream
@@ -40,7 +41,9 @@ public class ModuleFunctionParserInterface {
     CharStream inputStream = compound_statement.start.getInputStream();
     int startIndex = compound_statement.start.getStopIndex();
     int stopIndex = compound_statement.stop.getStopIndex();
-    return inputStream.getText(new Interval(startIndex + 1, stopIndex - 1));
+
+    return StringUtils.repeat("\n",null, ctx.start.getLine() - 1)
+            + inputStream.getText(new Interval(startIndex + 1, stopIndex - 1));
   }
 
 }

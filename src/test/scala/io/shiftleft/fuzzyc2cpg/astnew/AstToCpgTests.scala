@@ -481,18 +481,23 @@ class AstToCpgTests extends WordSpec with Matchers {
   "AST" should {
     "have correct line number for method content" in new Fixture(
       """
+        | void foo() {
+        | ;
+        | }
+        |
         | void method(int x) {
+        |
         |   x = 1;
         | }
       """.stripMargin) {
       val method = getMethod("method")
-      method.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 2)
+      method.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 6)
 
       val block = method.expandAst(NodeTypes.BLOCK)
 
       val assignment = block.expandAst(NodeTypes.CALL)
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
-      assignment.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 3)
+      assignment.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 8)
     }
   }
 }
