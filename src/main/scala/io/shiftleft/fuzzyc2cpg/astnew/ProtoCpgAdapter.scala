@@ -50,6 +50,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
       case NodeProperty.TYPE_FULL_NAME => NodePropertyName.TYPE_FULL_NAME
       case NodeProperty.SIGNATURE => NodePropertyName.SIGNATURE
       case NodeProperty.DISPATCH_TYPE => NodePropertyName.DISPATCH_TYPE
+      case NodeProperty.METHOD_FULL_NAME => NodePropertyName.METHOD_FULL_NAME
       case NodeProperty.METHOD_INST_FULL_NAME => NodePropertyName.METHOD_INST_FULL_NAME
       case NodeProperty.IS_EXTERNAL => NodePropertyName.IS_EXTERNAL
       case NodeProperty.PARSER_TYPE_NAME => NodePropertyName.PARSER_TYPE_NAME
@@ -65,6 +66,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
       case NodeKind.METHOD => Node.NodeType.METHOD
       case NodeKind.METHOD_RETURN => Node.NodeType.METHOD_RETURN
       case NodeKind.METHOD_PARAMETER_IN => Node.NodeType.METHOD_PARAMETER_IN
+      case NodeKind.METHOD_INST => Node.NodeType.METHOD_INST
       case NodeKind.CALL => Node.NodeType.CALL
       case NodeKind.LITERAL => Node.NodeType.LITERAL
       case NodeKind.IDENTIFIER => Node.NodeType.IDENTIFIER

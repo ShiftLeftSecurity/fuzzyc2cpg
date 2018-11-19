@@ -278,14 +278,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       case "--" => Operators.preDecrement
     }
 
-    val cpgUnary = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, operatorMethod)
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
-      .addCommons(astUnary, context)
-      .createNode(astUnary)
+    val cpgUnary = createCallNode(astUnary, operatorMethod)
 
     addAstChild(cpgUnary)
 
@@ -299,14 +292,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       case "++" => Operators.postIncrement
       case "--" => Operators.postDecrement
     }
-    val cpgPostIncDecOp = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, operatorMethod)
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
-      .addCommons(astPostIncDecOp, context)
-      .createNode(astPostIncDecOp)
+
+    val cpgPostIncDecOp = createCallNode(astPostIncDecOp, operatorMethod)
 
     addAstChild(cpgPostIncDecOp)
 
@@ -317,20 +304,13 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   override def visit(astCall: CallExpression): Unit = {
     val targetMethodName = astCall.getChild(0).getEscapedCodeStr
-    val cpgCall = adapter.createNodeBuilder(NodeKind.CALL)
-        // TODO For now we just take the code of the target. But this can be a complete
-        // expression and thus needs to be completley visited.
-        // Fix once we know how to represent this in a homogen way with
-        // calls to member methods.
-        .addProperty(NodeProperty.NAME, targetMethodName)
-        // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
-        // At the moment we use STATIC_DISPATCH also for calls of function pointers.
-        .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-        .addProperty(NodeProperty.SIGNATURE, "TODO signature")
-        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-        .addProperty(NodeProperty.METHOD_INST_FULL_NAME, targetMethodName)
-        .addCommons(astCall, context)
-        .createNode(astCall)
+    // TODO For now we just take the code of the target. But this can be a complete
+    // expression and thus needs to be completley visited.
+    // Fix once we know how to represent this in a homogen way with
+    // calls to member methods.
+    // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
+    // At the moment we use STATIC_DISPATCH also for calls of function pointers.
+    val cpgCall = createCallNode(astCall, targetMethodName)
 
     addAstChild(cpgCall)
 
@@ -393,16 +373,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astConditionalExpr: ConditionalExpression): Unit = {
-    val cpgConditionalExpr = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, "<operator>.conditionalExpression")
-      // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
-      // At the moment we use STATIC_DISPATCH also for calls of function pointers.
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, "<operator>.conditionalExpression")
-      .addCommons(astConditionalExpr, context)
-      .createNode(astConditionalExpr)
+    val cpgConditionalExpr = createCallNode(astConditionalExpr, "<operator>.conditionalExpression")
 
     addAstChild(cpgConditionalExpr)
 
@@ -542,14 +513,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   override def visit(astSizeof: SizeofExpression): Unit = {
     // TODO use define from cpg definition once it is defined there.
-    val cpgSizeof = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, "<operator>.sizeof")
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, "<operator>.sizeof")
-      .addCommons(astSizeof, context)
-      .createNode(astSizeof)
+    val cpgSizeof = createCallNode(astSizeof, "<operator>.sizeof")
 
     addAstChild(cpgSizeof)
 
@@ -578,14 +542,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astArrayIndexing: ArrayIndexing): Unit = {
-    val cpgArrayIndexing = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, Operators.computedMemberAccess)
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.computedMemberAccess)
-      .addCommons(astArrayIndexing, context)
-      .createNode(astArrayIndexing)
+    val cpgArrayIndexing = createCallNode(astArrayIndexing, Operators.computedMemberAccess)
 
     addAstChild(cpgArrayIndexing)
 
@@ -596,14 +553,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astCast: CastExpression): Unit = {
-    val cpgCast = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, Operators.cast)
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.cast)
-      .addCommons(astCast, context)
-      .createNode(astCast)
+    val cpgCast = createCallNode(astCast, Operators.cast)
 
     addAstChild(cpgCast)
 
@@ -614,14 +564,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astMemberAccess: MemberAccess): Unit = {
-    val cpgMemberAccess = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, Operators.memberAccess)
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.memberAccess)
-      .addCommons(astMemberAccess, context)
-      .createNode(astMemberAccess)
+    val cpgMemberAccess = createCallNode(astMemberAccess, Operators.memberAccess)
 
     addAstChild(cpgMemberAccess)
 
@@ -631,14 +574,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astPtrMemberAccess: PtrMemberAccess): Unit = {
-    val cpgPtrMemberAccess = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, Operators.indirectMemberAccess)
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, Operators.indirectMemberAccess)
-      .addCommons(astPtrMemberAccess, context)
-      .createNode(astPtrMemberAccess)
+    val cpgPtrMemberAccess = createCallNode(astPtrMemberAccess, Operators.indirectComputedMemberAccess)
 
     addAstChild(cpgPtrMemberAccess)
 
@@ -685,14 +621,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   private def visitBinaryExpr(astBinaryExpr: BinaryExpression, operatorMethod: String): Unit = {
-    val cpgBinaryExpr = adapter.createNodeBuilder(NodeKind.CALL)
-      .addProperty(NodeProperty.NAME, operatorMethod)
-      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, operatorMethod)
-      .addCommons(astBinaryExpr, context)
-      .createNode(astBinaryExpr)
+    val cpgBinaryExpr = createCallNode(astBinaryExpr, operatorMethod)
 
     addAstChild(cpgBinaryExpr)
 
@@ -712,5 +641,25 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.PARSER_TYPE_NAME, astNode.getClass.getSimpleName)
       .addCommons(astNode, context)
       .createNode(astNode)
+  }
+
+  private def createCallNode(astNode: AstNode, methodName: String): NodeType = {
+    val cpgNode = adapter.createNodeBuilder(NodeKind.CALL)
+      .addProperty(NodeProperty.NAME, methodName)
+      .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, methodName)
+      .addCommons(astNode, context)
+      .createNode(astNode)
+
+    adapter.createNodeBuilder(NodeKind.METHOD_INST)
+      .addProperty(NodeProperty.NAME, methodName)
+      .addProperty(NodeProperty.FULL_NAME, methodName)
+      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
+      .addProperty(NodeProperty.METHOD_FULL_NAME, methodName)
+      .createNode()
+
+    cpgNode
   }
 }
