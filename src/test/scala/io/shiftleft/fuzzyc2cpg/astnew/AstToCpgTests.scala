@@ -481,9 +481,9 @@ class AstToCpgTests extends WordSpec with Matchers {
   "AST" should {
     "have correct line number for method content" in new Fixture(
       """
-        | void foo() {
-        | ;
-        | }
+        |
+        |
+        |
         |
         | void method(int x) {
         |
