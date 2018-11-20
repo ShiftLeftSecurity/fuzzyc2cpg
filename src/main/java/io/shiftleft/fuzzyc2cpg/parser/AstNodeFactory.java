@@ -13,7 +13,9 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.ParameterType;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Statement;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 
 public class AstNodeFactory {
 
@@ -23,7 +25,13 @@ public class AstNodeFactory {
       return;
     }
     node.setLocation(CodeLocationExtractor.extractFromContext(ctx));
-    node.setCodeStr(escapeCodeStr(ParseTreeUtils.childTokenString(ctx)));
+    node.setCodeStr(escapeCodeStr(getOriginalCodeFragment(ctx)));
+  }
+
+  private static String getOriginalCodeFragment(ParserRuleContext ctx) {
+    CharStream cs = ctx.getStart().getInputStream();
+    String s = cs.getText(new Interval(ctx.getStart().getStartIndex(),ctx.getStop().getStopIndex()));
+    return s;
   }
 
   public static void initializeFromContext(Expression node,
