@@ -2,7 +2,7 @@ name := "fuzzyc2cpg"
 organization := "io.shiftleft"
 scalaVersion := "2.12.7"
 
-val cpgVersion = "0.9.67"
+val cpgVersion = "0.9.73"
 
 libraryDependencies ++= Seq(
   "org.antlr" % "antlr4-runtime" % "4.5.4",
@@ -17,7 +17,7 @@ libraryDependencies ++= Seq(
 
 // uncomment if you want to use a cpg version that has *just* been released
 // (it takes a few hours until it syncs to maven central)
-// resolvers += "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public"
+ resolvers += "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 compile / javacOptions ++= Seq("-Xlint:all", "-Xlint:-cast", "-g")

@@ -399,8 +399,10 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     }
 
     val cpgBlock = adapter.createNodeBuilder(NodeKind.BLOCK)
+      .addProperty(NodeProperty.CODE, "")
       .addProperty(NodeProperty.ORDER, context.childNum)
       .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
+      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
       .addProperty(NodeProperty.LINE_NUMBER, expression.getLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, expression.getLocation.startPos)
       .createNode(expression)
@@ -473,8 +475,10 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       }
     } else {
       val cpgBlock = adapter.createNodeBuilder(NodeKind.BLOCK)
+        .addProperty(NodeProperty.CODE, "")
         .addProperty(NodeProperty.ORDER, context.childNum)
         .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
+        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
         .addProperty(NodeProperty.LINE_NUMBER, astBlock.getLocation.startLine)
         .addProperty(NodeProperty.COLUMN_NUMBER, astBlock.getLocation.startPos)
         .createNode(astBlock)
