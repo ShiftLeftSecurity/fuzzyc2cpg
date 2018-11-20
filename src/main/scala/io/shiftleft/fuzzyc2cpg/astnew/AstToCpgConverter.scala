@@ -371,9 +371,6 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       case Some(variable) =>
         adapter.addEdge(EdgeKind.REF, variable, cpgIdentifier)
       case None =>
-        MDC.put("identifier", identifierName)
-        logger.warn("Cannot find variable for identifier.")
-        MDC.remove("identifier")
     }
   }
 
@@ -626,7 +623,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     if (statement.getChildCount != 0) {
       throw new RuntimeException("Unhandled statement type: " + statement.getClass)
     } else {
-      logger.info("Parse error. Code: {}", statement.getEscapedCodeStr)
+      logger.debug("Parse error. Code: {}", statement.getEscapedCodeStr)
     }
   }
 
