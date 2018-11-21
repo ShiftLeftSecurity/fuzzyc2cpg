@@ -90,14 +90,14 @@ class AstToCfgTests extends WordSpec with Matchers {
     "be correct for return statement" in
       new Fixture("return x;") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("return x ;", AlwaysEdge))
-        succOf("return x ;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("x") shouldBe expected(("return x;", AlwaysEdge))
+        succOf("return x;") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
     "be correct for void return statement" in
       new Fixture("return;") {
-        succOf("ENTRY") shouldBe expected(("return ;", AlwaysEdge))
-        succOf("return ;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("ENTRY") shouldBe expected(("return;", AlwaysEdge))
+        succOf("return;") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
     "be correct for call expression" in
@@ -106,22 +106,22 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("a") shouldBe expected(("1", AlwaysEdge))
         succOf("1") shouldBe expected(("a + 1", AlwaysEdge))
         succOf("a + 1") shouldBe expected(("b", AlwaysEdge))
-        succOf("b") shouldBe expected(("foo ( a + 1 , b )", AlwaysEdge))
-        succOf("foo ( a + 1 , b )") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("b") shouldBe expected(("foo(a + 1, b)", AlwaysEdge))
+        succOf("foo(a + 1, b)") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
     "be correct for unary expression '+'" in
       new Fixture("+x;") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("+ x", AlwaysEdge))
-        succOf("+ x") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("x") shouldBe expected(("+x", AlwaysEdge))
+        succOf("+x") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
     "be correct for unary expression '++'" in
       new Fixture("++x;") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("++ x", AlwaysEdge))
-        succOf("++ x") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("x") shouldBe expected(("++x", AlwaysEdge))
+        succOf("++x") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
      // TODO This is wrong but intention, see comment on
@@ -153,8 +153,8 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("1", AlwaysEdge))
         succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
-        succOf("x < 1") shouldBe expected(("break ;", TrueEdge), ("EXIT", FalseEdge))
-        succOf("break ;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("x < 1") shouldBe expected(("break;", TrueEdge), ("EXIT", FalseEdge))
+        succOf("break;") shouldBe expected(("EXIT", AlwaysEdge))
         succOf("y") shouldBe expected(("x", AlwaysEdge))
       }
 
@@ -163,8 +163,8 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("1", AlwaysEdge))
         succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
-        succOf("x < 1") shouldBe expected(("continue ;", TrueEdge), ("EXIT", FalseEdge))
-        succOf("continue ;") shouldBe expected(("x", AlwaysEdge))
+        succOf("x < 1") shouldBe expected(("continue;", TrueEdge), ("EXIT", FalseEdge))
+        succOf("continue;") shouldBe expected(("x", AlwaysEdge))
         succOf("y") shouldBe expected(("x", AlwaysEdge))
       }
 
@@ -192,22 +192,22 @@ class AstToCfgTests extends WordSpec with Matchers {
 
     "be correct with break" in
       new Fixture("do { break; y; } while (x < 1);") {
-        succOf("ENTRY") shouldBe expected(("break ;", AlwaysEdge))
-        succOf("break ;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("ENTRY") shouldBe expected(("break;", AlwaysEdge))
+        succOf("break;") shouldBe expected(("EXIT", AlwaysEdge))
         succOf("y") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("1", AlwaysEdge))
         succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
-        succOf("x < 1") shouldBe expected(("break ;", TrueEdge), ("EXIT", FalseEdge))
+        succOf("x < 1") shouldBe expected(("break;", TrueEdge), ("EXIT", FalseEdge))
       }
 
     "be correct with continue" in
       new Fixture("do { continue; y; } while (x < 1);") {
-        succOf("ENTRY") shouldBe expected(("continue ;", AlwaysEdge))
-        succOf("continue ;") shouldBe expected(("x", AlwaysEdge))
+        succOf("ENTRY") shouldBe expected(("continue;", AlwaysEdge))
+        succOf("continue;") shouldBe expected(("x", AlwaysEdge))
         succOf("y") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("1", AlwaysEdge))
         succOf("1") shouldBe expected(("x < 1", AlwaysEdge))
-        succOf("x < 1") shouldBe expected(("continue ;", TrueEdge), ("EXIT", FalseEdge))
+        succOf("x < 1") shouldBe expected(("continue;", TrueEdge), ("EXIT", FalseEdge))
       }
 
     "be correct with nested do-while-loop" in
@@ -244,8 +244,8 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("x = 0") shouldBe expected(("y", AlwaysEdge))
         succOf("y") shouldBe expected(("1", AlwaysEdge))
         succOf("1") shouldBe expected(("y < 1", AlwaysEdge))
-        succOf("y < 1") shouldBe expected(("break ;", TrueEdge), ("EXIT", FalseEdge))
-        succOf("break ;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("y < 1") shouldBe expected(("break;", TrueEdge), ("EXIT", FalseEdge))
+        succOf("break;") shouldBe expected(("EXIT", AlwaysEdge))
         succOf("a") shouldBe expected(("3", AlwaysEdge))
         succOf("3") shouldBe expected(("a = 3", AlwaysEdge))
         succOf("a = 3") shouldBe expected(("z", AlwaysEdge))
@@ -262,8 +262,8 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("x = 0") shouldBe expected(("y", AlwaysEdge))
         succOf("y") shouldBe expected(("1", AlwaysEdge))
         succOf("1") shouldBe expected(("y < 1", AlwaysEdge))
-        succOf("y < 1") shouldBe expected(("continue ;", TrueEdge), ("EXIT", FalseEdge))
-        succOf("continue ;") shouldBe expected(("z", AlwaysEdge))
+        succOf("y < 1") shouldBe expected(("continue;", TrueEdge), ("EXIT", FalseEdge))
+        succOf("continue;") shouldBe expected(("z", AlwaysEdge))
         succOf("a") shouldBe expected(("3", AlwaysEdge))
         succOf("3") shouldBe expected(("a = 3", AlwaysEdge))
         succOf("a = 3") shouldBe expected(("z", AlwaysEdge))
@@ -294,8 +294,8 @@ class AstToCfgTests extends WordSpec with Matchers {
 
     "be correct with empty condition with break" in
       new Fixture("for (;;) { break; }") {
-        succOf("ENTRY") shouldBe expected(("break ;", AlwaysEdge))
-        succOf("break ;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("ENTRY") shouldBe expected(("break;", AlwaysEdge))
+        succOf("break;") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
     "be correct with empty condition with continue" in
@@ -320,24 +320,24 @@ class AstToCfgTests extends WordSpec with Matchers {
     "be correct for single label" in
       new Fixture("x; goto l1; y; l1:") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("goto l1 ;", AlwaysEdge))
-        succOf("goto l1 ;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("x") shouldBe expected(("goto l1;", AlwaysEdge))
+        succOf("goto l1;") shouldBe expected(("EXIT", AlwaysEdge))
         succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
     "be correct for multiple labels" in
-      new Fixture("x; goto l1; l2: y; l1:") {
+      new Fixture("x;goto l1; l2: y; l1:") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("goto l1 ;", AlwaysEdge))
-        succOf("goto l1 ;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("x") shouldBe expected(("goto l1;", AlwaysEdge))
+        succOf("goto l1;") shouldBe expected(("EXIT", AlwaysEdge))
         succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
     "be correct for multiple labels on same spot" in
-      new Fixture("x; goto l2; y; l1:l2:") {
+      new Fixture("x;goto l2;y;l1:l2:") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("goto l2 ;", AlwaysEdge))
-        succOf("goto l2 ;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("x") shouldBe expected(("goto l2;", AlwaysEdge))
+        succOf("goto l2;") shouldBe expected(("EXIT", AlwaysEdge))
         succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
       }
   }
@@ -415,5 +415,4 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("e") shouldBe expected(("EXIT", AlwaysEdge))
       }
   }
-
 }
