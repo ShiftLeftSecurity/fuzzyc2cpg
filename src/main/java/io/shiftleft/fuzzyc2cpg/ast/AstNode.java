@@ -14,11 +14,11 @@ public class AstNode {
   protected int childNumber;
   private CodeLocation location = new CodeLocation();
   private boolean isInCFG = false;
+
+  // refers to the parsed source code, used for wiring goto labels
   private String code;
 
-
   /* constructors */
-
   public AstNode() {
   }
 

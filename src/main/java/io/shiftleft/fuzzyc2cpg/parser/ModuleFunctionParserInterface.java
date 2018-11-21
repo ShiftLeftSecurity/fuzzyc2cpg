@@ -25,8 +25,7 @@ public class ModuleFunctionParserInterface {
     } catch (RuntimeException ex) {
       System.err.println("Error parsing function "
           + ctx.function_name().getText() + ". skipping.");
-
-      // ex.printStackTrace();
+      //ex.printStackTrace();
     }
     CompoundStatement result = driver.getResult();
     Compound_statementContext statementContext = ctx.compound_statement();
@@ -39,6 +38,7 @@ public class ModuleFunctionParserInterface {
     Compound_statementContext compound_statement = ctx.compound_statement();
 
     CharStream inputStream = compound_statement.start.getInputStream();
+
     int startIndex = compound_statement.start.getStopIndex();
     int stopIndex = compound_statement.stop.getStopIndex();
 

@@ -27,8 +27,8 @@ public class Label extends Statement {
       return getNameChild().getEscapedCodeStr();
     }
 
-    String codeStr = getEscapedCodeStr();
-    return codeStr.substring(0, codeStr.length() - 2);
+    String lbl = getEscapedCodeStr().trim();
+    return lbl.substring(0, lbl.length()-1);
   }
 
   @Override
