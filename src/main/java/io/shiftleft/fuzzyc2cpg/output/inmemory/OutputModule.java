@@ -34,6 +34,11 @@ public class OutputModule implements CpgOutputModule {
   }
 
   @Override
+  public void setOutputIdentifier(String identifier) {
+
+  }
+
+  @Override
   public void persistCpg(CpgStruct.Builder cpg) {
 
     synchronized (cpgBuilders) {
@@ -63,10 +68,6 @@ public class OutputModule implements CpgOutputModule {
       System.err.println("Error loading CPG from byte array input stream");
       cpg = null;
     }
-  }
-
-  @Override
-  public void setClassAndMethodName(String className, String methodName) {
   }
 
 }

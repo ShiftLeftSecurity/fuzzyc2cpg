@@ -10,11 +10,11 @@ import java.io.IOException;
 public interface CpgOutputModule {
 
   /**
-   * Set the className and methodName which can be used by the output module
-   * to organize or structure the output.
+   * Identifier for this output module which can be used to derive a name for
+   * e.g. a resulting output file.
    */
 
-  void setClassAndMethodName(String className, String methodName);
+  void setOutputIdentifier(String identifier);
 
   /**
    * Persists the individual CPG.

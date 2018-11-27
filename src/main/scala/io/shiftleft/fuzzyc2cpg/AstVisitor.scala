@@ -26,7 +26,9 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_],
     * */
   override def visit(functionDef: FunctionDef): Unit =  {
     val outputModule = outputModuleFactory.create()
-    outputModule.setClassAndMethodName(fileNameOption.get, functionDef.getName)
+    outputModule.setOutputIdentifier(
+      s"${fileNameOption.get}${functionDef.getName}" +
+        s"${functionDef.getLocation.startLine}${functionDef.getLocation.endLine}")
 
     val bodyCpg = CpgStruct.newBuilder()
     val cpgAdapter = new ProtoCpgAdapter(bodyCpg)

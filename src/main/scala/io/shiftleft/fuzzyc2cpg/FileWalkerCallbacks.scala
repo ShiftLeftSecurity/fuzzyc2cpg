@@ -109,7 +109,7 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
       .get(Config.outputDirectory, "structural-cpg.proto")
       .toString();
     val outputModule = outputModuleFactory.create()
-    outputModule.setClassAndMethodName("__structural__", "")
+    outputModule.setOutputIdentifier("__structural__")
     outputModule.persistCpg(structureCpg);
   }
 

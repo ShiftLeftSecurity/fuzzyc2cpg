@@ -26,8 +26,7 @@ public class OutputModule implements CpgOutputModule {
   private boolean writeToDisk;
   private boolean keepInternalGraph;
 
-  private String className;
-  private String methodName;
+  private String outputIdentifier;
 
   public OutputModule(boolean keepInternalGraph,
                       boolean writeToDisk,
@@ -41,10 +40,10 @@ public class OutputModule implements CpgOutputModule {
     return protoCpg;
   }
 
+
   @Override
-  public void setClassAndMethodName(String className, String methodName) {
-    this.className = className;
-    this.methodName = methodName;
+  public void setOutputIdentifier(String identifier) {
+    outputIdentifier = identifier;
   }
 
   /**
@@ -84,8 +83,8 @@ public class OutputModule implements CpgOutputModule {
       if (Files.exists(Paths.get(outputFilename))) {
         postfix = ThreadLocalRandom.current().nextInt(0, 100000);
 
-        logger.warn("Hash collision className={}, methodName={}, postfix={}." +
-            " Retry with random postfix.", className, methodName, postfix);
+        logger.warn("Hash collision identifier={}, postfix={}." +
+            " Retry with random postfix.", outputIdentifier, postfix);
 
         resolveAttemptCounter++;
       } else {
@@ -104,8 +103,7 @@ public class OutputModule implements CpgOutputModule {
     HashFunction hashFunction = Hashing.murmur3_128();
 
     Hasher hasher = hashFunction.newHasher();
-    hasher.putUnencodedChars(className);
-    hasher.putUnencodedChars(methodName);
+    hasher.putUnencodedChars(outputIdentifier);
     hasher.putInt(postfix);
 
     return protoTempDir.toString() + File.separator + hasher.hash() + ProtoSuffix;
