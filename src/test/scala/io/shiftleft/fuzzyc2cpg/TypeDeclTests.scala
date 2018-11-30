@@ -29,7 +29,7 @@ class TypeDeclTests extends WordSpec with Matchers {
     "contain correct code fields for all members" in {
       val members = fixture.V.hasLabel(NodeType.MEMBER.toString).l
       members.map(_.value[String]("CODE")).toSet shouldBe
-        Set("x", "y", "* foo")
+        Set("x", "y", "*foo")
     }
 
   }

@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg.astnew
 
 import gremlin.scala._
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
-import io.shiftleft.fuzzyc2cpg.{ModuleLexer, Utils}
+import io.shiftleft.fuzzyc2cpg.{GraphUtils, ModuleLexer, Utils}
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.astnew.EdgeKind.EdgeKind
 import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
@@ -72,7 +72,7 @@ class AstToCpgTests extends WordSpec with Matchers {
 
   }
 
-  private class Fixture(code: String) {
+  class Fixture(code: String) {
 
     private class DriverObserver extends AntlrParserDriverObserver {
       override def begin(): Unit = {}
@@ -100,7 +100,7 @@ class AstToCpgTests extends WordSpec with Matchers {
     driver.parseAndWalkTokenStream(tokens)
 
     private val fileName = "codeFromString"
-    private val graph = TinkerGraph.open().asScala()
+    val graph = TinkerGraph.open().asScala()
     private val astParentNode = graph.addVertex("PARENT")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
@@ -462,7 +462,10 @@ class AstToCpgTests extends WordSpec with Matchers {
         | struct foo {
         |   int x;
         |   struct bar {
-        |     int x;
+        |     int y;
+        |     struct foo2 {
+        |       int z;
+        |     };
         |   };
         | };
       """.stripMargin) {
@@ -471,10 +474,15 @@ class AstToCpgTests extends WordSpec with Matchers {
       val memberFoo = typeDeclFoo.expandAst(NodeTypes.MEMBER)
       memberFoo.checkForSingle(NodeKeys.CODE, "x")
 
-      val typeDeclBar = getTypeDecl("bar")
-      typeDeclBar.checkForSingle()
+      val typeDeclBar = typeDeclFoo.expandAst(NodeTypes.TYPE_DECL)
+      typeDeclBar.checkForSingle(NodeKeys.TYPE_DECL.FULL_NAME, "bar")
       val memberBar = typeDeclBar.expandAst(NodeTypes.MEMBER)
-      memberBar.checkForSingle(NodeKeys.CODE, "x")
+      memberBar.checkForSingle(NodeKeys.CODE, "y")
+
+      val typeDeclFoo2 = typeDeclBar.expandAst(NodeTypes.TYPE_DECL)
+      typeDeclFoo2.checkForSingle(NodeKeys.TYPE_DECL.FULL_NAME, "foo2")
+      val memberFoo2 = typeDeclFoo2.expandAst(NodeTypes.MEMBER)
+      memberFoo2.checkForSingle(NodeKeys.CODE, "z")
     }
   }
 
