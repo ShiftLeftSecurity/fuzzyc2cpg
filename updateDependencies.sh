@@ -23,4 +23,4 @@ function update {
   fi
 }
 
-update cpg git@github.com:ShiftLeftSecurity/codepropertygraph-internal.git
+update cpg git@github.com:ShiftLeftSecurity/codepropertygraph.git
