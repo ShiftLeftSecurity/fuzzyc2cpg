@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg.astnew
 
 import gremlin.scala._
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
-import io.shiftleft.fuzzyc2cpg.{GraphUtils, ModuleLexer, Utils}
+import io.shiftleft.fuzzyc2cpg.{ModuleLexer, Utils}
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.astnew.EdgeKind.EdgeKind
 import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
