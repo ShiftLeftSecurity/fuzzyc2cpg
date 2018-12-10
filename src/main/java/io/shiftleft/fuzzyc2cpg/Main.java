@@ -18,7 +18,7 @@ public class Main {
         options.addOption(Option.builder("i")
                 .longOpt("input")
                 .hasArgs()
-                .desc("comma-separated list of input files or directories")
+                .desc("comma-separated list of input directories")
                 .hasArgs()
                 .required()
                 .valueSeparator(',')
