@@ -10,6 +10,7 @@ libraryDependencies ++= Seq(
   "io.shiftleft" % "codepropertygraph-protos" % cpgVersion,
   "io.shiftleft" % "cpgloader-tinkergraph" % cpgVersion,
   "org.slf4j" % "slf4j-simple" % "1.7.25",
+  "commons-cli" % "commons-cli" % "1.4",
   "com.novocode" % "junit-interface" % "0.11" % Test,
   "junit" % "junit" % "4.12" % Test,
   "org.scalatest" %% "scalatest" % "3.0.3" % Test,

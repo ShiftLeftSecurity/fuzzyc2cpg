@@ -1,36 +1,65 @@
 package io.shiftleft.fuzzyc2cpg;
 
 import io.shiftleft.fuzzyc2cpg.output.protobuf.OutputModuleFactory;
+import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
 public class Main {
-  private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-  public static void main(String[] args) {
-    String[] fileAndDirNames = readInputDirFromArguments(args);
-    try {
-      Fuzzyc2Cpg fuzzyc2Cpg = new Fuzzyc2Cpg(new OutputModuleFactory("cpg.bin.zip", true, false));
-      fuzzyc2Cpg.runAndOutput(fileAndDirNames);
-    } catch (Exception exception) {
-      logger.error("Failed to generate CPG.", exception);
-      System.exit(1);
+    private static CommandLine parseOptions(String args []) {
+        Options options = new Options();
+
+        options.addOption(Option.builder("i")
+                .longOpt("input")
+                .hasArgs()
+                .desc("comma-separated list of input directories")
+                .hasArgs()
+                .required()
+                .valueSeparator(',')
+                .build());
+
+        options.addOption(Option.builder("o")
+                .longOpt("output")
+                .hasArg()
+                .desc("path to output file (default is cpg.bin.zip in your current working dir)")
+                .hasArgs()
+                .required(false)
+                .build());
+
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cmd = null;
+
+        try {
+            cmd = parser.parse(options, args);
+        } catch (ParseException e) {
+            formatter.printHelp("./fuzzyc2cpg.sh", options);
+            System.exit(1);
+        }
+        return cmd;
     }
-    System.exit(0);
-  }
 
-  private static String[] readInputDirFromArguments(String[] args) {
-    if (args.length == 0) {
-      showUsageAndExit();
+    public static void main(String[] args) {
+
+        CommandLine cmd = parseOptions(args);
+
+        assert (cmd != null);
+        String[] fileAndDirNames = cmd.getOptionValues("i");
+        try {
+            Fuzzyc2Cpg fuzzyc2Cpg = new Fuzzyc2Cpg(
+                    new OutputModuleFactory(
+                            cmd.hasOption("o") ? cmd.getOptionValue("o") : "cpg.bin.zip",
+                            true, false));
+            fuzzyc2Cpg.runAndOutput(fileAndDirNames);
+        } catch (Exception exception) {
+            logger.error("Failed to generate CPG.", exception);
+            System.exit(1);
+        }
+        System.exit(0);
     }
-    return Arrays.copyOfRange(args, 0, args.length);
-  }
-
-  private static void showUsageAndExit() {
-    System.out.println("fuzzyc2cpg <dir_1> ... <dir_n>");
-    System.exit(1);
-  }
 
 }
