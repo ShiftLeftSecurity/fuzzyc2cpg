@@ -10,9 +10,7 @@ import java.util.Arrays;
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
-
-    public static void main(String[] args) {
-
+    private static CommandLine parseOptions(String args []) {
         Options options = new Options();
 
         options.addOption(Option.builder("i")
@@ -42,6 +40,12 @@ public class Main {
             formatter.printHelp("./fuzzyc2cpg.sh", options);
             System.exit(1);
         }
+        return cmd;
+    }
+
+    public static void main(String[] args) {
+
+        CommandLine cmd = parseOptions(args);
 
         assert (cmd != null);
         String[] fileAndDirNames = cmd.getOptionValues("i");
