@@ -379,6 +379,15 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("x") shouldBe expected(("y", CaseEdge))
         succOf("y") shouldBe expected(("EXIT", AlwaysEdge))
       }
+
+    "be correct for case and default combined" in
+      new Fixture("switch (x) { case 1: y; break; default: z;}") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("z", CaseEdge))
+        succOf("y") shouldBe expected(("break;", AlwaysEdge))
+        succOf("break;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("z") shouldBe expected(("EXIT", AlwaysEdge))
+      }
   }
 
   "Cfg for if" should {
