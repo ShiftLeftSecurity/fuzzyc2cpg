@@ -2,7 +2,7 @@ name := "fuzzyc2cpg"
 organization := "io.shiftleft"
 scalaVersion := "2.12.7"
 
-val cpgVersion = "0.9.76"
+val cpgVersion = "0.9.93"
 
 libraryDependencies ++= Seq(
   "org.antlr" % "antlr4-runtime" % "4.5.4",

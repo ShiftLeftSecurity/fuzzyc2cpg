@@ -2,6 +2,7 @@ package io.shiftleft.fuzzyc2cpg
 
 import java.nio.file.{Path, Paths}
 
+import io.shiftleft.codepropertygraph.generated.Languages
 import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
@@ -91,7 +92,7 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
   private def addMetaDataNode(): Unit = {
     // TODO replace FUZZYC through define from CPG.
     val metaNode = newNode(NodeType.META_DATA)
-      .addStringProperty(NodePropertyName.LANGUAGE, "FUZZYC")
+      .addStringProperty(NodePropertyName.LANGUAGE, Languages.C)
       .build
 
     structureCpg.addNode(metaNode)
