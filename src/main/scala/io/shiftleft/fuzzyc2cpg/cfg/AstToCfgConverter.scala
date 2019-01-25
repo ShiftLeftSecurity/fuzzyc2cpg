@@ -409,12 +409,14 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     switchStatement.getStatement.accept(this)
     val switchFringe = fringe
 
-    val hasDefaultCase =
-      caseStack.getTopElements.exists { case (caseNode, isDefault) =>
-        fringe = conditionFringe
-        extendCfg(caseNode)
-        isDefault
-      }
+    caseStack.getTopElements.foreach { case (caseNode, isDefault) =>
+      fringe = conditionFringe
+      extendCfg(caseNode)
+    }
+
+    val hasDefaultCase = caseStack.getTopElements.exists { case (caseNode, isDefault) =>
+      isDefault
+    }
 
     fringe = switchFringe.add(breakStack.getTopElements, AlwaysEdge)
 
