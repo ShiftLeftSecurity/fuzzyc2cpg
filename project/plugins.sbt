@@ -1,5 +1,8 @@
-// for our clone of sbt-checkstyle-plugin
-resolvers ++= Seq(Resolver.mavenLocal)
+// for our clone of sbt-checkstyle-plugin|sbt-git
+resolvers ++= Seq(
+  Resolver.mavenLocal,
+  "Artifactory release local" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local"
+)
 
 dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "7.3"
 addSbtPlugin("com.etsy" % "sbt-checkstyle-plugin" % "3.1.1")
