@@ -404,6 +404,50 @@ class AstToCpgTests extends WordSpec with Matchers {
         |}
       """.stripMargin) {
     }
+
+    "be correct for member access" in new Fixture(
+      """
+        |void method(struct someUndefinedStruct x) {
+        |  x.a;
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      val memberAccess = block.expandAst(NodeTypes.CALL)
+      memberAccess.checkForSingle(NodeKeys.NAME, Operators.memberAccess)
+
+      val arguments = memberAccess.expandAst(NodeTypes.IDENTIFIER)
+      arguments.check(2,
+        arg => {
+          (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+        },
+        expectations = ("x", 1), ("a", 2)
+      )
+    }
+
+    "be correct for indirect member access" in new Fixture(
+      """
+        |void method(struct someUndefinedStruct *x) {
+        |  x->a;
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      val memberAccess = block.expandAst(NodeTypes.CALL)
+      memberAccess.checkForSingle(NodeKeys.NAME, Operators.indirectMemberAccess)
+
+      val arguments = memberAccess.expandAst(NodeTypes.IDENTIFIER)
+      arguments.check(2,
+        arg => {
+          (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+        },
+        expectations = ("x", 1), ("a", 2)
+      )
+    }
   }
 
   "Structural AST layout" should {

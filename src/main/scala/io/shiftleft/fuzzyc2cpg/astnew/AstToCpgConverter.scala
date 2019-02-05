@@ -274,7 +274,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
           case "+" => Operators.plus
           case "-" => Operators.minus
           case "*" => Operators.indirection
-          case "&" => "<operator>.address" // TODO use define from cpg.
+          case "&" => Operators.addressOf
           case "~" => Operators.not
           case "!" => Operators.logicalNot
           case "++" => Operators.preIncrement
@@ -602,7 +602,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astPtrMemberAccess: PtrMemberAccess): Unit = {
-    val cpgPtrMemberAccess = createCallNode(astPtrMemberAccess, Operators.indirectComputedMemberAccess)
+    val cpgPtrMemberAccess = createCallNode(astPtrMemberAccess, Operators.indirectMemberAccess)
 
     addAstChild(cpgPtrMemberAccess)
 
