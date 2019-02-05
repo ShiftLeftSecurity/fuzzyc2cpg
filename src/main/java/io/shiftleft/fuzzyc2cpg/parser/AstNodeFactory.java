@@ -36,9 +36,16 @@ public class AstNodeFactory {
     int startIdx = ctx.start.getStartIndex();
     int stopIdx = ctx.stop != null ? ctx.stop.getStopIndex() : -1;
 
-    String ret = ctx.getStart().getInputStream().toString();
-    if(startIdx <= stopIdx) {
-      ret = ret.substring(startIdx, stopIdx + 1);
+    String ret;
+    // Check for size > 0 is required because toString() method in
+    // ANTLR crashes on empty input streams.
+    if (ctx.getStart().getInputStream().size() > 0) {
+      ret = ctx.getStart().getInputStream().toString();
+      if(startIdx <= stopIdx) {
+        ret = ret.substring(startIdx, stopIdx + 1);
+      } else {
+        ret = "";
+      }
     } else {
       ret = "";
     }

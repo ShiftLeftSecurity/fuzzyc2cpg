@@ -147,7 +147,7 @@ public class ModuleBuildersTest
 		List<AstNode> codeItems = parseInput(input);
 		FunctionDefBase codeItem = (FunctionDefBase) codeItems.get(0);
 		assertTrue(codeItem.getEscapedCodeStr()
-				.equals("foo (int x , char * * ptr)"));
+				.equals("foo (int x , char **ptr)"));
 	}
 
 	@Test
@@ -167,7 +167,7 @@ public class ModuleBuildersTest
 		List<AstNode> codeItems = parseInput(input);
 		FunctionDefBase codeItem = (FunctionDefBase) codeItems.get(0);
 		String codeStr = codeItem.getParameterList().getEscapedCodeStr();
-		assertTrue(codeStr.equals("char * myParam , myType x"));
+		assertTrue(codeStr.equals("char *myParam , myType x"));
 	}
 
 	@Test
@@ -178,7 +178,7 @@ public class ModuleBuildersTest
 		FunctionDefBase codeItem = (FunctionDefBase) codeItems.get(0);
 		ParameterBase parameter = codeItem.getParameterList().getParameter(0);
 		String codeStr = parameter.getEscapedCodeStr();
-		assertTrue(codeStr.equals("char * myParam"));
+		assertTrue(codeStr.equals("char *myParam"));
 	}
 
 	@Test
