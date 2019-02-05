@@ -12,10 +12,10 @@ class MethodCfgLayoutTests extends WordSpec with Matchers with TravesalUtils {
       vertexList.flatMap(_.start.out(EdgeTypes.CFG).l)
     }
 
-    def checkForSingle(label: String, name: String): Unit = {
+    def checkForSingleProperty(label: String, property: Key[String], value: String): Unit = {
       vertexList.size shouldBe 1
       vertexList.head.label shouldBe label
-      vertexList.head.value2(NodeKeys.NAME) shouldBe name
+      vertexList.head.value2(property) shouldBe value
     }
 
     def checkForSingle(label: String): Unit = {
@@ -27,13 +27,13 @@ class MethodCfgLayoutTests extends WordSpec with Matchers with TravesalUtils {
   "CFG layout" should {
     "be correct for decl assignment in method1" in {
       var result = getMethod("method1").expandCfg()
-      result.checkForSingle(NodeTypes.IDENTIFIER, "x")
+      result.checkForSingleProperty(NodeTypes.IDENTIFIER, NodeKeys.NAME, "x")
 
       result = result.expandCfg()
-      result.checkForSingle(NodeTypes.LITERAL, "1")
+      result.checkForSingleProperty(NodeTypes.LITERAL, NodeKeys.CODE, "1")
 
       result = result.expandCfg()
-      result.checkForSingle(NodeTypes.CALL, Operators.assignment)
+      result.checkForSingleProperty(NodeTypes.CALL, NodeKeys.NAME, Operators.assignment)
 
       result = result.expandCfg()
       result.checkForSingle(NodeTypes.METHOD_RETURN)
@@ -41,19 +41,19 @@ class MethodCfgLayoutTests extends WordSpec with Matchers with TravesalUtils {
 
     "be correct for nested expression in method2" in {
       var result = getMethod("method2").expandCfg()
-      result.checkForSingle(NodeTypes.IDENTIFIER, "x")
+      result.checkForSingleProperty(NodeTypes.IDENTIFIER, NodeKeys.NAME, "x")
 
       result = result.expandCfg()
-      result.checkForSingle(NodeTypes.IDENTIFIER, "y")
+      result.checkForSingleProperty(NodeTypes.IDENTIFIER, NodeKeys.NAME, "y")
 
       result = result.expandCfg()
-      result.checkForSingle(NodeTypes.IDENTIFIER, "z")
+      result.checkForSingleProperty(NodeTypes.IDENTIFIER, NodeKeys.NAME, "z")
 
       result = result.expandCfg()
-      result.checkForSingle(NodeTypes.CALL, Operators.addition)
+      result.checkForSingleProperty(NodeTypes.CALL, NodeKeys.NAME, Operators.addition)
 
       result = result.expandCfg()
-      result.checkForSingle(NodeTypes.CALL, Operators.assignment)
+      result.checkForSingleProperty(NodeTypes.CALL, NodeKeys.NAME, Operators.assignment)
 
       result = result.expandCfg()
       result.checkForSingle(NodeTypes.METHOD_RETURN)

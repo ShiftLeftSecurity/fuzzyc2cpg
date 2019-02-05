@@ -328,7 +328,6 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   override def visit(astConstant: Constant): Unit = {
     val cpgConstant = adapter.createNodeBuilder(NodeKind.LITERAL)
-        .addProperty(NodeProperty.NAME, astConstant.getEscapedCodeStr)
         .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
         .addCommons(astConstant, context)
         .createNode(astConstant)
