@@ -94,6 +94,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   private var continueStack = new LayeredStack[NodeType]()
   private var caseStack = new LayeredStack[(NodeType, Boolean)]()
   private var gotos = List[(NodeType, String)]()
+  private var returns = List[NodeType]()
   private var labeledNodes = Map[String, NodeType]()
   private var pendingGotoLabels = List[String]()
   private var pendingCaseLabels = List[String]()
@@ -109,10 +110,17 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     }
   }
 
+  private def connectReturnsToExit(): Unit = {
+    returns.foreach { ret =>
+      adapter.newCfgEdge(exitNode, ret, AlwaysEdge)
+    }
+  }
+
   def convert(astNode: AstNode): Unit = {
     astNode.accept(this)
     extendCfg(exitNode)
     connectGotosAndLabels()
+    connectReturnsToExit()
   }
 
   override def visit(argument: Argument): Unit = {
@@ -374,7 +382,10 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
   override def visit(returnStatement: ReturnStatement): Unit = {
     Option(returnStatement.getReturnExpression).foreach(_.accept(this))
-    extendCfg(returnStatement)
+    val mappedReturnStatement = adapter.mapNode(returnStatement)
+    extendCfg(mappedReturnStatement)
+    fringe = fringe.empty()
+    returns = mappedReturnStatement :: returns
   }
 
   override def visit(sizeofExpression: SizeofExpression): Unit = {

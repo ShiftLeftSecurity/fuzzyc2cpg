@@ -94,6 +94,15 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("return x;") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
+    "be correct for consecutive return statements" in
+      new Fixture("return x; return y;") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("return x;", AlwaysEdge))
+        succOf("y") shouldBe expected(("return y;", AlwaysEdge))
+        succOf("return x;") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("return y;") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
     "be correct for void return statement" in
       new Fixture("return;") {
         succOf("ENTRY") shouldBe expected(("return;", AlwaysEdge))
