@@ -540,8 +540,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astSizeof: SizeofExpression): Unit = {
-    // TODO use define from cpg definition once it is defined there.
-    val cpgSizeof = createCallNode(astSizeof, "<operator>.sizeof")
+    val cpgSizeof = createCallNode(astSizeof, Operators.sizeOf)
 
     addAstChild(cpgSizeof)
 
