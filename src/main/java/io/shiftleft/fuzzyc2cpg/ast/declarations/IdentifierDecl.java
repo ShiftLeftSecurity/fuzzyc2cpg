@@ -13,7 +13,9 @@ public class IdentifierDecl extends AstNode {
 
   public void addChild(AstNode node) {
     if (node instanceof Identifier) {
-      setName((Identifier) node);
+      if (name == null) {
+        setName((Identifier) node);
+      }
     } else if (node instanceof IdentifierDeclType) {
       setType((IdentifierDeclType) node);
     } else if (node instanceof AssignmentExpression) {

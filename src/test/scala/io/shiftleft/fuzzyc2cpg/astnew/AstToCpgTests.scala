@@ -168,6 +168,79 @@ class AstToCpgTests extends WordSpec with Matchers {
         (NodeTypes.LITERAL, "1", 2, 2))
     }
 
+    "be correct for decl assignment with identifier on right hand side" in new Fixture(
+      """
+        |void method(int x) {
+        |  int local = x;
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
+      val block= method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      block.expandAst(NodeTypes.LOCAL).checkForSingle(NodeKeys.NAME, "local")
+
+      val assignment = block.expandAst(NodeTypes.CALL)
+      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
+
+      val arguments = assignment.expandAst()
+      arguments.check(2,
+        arg =>
+          (arg.label,
+            arg.value2(NodeKeys.CODE),
+            arg.value2(NodeKeys.ORDER),
+            arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        expectations =
+          (NodeTypes.IDENTIFIER, "local", 1, 1),
+        (NodeTypes.IDENTIFIER, "x", 2, 2))
+    }
+
+    "be correct for decl assignment of multiple locals" in new Fixture(
+      """
+        |void method(int x, int y) {
+        |  int local = x, local2 = y;
+        |}
+      """.stripMargin) {
+      val method = getMethod("method")
+      val block= method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      block.expandAst(NodeTypes.LOCAL).check(2,
+        local =>
+          (local.label, local.value2(NodeKeys.CODE)),
+        expectations =
+          (NodeTypes.LOCAL, "local"),
+        (NodeTypes.LOCAL, "local2"))
+
+      val assignment1 = block.expandAst(NodeTypes.CALL).filterOrder(1)
+      assignment1.checkForSingle(NodeKeys.NAME, Operators.assignment)
+
+      val arguments1 = assignment1.expandAst()
+      arguments1.check(2,
+        arg =>
+          (arg.label,
+            arg.value2(NodeKeys.CODE),
+            arg.value2(NodeKeys.ORDER),
+            arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        expectations =
+          (NodeTypes.IDENTIFIER, "local", 1, 1),
+        (NodeTypes.IDENTIFIER, "x", 2, 2))
+
+      val assignment2 = block.expandAst(NodeTypes.CALL).filterOrder(2)
+      assignment2.checkForSingle(NodeKeys.NAME, Operators.assignment)
+
+      val arguments2 = assignment2.expandAst()
+      arguments2.check(2,
+        arg =>
+          (arg.label,
+            arg.value2(NodeKeys.CODE),
+            arg.value2(NodeKeys.ORDER),
+            arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        expectations =
+          (NodeTypes.IDENTIFIER, "local2", 1, 1),
+        (NodeTypes.IDENTIFIER, "y", 2, 2))
+    }
+
     "be correct for nested expression" in new Fixture(
       """
         |void method() {
