@@ -8,9 +8,9 @@ import io.shiftleft.fuzzyc2cpg.filewalker.SourceFileListener
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
-import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
-import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
-import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName, PropertyValue}
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
+import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 
 class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
   extends SourceFileListener {
@@ -49,31 +49,9 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
   }
 
   private def addAnyTypeAndNamespacBlock(): Unit = {
-    val anyTypeNode = createAnyTypeNode()
-    val anyTypeDeclNode = createAnyTypeDeclNode()
     val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None)
 
-    structureCpg.addNode(anyTypeNode)
-    structureCpg.addNode(anyTypeDeclNode)
     structureCpg.addNode(globalNamespaceBlockNotInFileNode)
-  }
-
-  private def createAnyTypeNode(): Node = {
-    newNode(NodeType.TYPE)
-      .addStringProperty(NodePropertyName.NAME, Defines.anyTypeName)
-      .addStringProperty(NodePropertyName.FULL_NAME, Defines.anyTypeName)
-      .addStringProperty(NodePropertyName.TYPE_DECL_FULL_NAME, Defines.anyTypeName)
-      .build()
-  }
-
-  private def createAnyTypeDeclNode(): Node = {
-    newNode(NodeType.TYPE_DECL)
-      .addStringProperty(NodePropertyName.NAME, Defines.anyTypeName)
-      .addStringProperty(NodePropertyName.FULL_NAME, Defines.anyTypeName)
-      .addBooleanProperty(NodePropertyName.IS_EXTERNAL, false)
-      .addStringProperty(NodePropertyName.AST_PARENT_TYPE, NodeType.NAMESPACE_BLOCK.toString)
-      .addStringProperty(NodePropertyName.AST_PARENT_FULL_NAME, getGlobalNamespaceBlockFullName(None))
-      .build
   }
 
   private def createFileNode(pathToFile: Path): Node = {

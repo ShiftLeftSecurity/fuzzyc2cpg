@@ -48,6 +48,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
       case NodeProperty.CODE => NodePropertyName.CODE
       case NodeProperty.EVALUATION_STRATEGY => NodePropertyName.EVALUATION_STRATEGY
       case NodeProperty.TYPE_FULL_NAME => NodePropertyName.TYPE_FULL_NAME
+      case NodeProperty.TYPE_DECL_FULL_NAME => NodePropertyName.TYPE_DECL_FULL_NAME
       case NodeProperty.SIGNATURE => NodePropertyName.SIGNATURE
       case NodeProperty.DISPATCH_TYPE => NodePropertyName.DISPATCH_TYPE
       case NodeProperty.METHOD_FULL_NAME => NodePropertyName.METHOD_FULL_NAME
@@ -73,6 +74,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
       case NodeKind.BLOCK => Node.NodeType.BLOCK
       case NodeKind.RETURN => Node.NodeType.RETURN
       case NodeKind.LOCAL => Node.NodeType.LOCAL
+      case NodeKind.TYPE => Node.NodeType.TYPE
       case NodeKind.TYPE_DECL => Node.NodeType.TYPE_DECL
       case NodeKind.MEMBER => Node.NodeType.MEMBER
       case NodeKind.NAMESPACE_BLOCK => Node.NodeType.NAMESPACE_BLOCK
