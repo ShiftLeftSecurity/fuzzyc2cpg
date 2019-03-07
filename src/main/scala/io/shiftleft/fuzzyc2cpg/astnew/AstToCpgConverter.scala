@@ -36,6 +36,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   private var astToProtoMapping = Map[AstNode, NodeType]()
   private var methodNode = Option.empty[NodeType]
   private var methodReturnNode = Option.empty[NodeType]
+  private var typeNames = Set.empty[String]
 
   pushContext(cpgParent, 1)
 
@@ -105,6 +106,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   def convert(astNode: AstNode): Unit = {
     astNode.accept(this)
+    createTypeNodes()
   }
 
   override def visit(astFunction: FunctionDefBase): Unit = {
@@ -144,7 +146,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     val cpgMethodReturn = adapter.createNodeBuilder(NodeKind.METHOD_RETURN)
       .addProperty(NodeProperty.CODE, "RET")
       .addProperty(NodeProperty.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+      .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(returnType))
       .addProperty(NodeProperty.LINE_NUMBER, methodReturnLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, methodReturnLocation.startPos)
       .createNode()
@@ -160,12 +162,18 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astParameter: Parameter): Unit = {
+    val parameterType = if (astParameter.getType != null) {
+      astParameter.getType.getEscapedCodeStr
+    } else {
+      "int"
+    }
+
     val cpgParameter = adapter.createNodeBuilder(NodeKind.METHOD_PARAMETER_IN)
       .addProperty(NodeProperty.CODE, astParameter.getEscapedCodeStr)
       .addProperty(NodeProperty.NAME, astParameter.getName)
       .addProperty(NodeProperty.ORDER, astParameter.getChildNumber + 1)
       .addProperty(NodeProperty.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+      .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(parameterType))
       .addProperty(NodeProperty.LINE_NUMBER, astParameter.getLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, astParameter.getLocation.startPos)
       .createNode(astParameter)
@@ -327,8 +335,9 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astConstant: Constant): Unit = {
+    val constantType = deriveConstantTypeFromCode(astConstant.getEscapedCodeStr)
     val cpgConstant = adapter.createNodeBuilder(NodeKind.LITERAL)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(constantType))
         .addCommons(astConstant, context)
         .createNode(astConstant)
 
@@ -358,7 +367,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
     val cpgIdentifier = adapter.createNodeBuilder(NodeKind.IDENTIFIER)
         .addProperty(NodeProperty.NAME, identifierName)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(Defines.anyTypeName))
         .addCommons(astIdentifier, context)
         .createNode(astIdentifier)
 
@@ -399,7 +408,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.CODE, "")
       .addProperty(NodeProperty.ORDER, context.childNum)
       .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+      .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(Defines.anyTypeName))
       .addProperty(NodeProperty.LINE_NUMBER, expression.getLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, expression.getLocation.startPos)
       .createNode(expression)
@@ -475,7 +484,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
         .addProperty(NodeProperty.CODE, "")
         .addProperty(NodeProperty.ORDER, context.childNum)
         .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(Defines.voidTypeName))
         .addProperty(NodeProperty.LINE_NUMBER, astBlock.getLocation.startLine)
         .addProperty(NodeProperty.COLUMN_NUMBER, astBlock.getLocation.startPos)
         .createNode(astBlock)
@@ -511,11 +520,13 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(identifierDecl: IdentifierDecl): Unit = {
+    val declTypeName = identifierDecl.getType.getEscapedCodeStr
+
     if (context.parentIsClassDef) {
       val cpgMember = adapter.createNodeBuilder(NodeKind.MEMBER)
         .addProperty(NodeProperty.CODE, identifierDecl.getEscapedCodeStr)
         .addProperty(NodeProperty.NAME, identifierDecl.getName.getEscapedCodeStr)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(declTypeName))
         .createNode(identifierDecl)
       addAstChild(cpgMember)
     } else {
@@ -523,7 +534,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       val cpgLocal = adapter.createNodeBuilder(NodeKind.LOCAL)
         .addProperty(NodeProperty.CODE, localName)
         .addProperty(NodeProperty.NAME, localName)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(declTypeName))
         .createNode(identifierDecl)
 
       val scopeParentNode = scope.addToScope(localName, cpgLocal)
@@ -675,7 +686,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.NAME, methodName)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.TYPE_FULL_NAME, Defines.anyTypeName)
+      .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(Defines.anyTypeName))
       .addProperty(NodeProperty.METHOD_INST_FULL_NAME, methodName)
       .addCommons(astNode, context)
       .createNode(astNode)
@@ -688,5 +699,42 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .createNode()
 
     cpgNode
+  }
+
+  private def registerType(typeName: String): String = {
+    typeNames += typeName
+    typeName
+  }
+
+  private def createTypeNodes(): Unit = {
+    typeNames.foreach { typeName =>
+      adapter.createNodeBuilder(NodeKind.TYPE)
+      .addProperty(NodeProperty.NAME, typeName)
+      .addProperty(NodeProperty.FULL_NAME, typeName)
+      .addProperty(NodeProperty.TYPE_DECL_FULL_NAME, typeName)
+      .createNode()
+    }
+  }
+
+  // TODO Implement this method properly, the current implementation is just a
+  // quick hack to have some implementation at all.
+  private def deriveConstantTypeFromCode(code: String): String = {
+    val firstChar = code.charAt(0)
+    val lastChar = code.charAt(code.length - 1)
+    if (firstChar == '"') {
+      Defines.charPointerTypeName
+    } else if (firstChar == '\'') {
+      Defines.charTypeName
+    } else if (lastChar == 'f' || lastChar == 'F') {
+      Defines.floatTypeName
+    } else if (lastChar == 'd' || lastChar == 'D') {
+      Defines.doubleTypeName
+    } else if (lastChar == 'l' || lastChar == 'L') {
+      Defines.longTypeName
+    } else if (code.endsWith("ll") || code.endsWith("LL")) {
+      Defines.longlongTypeName
+    } else {
+      Defines.intTypeName
+    }
   }
 }

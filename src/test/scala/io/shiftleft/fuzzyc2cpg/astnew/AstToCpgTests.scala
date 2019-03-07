@@ -134,11 +134,17 @@ class AstToCpgTests extends WordSpec with Matchers {
   "Method AST layout" should {
     "be correct for empty method" in new Fixture(
       """
-        |void method() {
+        |void method(int x) {
         |}"
       """.stripMargin) {
       val method = getMethod("method")
       method.expandAst(NodeTypes.BLOCK).checkForSingle()
+
+      method.expandAst(NodeTypes.METHOD_RETURN)
+        .checkForSingle(NodeKeys.TYPE_FULL_NAME, "void")
+
+      method.expandAst(NodeTypes.METHOD_PARAMETER_IN)
+        .checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
     }
 
     "be correct for decl assignment" in new Fixture(
@@ -151,7 +157,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block= method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      block.expandAst(NodeTypes.LOCAL).checkForSingle(NodeKeys.NAME, "local")
+      val local = block.expandAst(NodeTypes.LOCAL)
+      local.checkForSingle(NodeKeys.NAME, "local")
+      local.checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
 
       val assignment = block.expandAst(NodeTypes.CALL)
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
@@ -161,11 +169,12 @@ class AstToCpgTests extends WordSpec with Matchers {
         arg =>
           (arg.label,
             arg.value2(NodeKeys.CODE),
+            arg.value2(NodeKeys.TYPE_FULL_NAME),
             arg.value2(NodeKeys.ORDER),
             arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations =
-          (NodeTypes.IDENTIFIER, "local", 1, 1),
-        (NodeTypes.LITERAL, "1", 2, 2))
+          (NodeTypes.IDENTIFIER, "local", "ANY", 1, 1),
+        (NodeTypes.LITERAL, "1", "int", 2, 2))
     }
 
     "be correct for decl assignment with identifier on right hand side" in new Fixture(
@@ -178,7 +187,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block= method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      block.expandAst(NodeTypes.LOCAL).checkForSingle(NodeKeys.NAME, "local")
+      val local = block.expandAst(NodeTypes.LOCAL)
+      local.checkForSingle(NodeKeys.NAME, "local")
+      local.checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
 
       val assignment = block.expandAst(NodeTypes.CALL)
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
@@ -188,11 +199,12 @@ class AstToCpgTests extends WordSpec with Matchers {
         arg =>
           (arg.label,
             arg.value2(NodeKeys.CODE),
+            arg.value2(NodeKeys.TYPE_FULL_NAME),
             arg.value2(NodeKeys.ORDER),
             arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations =
-          (NodeTypes.IDENTIFIER, "local", 1, 1),
-        (NodeTypes.IDENTIFIER, "x", 2, 2))
+          (NodeTypes.IDENTIFIER, "local", "ANY", 1, 1),
+        (NodeTypes.IDENTIFIER, "x", "ANY", 2, 2))
     }
 
     "be correct for decl assignment of multiple locals" in new Fixture(
@@ -207,10 +219,10 @@ class AstToCpgTests extends WordSpec with Matchers {
 
       block.expandAst(NodeTypes.LOCAL).check(2,
         local =>
-          (local.label, local.value2(NodeKeys.CODE)),
+          (local.label, local.value2(NodeKeys.CODE), local.value2(NodeKeys.TYPE_FULL_NAME)),
         expectations =
-          (NodeTypes.LOCAL, "local"),
-        (NodeTypes.LOCAL, "local2"))
+          (NodeTypes.LOCAL, "local", "int"),
+        (NodeTypes.LOCAL, "local2", "int"))
 
       val assignment1 = block.expandAst(NodeTypes.CALL).filterOrder(1)
       assignment1.checkForSingle(NodeKeys.NAME, Operators.assignment)
@@ -220,11 +232,12 @@ class AstToCpgTests extends WordSpec with Matchers {
         arg =>
           (arg.label,
             arg.value2(NodeKeys.CODE),
+            arg.value2(NodeKeys.TYPE_FULL_NAME),
             arg.value2(NodeKeys.ORDER),
             arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations =
-          (NodeTypes.IDENTIFIER, "local", 1, 1),
-        (NodeTypes.IDENTIFIER, "x", 2, 2))
+          (NodeTypes.IDENTIFIER, "local", "ANY", 1, 1),
+        (NodeTypes.IDENTIFIER, "x", "ANY", 2, 2))
 
       val assignment2 = block.expandAst(NodeTypes.CALL).filterOrder(2)
       assignment2.checkForSingle(NodeKeys.NAME, Operators.assignment)
@@ -234,11 +247,12 @@ class AstToCpgTests extends WordSpec with Matchers {
         arg =>
           (arg.label,
             arg.value2(NodeKeys.CODE),
+            arg.value2(NodeKeys.TYPE_FULL_NAME),
             arg.value2(NodeKeys.ORDER),
             arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations =
-          (NodeTypes.IDENTIFIER, "local2", 1, 1),
-        (NodeTypes.IDENTIFIER, "y", 2, 2))
+          (NodeTypes.IDENTIFIER, "local2", "ANY", 1, 1),
+        (NodeTypes.IDENTIFIER, "y", "ANY", 2, 2))
     }
 
     "be correct for nested expression" in new Fixture(
@@ -557,6 +571,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val member = typeDecl.expandAst(NodeTypes.MEMBER)
       member.checkForSingle(NodeKeys.CODE, "x")
       member.checkForSingle(NodeKeys.NAME, "x")
+      member.checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
     }
 
     "be correct for named struct with multiple fields" in new Fixture(
