@@ -5,6 +5,7 @@ scalaVersion := "2.12.7"
 val cpgVersion = "0.9.99"
 
 libraryDependencies ++= Seq(
+  "com.github.scopt"   %% "scopt"          % "3.7.0",
   "org.antlr" % "antlr4-runtime" % "4.5.4",
   "io.shiftleft" % "codepropertygraph" % cpgVersion,
   "io.shiftleft" % "codepropertygraph-protos" % cpgVersion,
