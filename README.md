@@ -4,8 +4,21 @@ A fuzzy parser for C/C++ that creates code property graphs.
 
 ## Building the code
 
-sbt stage
+
+The build process has been verified on Linux and it should be possible 
+to build on OS X and BSD systems as well. The build process requires
+the following prerequisites:
+
+* Java runtime 8
+  - Link: http://openjdk.java.net/install/
+* Scala build tool (sbt)
+  - Link: https://www.scala-sbt.org/
+
+Additional build-time dependencies are automatically downloaded as part
+of the build process. To build fuzzyc2cpg issue the command `sbt stage`.
 
 ## Running
 
-./fuzzy2cpg.sh
+To run fuzzyc2cpg in order to produce a code property graph issue the
+command
+`./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> --out <path/to/outputCpg>`.
