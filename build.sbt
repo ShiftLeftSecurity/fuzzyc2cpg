@@ -38,4 +38,29 @@ Antlr4 / javaSource := (sourceManaged in Compile).value
 
 enablePlugins(JavaAppPackaging)
 
-publishTo := Some("releases" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")
+scmInfo := Some(ScmInfo(url("https://github.com/ShiftLeftSecurity/fuzzyc2cpg"),
+                            "scm:git@github.com:ShiftLeftSecurity/fuzzyc2cpg.git"))
+homepage := Some(url("https://github.com/ShiftLeftSecurity/fuzzyc2cpg/"))
+licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
+developers := List(
+  /* sonatype requires this to be non-empty */
+  Developer(
+    "fabsx00",
+    "Fabian Yamaguchi",
+    "fabs@shiftleft.io",
+    url("https://github.com/fabsx00")
+  ),
+  Developer(
+    "ml86",
+    "Markus Lottmann",
+    "markus@shiftleft.io",
+    url("https://github.com/ml86")
+  ),
+  Developer(
+    "julianthome",
+    "Julian Thome",
+    "julian.thome.de@gmail.com",
+    url("https://github.com/julianthome")
+  )
+)
+publishTo := sonatypePublishTo.value
