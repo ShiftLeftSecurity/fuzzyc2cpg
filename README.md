@@ -1,3 +1,6 @@
+[![Build Status](https://secure.travis-ci.org/ShiftLeftSecurity/fuzzyc2cpg.png?branch=master)](http://travis-ci.org/ShiftLeftSecurity/fuzzyc2cpg)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.shiftleft/fuzzyc2cpg_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.shiftleft/fuzzyc2cpg_2.12)
+
 # fuzzyc2cpg
 
 A fuzzy parser for C/C++ that creates code property graphs.
