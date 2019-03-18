@@ -32,9 +32,9 @@ public class Fuzzyc2Cpg {
   }
 
   private void createOutputDirectory() {
-    new File(
-        Config.outputDirectory
-    ).mkdirs();
+    File outputDir = new File(Config.outputDirectory);
+    outputDir.mkdir();
+    outputDir.deleteOnExit();
   }
 
   private void walkCodebase(String[] fileAndDirNames) {
