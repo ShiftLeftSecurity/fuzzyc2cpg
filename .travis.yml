@@ -1,5 +1,8 @@
 language: scala
 jdk: oraclejdk8
+branches:
+  only:
+  - master
 before_install:
 - openssl aes-256-cbc -K $encrypted_b3f7bd94ef38_key -iv $encrypted_b3f7bd94ef38_iv
   -in private-key.pem.enc -out private-key.pem -d
