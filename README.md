@@ -3,10 +3,9 @@
 
 # fuzzyc2cpg
 
-A fuzzy parser for C/C++ that creates code property graphs.
+A fuzzy parser for C/C++ that creates code property graphs according to the specification at https://github.com/ShiftLeftSecurity/codepropertygraph .
 
 ## Building the code
-
 
 The build process has been verified on Linux and it should be possible 
 to build on OS X and BSD systems as well. The build process requires
