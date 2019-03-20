@@ -5,6 +5,8 @@
 
 A fuzzy parser for C/C++ that creates code property graphs according to the specification at https://github.com/ShiftLeftSecurity/codepropertygraph .
 
+*Note* for first-time users, we recommend building "joern" at https://github.com/ShiftLeftSecurity/joern/ instead. It contains both fuzzyc2cpg and a component for querying code property graphs, as well as a few helpful examples to get started.
+
 ## Building the code
 
 The build process has been verified on Linux and it should be possible 
