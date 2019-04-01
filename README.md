@@ -26,4 +26,3 @@ of the build process. To build fuzzyc2cpg issue the command `sbt stage`.
 To run fuzzyc2cpg in order to produce a code property graph issue the
 command
 `./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> --out <path/to/outputCpg>`.
-
