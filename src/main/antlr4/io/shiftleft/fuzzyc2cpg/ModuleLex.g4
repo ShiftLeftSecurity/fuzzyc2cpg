@@ -47,6 +47,7 @@ PRE_ENDIF: '#endif' ~[\r\n]* '\r'? '\n';
 HEX_LITERAL : '0' ('x'|'X') HexDigit+ IntegerTypeSuffix? ;
 DECIMAL_LITERAL : ('0' | '1'..'9' '0'..'9'*) IntegerTypeSuffix? ;
 OCTAL_LITERAL : '0' ('0'..'7')+ IntegerTypeSuffix? ;
+BINARY_LITERAL : '0b' ( '0' | '1')+ IntegerTypeSuffix? ;
 
 FLOATING_POINT_LITERAL
     :   ('0'..'9')+ '.' ('0'..'9')* Exponent? FloatTypeSuffix?
