@@ -5,7 +5,8 @@
 
 **Note: fuzzyc2cpg is part of https://github.com/ShiftLeftSecurity/joern/. If you are new to it, we recommend starting over there instead.**
 
-A fuzzy parser for C/C++ that creates code property graphs according to the specification at https://github.com/ShiftLeftSecurity/codepropertygraph .
+A fuzzy parser for C/C++ that creates code property graphs according to the specification at https://github.com/ShiftLeftSecurity/codepropertygraph . This is a fork of the (now unmaintainted) version of Joern at https://github.com/octopus-platform/joern.
+
 
 *Note:* for first-time users, we recommend building "joern" at https://github.com/ShiftLeftSecurity/joern/ instead. It contains both fuzzyc2cpg and a component for querying code property graphs, as well as a few helpful examples to get started.
 
