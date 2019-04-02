@@ -78,6 +78,7 @@ constant
     :   HEX_LITERAL
     |   OCTAL_LITERAL
     |   DECIMAL_LITERAL
+    |   BINARY_LITERAL
 	|	STRING
     |   CHAR
     |   FLOATING_POINT_LITERAL
