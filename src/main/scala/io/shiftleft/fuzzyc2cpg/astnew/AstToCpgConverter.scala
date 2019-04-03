@@ -32,7 +32,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   import AstToCpgConverter._
 
   private var contextStack = List[Context]()
-  private val scope = new Scope[String, NodeType, NodeType]()
+  private val scope = new Scope[String, (NodeType, String), NodeType]()
   private var astToProtoMapping = Map[AstNode, NodeType]()
   private var methodNode = Option.empty[NodeType]
   private var methodReturnNode = Option.empty[NodeType]
@@ -178,7 +178,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addProperty(NodeProperty.COLUMN_NUMBER, astParameter.getLocation.startPos)
       .createNode(astParameter)
 
-    scope.addToScope(astParameter.getName, cpgParameter)
+    scope.addToScope(astParameter.getName, (cpgParameter, parameterType))
     addAstChild(cpgParameter)
   }
 
@@ -365,16 +365,24 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   override def visit(astIdentifier: Identifier): Unit = {
     val identifierName = astIdentifier.getEscapedCodeStr
 
+    val variableOption = scope.lookupVariable(identifierName)
+    val identifierTypeName = variableOption match {
+      case Some((variable, variableTypeName)) =>
+        variableTypeName
+      case None =>
+        Defines.anyTypeName
+    }
+
     val cpgIdentifier = adapter.createNodeBuilder(NodeKind.IDENTIFIER)
         .addProperty(NodeProperty.NAME, identifierName)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(Defines.anyTypeName))
+        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(identifierTypeName))
         .addCommons(astIdentifier, context)
         .createNode(astIdentifier)
 
     addAstChild(cpgIdentifier)
 
-    scope.lookupVariable(identifierName) match {
-      case Some(variable) =>
+    variableOption match {
+      case Some((variable, variableTypeName)) =>
         adapter.addEdge(EdgeKind.REF, variable, cpgIdentifier)
       case None =>
     }
@@ -537,7 +545,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
         .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(declTypeName))
         .createNode(identifierDecl)
 
-      val scopeParentNode = scope.addToScope(localName, cpgLocal)
+      val scopeParentNode = scope.addToScope(localName, (cpgLocal, declTypeName))
       // Here we on purpose do not use addAstChild because the LOCAL nodes
       // are not really in the AST (they also have no ORDER property).
       // So do not be confused that the format still demands an AST edge.

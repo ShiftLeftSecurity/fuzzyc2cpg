@@ -173,7 +173,7 @@ class AstToCpgTests extends WordSpec with Matchers {
             arg.value2(NodeKeys.ORDER),
             arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations =
-          (NodeTypes.IDENTIFIER, "local", "ANY", 1, 1),
+          (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
         (NodeTypes.LITERAL, "1", "int", 2, 2))
     }
 
@@ -203,8 +203,8 @@ class AstToCpgTests extends WordSpec with Matchers {
             arg.value2(NodeKeys.ORDER),
             arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations =
-          (NodeTypes.IDENTIFIER, "local", "ANY", 1, 1),
-        (NodeTypes.IDENTIFIER, "x", "ANY", 2, 2))
+          (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
+        (NodeTypes.IDENTIFIER, "x", "int", 2, 2))
     }
 
     "be correct for decl assignment of multiple locals" in new Fixture(
@@ -236,8 +236,8 @@ class AstToCpgTests extends WordSpec with Matchers {
             arg.value2(NodeKeys.ORDER),
             arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations =
-          (NodeTypes.IDENTIFIER, "local", "ANY", 1, 1),
-        (NodeTypes.IDENTIFIER, "x", "ANY", 2, 2))
+          (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
+        (NodeTypes.IDENTIFIER, "x", "int", 2, 2))
 
       val assignment2 = block.expandAst(NodeTypes.CALL).filterOrder(2)
       assignment2.checkForSingle(NodeKeys.NAME, Operators.assignment)
@@ -251,8 +251,8 @@ class AstToCpgTests extends WordSpec with Matchers {
             arg.value2(NodeKeys.ORDER),
             arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations =
-          (NodeTypes.IDENTIFIER, "local2", "ANY", 1, 1),
-        (NodeTypes.IDENTIFIER, "y", "ANY", 2, 2))
+          (NodeTypes.IDENTIFIER, "local2", "int", 1, 1),
+        (NodeTypes.IDENTIFIER, "y", "int", 2, 2))
     }
 
     "be correct for nested expression" in new Fixture(
