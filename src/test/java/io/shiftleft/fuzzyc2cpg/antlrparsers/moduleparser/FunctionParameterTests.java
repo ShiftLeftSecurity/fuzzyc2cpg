@@ -60,4 +60,15 @@ public class FunctionParameterTests extends FunctionDefinitionTests
 		String output = parser.function_def().toStringTree(parser);
 		assertTrue(output.startsWith("(function_def"));
 	}
+
+	@Test
+	public void testConstConstPtr()
+	{
+		String input = "static void black_box(const example_s * const * alias_to_alias) {}";
+
+		ModuleParser parser = createParser(input);
+		String output = parser.function_def().toStringTree(parser);
+		assertTrue(output.startsWith("(function_def"));
+	}
+
 }
