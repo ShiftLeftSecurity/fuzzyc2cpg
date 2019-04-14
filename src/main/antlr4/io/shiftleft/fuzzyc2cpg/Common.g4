@@ -134,7 +134,7 @@ water: .;
 identifier : (ALPHA_NUMERIC ('::' ALPHA_NUMERIC)*) | access_specifier;
 number: HEX_LITERAL | DECIMAL_LITERAL | OCTAL_LITERAL;
 
-ptrs: (ptr_operator 'restrict'?)+;
+ptrs: (CV_QUALIFIER? ptr_operator 'restrict'?)+;
 func_ptrs: ptrs;
 
 
