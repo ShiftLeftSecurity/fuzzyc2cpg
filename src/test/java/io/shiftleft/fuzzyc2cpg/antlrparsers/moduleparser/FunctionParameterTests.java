@@ -1,9 +1,9 @@
 package io.shiftleft.fuzzyc2cpg.antlrparsers.moduleparser;
 
-import static org.junit.Assert.assertTrue;
-
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
 
 
 public class FunctionParameterTests extends FunctionDefinitionTests
@@ -70,5 +70,13 @@ public class FunctionParameterTests extends FunctionDefinitionTests
 		String output = parser.function_def().toStringTree(parser);
 		assertTrue(output.startsWith("(function_def"));
 	}
+	@Test
+	public void testVoidConstArgs() {
+		String input = "static void * black_box(void * const args) {}";
 
+		ModuleParser parser = createParser(input);
+		String output = parser.function_def().toStringTree(parser);
+		System.out.println("OKOKOKOK"+output);
+		assertTrue(output.startsWith("(function_def"));
+	}
 }
