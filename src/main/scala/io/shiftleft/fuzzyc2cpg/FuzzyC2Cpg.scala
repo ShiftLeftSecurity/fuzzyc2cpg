@@ -1,6 +1,5 @@
 package io.shiftleft.fuzzyc2cpg
 
-import io.shiftleft.fuzzyc2cpg.output.protobuf.OutputModuleFactory
 import org.slf4j.LoggerFactory
 
 object FuzzyC2Cpg extends App {
@@ -9,11 +8,9 @@ object FuzzyC2Cpg extends App {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  parseConfig.map{ config =>
+  parseConfig.foreach{ config =>
     try {
-      val fuzzyc2Cpg = new Fuzzyc2Cpg(new OutputModuleFactory(config.outputPath,
-        true, false))
-      fuzzyc2Cpg.runAndOutput(config.inputPaths.toArray)
+      new Fuzzyc2Cpg(config.outputPath).runAndOutput(config.inputPaths.toArray)
     } catch {
       case exception: Exception =>
         logger.error("Failed to generate CPG.", exception)
