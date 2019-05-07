@@ -27,20 +27,23 @@ object Utils {
   }
 
   def newNode(nodeType: NodeType): Node.Builder = {
-    Node.newBuilder()
+    Node
+      .newBuilder()
       .setType(nodeType)
       .setKey(IdPool.getNextId)
   }
 
   def newEdge(edgeType: Edge.EdgeType, dstNode: Node, srcNode: Node): Edge.Builder = {
-    Edge.newBuilder()
+    Edge
+      .newBuilder()
       .setType(edgeType)
       .setDst(dstNode.getKey)
       .setSrc(srcNode.getKey)
   }
 
   def children(node: AstNode) =
-    (0 to node.getChildCount).map(node.getChild)
+    (0 to node.getChildCount)
+      .map(node.getChild)
       .filterNot(_ == null)
       .toList
 
@@ -52,7 +55,6 @@ object Utils {
         Defines.globalNamespaceName
     }
   }
-
 
   implicit class NodeBuilderWrapper(nodeBuilder: Node.Builder) {
     def addStringProperty(name: Cpg.NodePropertyName, value: String): Node.Builder = {
@@ -71,6 +73,5 @@ object Utils {
       cpgStructBuilder.addEdge(newEdge(edgeType, dstNode, srcNode))
     }
   }
-
 
 }
