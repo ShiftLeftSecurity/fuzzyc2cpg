@@ -83,7 +83,6 @@ class ThreadedZipper extends Thread {
             logger.error("Couldn't list files in " + inputFile);
             return;
           }
-          logger.info("Found " + files.length + " files");
           Arrays.sort(files);
 
           List<ZipEntry> entries = Arrays.stream(files).flatMap(f -> {
