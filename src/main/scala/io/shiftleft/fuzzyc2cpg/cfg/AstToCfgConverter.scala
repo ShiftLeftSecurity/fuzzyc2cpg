@@ -19,17 +19,17 @@ object AstToCfgConverter {
   private val logger = LoggerFactory.getLogger(getClass)
 }
 
-class AstToCfgConverter[NodeType](entryNode: NodeType,
-                                  exitNode: NodeType,
-                                  adapter: CfgAdapter[NodeType] = null) extends ASTNodeVisitor {
+class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapter: CfgAdapter[NodeType] = null)
+    extends ASTNodeVisitor {
   import AstToCfgConverter._
 
   private case class FringeElement(node: NodeType, cfgEdgeType: CfgEdgeType)
 
   private implicit class FringeWrapper(fringe: List[FringeElement]) {
     def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[FringeElement] = {
-      fringe.map { case FringeElement(node, _) =>
-        FringeElement(node, cfgEdgeType)
+      fringe.map {
+        case FringeElement(node, _) =>
+          FringeElement(node, cfgEdgeType)
       }
     }
 
@@ -56,20 +56,22 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   }
 
   private def extendCfg(dstNode: NodeType): Unit = {
-    fringe.foreach { case FringeElement(srcNode, cfgEdgeType) =>
-      adapter.newCfgEdge(dstNode, srcNode, cfgEdgeType)
+    fringe.foreach {
+      case FringeElement(srcNode, cfgEdgeType) =>
+        adapter.newCfgEdge(dstNode, srcNode, cfgEdgeType)
     }
     fringe = fringe.empty().add(dstNode, AlwaysEdge)
 
     if (markerStack.nonEmpty) {
       // Up until the first none None stack element we replace the Nones with Some(dstNode)
-      val leadingNoneLength  = markerStack.prefixLength(_.isEmpty)
-      markerStack = List.fill(leadingNoneLength)(Some(dstNode)) ++ markerStack.drop(leadingNoneLength)
+      val leadingNoneLength = markerStack.prefixLength(_.isEmpty)
+      markerStack = List.fill(leadingNoneLength)(Some(dstNode)) ++ markerStack
+        .drop(leadingNoneLength)
     }
 
     if (pendingGotoLabels.nonEmpty) {
       pendingGotoLabels.foreach { label =>
-        labeledNodes = labeledNodes + (label  -> dstNode)
+        labeledNodes = labeledNodes + (label -> dstNode)
       }
       pendingGotoLabels = List()
     }
@@ -90,7 +92,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
   private var fringe = List[FringeElement]().add(entryNode, AlwaysEdge)
   private var markerStack = List[Option[NodeType]]() // Used to track the start of yet to be processed
-                                                     // cfg parts.
+  // cfg parts.
   private var breakStack = new LayeredStack[NodeType]()
   private var continueStack = new LayeredStack[NodeType]()
   private var caseStack = new LayeredStack[(NodeType, Boolean)]()
@@ -101,13 +103,14 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   private var pendingCaseLabels = List[String]()
 
   private def connectGotosAndLabels(): Unit = {
-    gotos.foreach { case (goto, label) =>
-      labeledNodes.get(label) match {
-        case Some(labeledNode) =>
-          adapter.newCfgEdge(labeledNode, goto, AlwaysEdge)
-        case None =>
-          logger.warn("Unable to wire goto statement. Missing label {}.", label)
-      }
+    gotos.foreach {
+      case (goto, label) =>
+        labeledNodes.get(label) match {
+          case Some(labeledNode) =>
+            adapter.newCfgEdge(labeledNode, goto, AlwaysEdge)
+          case None =>
+            logger.warn("Unable to wire goto statement. Missing label {}.", label)
+        }
     }
   }
 
@@ -234,10 +237,10 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
         fringe = conditionFringe.setCfgEdgeType(FalseEdge)
       case None =>
-        // We only get here if the parser missed the condition.
-        // In this case doing nothing here means that we have
-        // no CFG edge to the loop start because we default
-        // to an always false condition.
+      // We only get here if the parser missed the condition.
+      // In this case doing nothing here means that we have
+      // no CFG edge to the loop start because we default
+      // to an always false condition.
     }
     fringe = fringe.add(breakStack.getTopElements, AlwaysEdge)
 
@@ -256,8 +259,9 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     // given as parameter.
     val classOfExression = expression.getClass
     if (classOfExression != classOf[Expression]) {
-      throw new RuntimeException(s"Only direct instances of Expressions expected " +
-        s"but ${classOfExression.getSimpleName} found")
+      throw new RuntimeException(
+        s"Only direct instances of Expressions expected " +
+          s"but ${classOfExression.getSimpleName} found")
     }
 
     acceptChildren(expression)
@@ -298,7 +302,9 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
     markerStack.head.foreach(extendCfg)
 
-    fringe = conditionFringe.setCfgEdgeType(FalseEdge).add(breakStack.getTopElements, AlwaysEdge)
+    fringe = conditionFringe
+      .setCfgEdgeType(FalseEdge)
+      .add(breakStack.getTopElements, AlwaysEdge)
 
     markerStack = markerStack.tail
     breakStack.popLayer()
@@ -397,7 +403,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
   override def visit(sizeofOperand: SizeofOperand): Unit = {
     sizeofOperand.getChildCount match {
       case 0 =>
-        // Operand is a type. We do not add the type to the CFG.
+      // Operand is a type. We do not add the type to the CFG.
       case 1 =>
         // Operand is an expression.
         sizeofOperand.getChild(0).accept(this)
@@ -421,13 +427,15 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
     switchStatement.getStatement.accept(this)
     val switchFringe = fringe
 
-    caseStack.getTopElements.foreach { case (caseNode, isDefault) =>
-      fringe = conditionFringe
-      extendCfg(caseNode)
+    caseStack.getTopElements.foreach {
+      case (caseNode, isDefault) =>
+        fringe = conditionFringe
+        extendCfg(caseNode)
     }
 
-    val hasDefaultCase = caseStack.getTopElements.exists { case (caseNode, isDefault) =>
-      isDefault
+    val hasDefaultCase = caseStack.getTopElements.exists {
+      case (caseNode, isDefault) =>
+        isDefault
     }
 
     fringe = switchFringe.add(breakStack.getTopElements, AlwaysEdge)
@@ -460,7 +468,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
         // Child 0 is the operator child 1 is the operand.
         child.accept(this)
       case None =>
-        // We get here for `new` expression.
+      // We get here for `new` expression.
     }
 
     extendCfg(unaryExpression)
@@ -481,7 +489,9 @@ class AstToCfgConverter[NodeType](entryNode: NodeType,
 
     extendCfg(markerStack.head.get)
 
-    fringe = conditionFringe.setCfgEdgeType(FalseEdge).add(breakStack.getTopElements, AlwaysEdge)
+    fringe = conditionFringe
+      .setCfgEdgeType(FalseEdge)
+      .add(breakStack.getTopElements, AlwaysEdge)
 
     markerStack = markerStack.tail
     breakStack.popLayer()

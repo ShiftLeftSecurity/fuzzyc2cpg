@@ -26,6 +26,6 @@ class LayeredStack[ElementType] {
   }
 
   def numberOfLayers: Int = {
-   stack.size
+    stack.size
   }
 }

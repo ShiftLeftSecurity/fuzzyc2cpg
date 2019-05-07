@@ -12,8 +12,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 
-class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
-  extends SourceFileListener {
+class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_]) extends SourceFileListener {
   private val structureCpg = CpgStruct.newBuilder()
 
   /**
@@ -28,7 +27,8 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
     structureCpg.addNode(namespaceBlock)
     structureCpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
 
-    val astVisitor = new AstVisitor(outputModuleFactory, structureCpg, namespaceBlock)
+    val astVisitor =
+      new AstVisitor(outputModuleFactory, structureCpg, namespaceBlock)
     driver.addObserver(astVisitor)
 
     driver.parseAndWalkFile(pathToFile.toString)
@@ -37,16 +37,12 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
   /**
     * Callback invoked upon entering a directory
     * */
-  override def preVisitDirectory(dir: Path): Unit = {
-
-  }
+  override def preVisitDirectory(dir: Path): Unit = {}
 
   /**
     * Callback invoked upon leaving a directory
     * */
-  override def postVisitDirectory(dir: Path): Unit = {
-
-  }
+  override def postVisitDirectory(dir: Path): Unit = {}
 
   private def addAnyTypeAndNamespacBlock(): Unit = {
     val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None)
@@ -61,10 +57,10 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
   }
 
   private def createNamespaceBlockNode(filePath: Option[Path]): Node = {
-      newNode(NodeType.NAMESPACE_BLOCK)
-        .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
-        .addStringProperty(NodePropertyName.FULL_NAME, getGlobalNamespaceBlockFullName(filePath.map(_.toString)))
-        .build
+    newNode(NodeType.NAMESPACE_BLOCK)
+      .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
+      .addStringProperty(NodePropertyName.FULL_NAME, getGlobalNamespaceBlockFullName(filePath.map(_.toString)))
+      .build
   }
 
   private def addMetaDataNode(): Unit = {
@@ -91,8 +87,5 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_])
     outputModule.persistCpg(structureCpg);
   }
 
-  override def initialize(): Unit = {
-
-  }
+  override def initialize(): Unit = {}
 }
-
