@@ -6,8 +6,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 
-class ProtoCfgAdapter(targetCpg: CpgStruct.Builder,
-                      astToProtoMapping: Map[AstNode, Node]) extends CfgAdapter[Node] {
+class ProtoCfgAdapter(targetCpg: CpgStruct.Builder, astToProtoMapping: Map[AstNode, Node]) extends CfgAdapter[Node] {
   override def mapNode(astNode: AstNode): Node = {
     astToProtoMapping(astNode)
   }

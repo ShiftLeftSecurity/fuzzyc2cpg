@@ -25,10 +25,10 @@ object AstToCpgConverter {
   private val logger = LoggerFactory.getLogger(getClass)
 }
 
-class AstToCpgConverter[NodeBuilderType,NodeType]
-(containingFileName: String,
- cpgParent: NodeType,
- adapter: CpgAdapter[NodeBuilderType, NodeType]) extends ASTNodeVisitor {
+class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
+                                                   cpgParent: NodeType,
+                                                   adapter: CpgAdapter[NodeBuilderType, NodeType])
+    extends ASTNodeVisitor {
   import AstToCpgConverter._
 
   private var contextStack = List[Context]()
@@ -42,9 +42,7 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   private class Context(val cpgParent: NodeType, var childNum: Int, val parentIsClassDef: Boolean)
 
-  private def pushContext(cpgParent: NodeType,
-                          startChildNum: Int,
-                          parentIsClassDef: Boolean = false): Unit = {
+  private def pushContext(cpgParent: NodeType, startChildNum: Int, parentIsClassDef: Boolean = false): Unit = {
     contextStack = new Context(cpgParent, startChildNum, parentIsClassDef) :: contextStack
   }
 
@@ -117,8 +115,11 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       "int"
     }
     val signature = returnType +
-      astFunction.getParameterList.asScala.map(_.getType.getEscapedCodeStr).mkString("(", ",", ")")
-    val cpgMethod = adapter.createNodeBuilder(NodeKind.METHOD)
+      astFunction.getParameterList.asScala
+        .map(_.getType.getEscapedCodeStr)
+        .mkString("(", ",", ")")
+    val cpgMethod = adapter
+      .createNodeBuilder(NodeKind.METHOD)
       .addProperty(NodeProperty.NAME, astFunction.getName)
       .addProperty(NodeProperty.FULL_NAME, s"${astFunction.getName}")
       .addProperty(NodeProperty.LINE_NUMBER, astFunction.getLocation.startLine)
@@ -143,7 +144,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       } else {
         astFunction.getLocation
       }
-    val cpgMethodReturn = adapter.createNodeBuilder(NodeKind.METHOD_RETURN)
+    val cpgMethodReturn = adapter
+      .createNodeBuilder(NodeKind.METHOD_RETURN)
       .addProperty(NodeProperty.CODE, "RET")
       .addProperty(NodeProperty.EVALUATION_STRATEGY, EvaluationStrategies.BY_VALUE)
       .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(returnType))
@@ -168,7 +170,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       "int"
     }
 
-    val cpgParameter = adapter.createNodeBuilder(NodeKind.METHOD_PARAMETER_IN)
+    val cpgParameter = adapter
+      .createNodeBuilder(NodeKind.METHOD_PARAMETER_IN)
       .addProperty(NodeProperty.CODE, astParameter.getEscapedCodeStr)
       .addProperty(NodeProperty.NAME, astParameter.getName)
       .addProperty(NodeProperty.ORDER, astParameter.getChildNumber + 1)
@@ -192,17 +195,17 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   override def visit(astAssignment: AssignmentExpression): Unit = {
     val operatorMethod = astAssignment.getOperator match {
-      case "=" => Operators.assignment
-      case "*=" => Operators.assignmentMultiplication
-      case "/=" => Operators.assignmentDivision
-      case "%=" => Operators.assignmentDivision
-      case "+=" => Operators.assignmentPlus
-      case "-=" => Operators.assignmentMinus
+      case "="   => Operators.assignment
+      case "*="  => Operators.assignmentMultiplication
+      case "/="  => Operators.assignmentDivision
+      case "%="  => Operators.assignmentDivision
+      case "+="  => Operators.assignmentPlus
+      case "-="  => Operators.assignmentMinus
       case "<<=" => Operators.assignmentShiftLeft
       case ">>=" => Operators.assignmentArithmeticShiftRight
-      case "&=" => Operators.assignmentAnd
-      case "^=" => Operators.assignmentXor
-      case "|=" => Operators.assignmentOr
+      case "&="  => Operators.assignmentAnd
+      case "^="  => Operators.assignmentXor
+      case "|="  => Operators.assignmentOr
     }
     visitBinaryExpr(astAssignment, operatorMethod)
   }
@@ -228,8 +231,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   override def visit(astRelation: RelationalExpression): Unit = {
     val operatorMethod = astRelation.getOperator match {
-      case "<" => Operators.lessThan
-      case ">" => Operators.greaterThan
+      case "<"  => Operators.lessThan
+      case ">"  => Operators.greaterThan
       case "<=" => Operators.lessEqualsThan
       case ">=" => Operators.greaterEqualsThan
     }
@@ -279,12 +282,12 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     Option(astUnary.getChild(0)) match {
       case Some(child) =>
         val operatorMethod = astUnary.getChild(0).getEscapedCodeStr match {
-          case "+" => Operators.plus
-          case "-" => Operators.minus
-          case "*" => Operators.indirection
-          case "&" => Operators.addressOf
-          case "~" => Operators.not
-          case "!" => Operators.logicalNot
+          case "+"  => Operators.plus
+          case "-"  => Operators.minus
+          case "*"  => Operators.indirection
+          case "&"  => Operators.addressOf
+          case "~"  => Operators.not
+          case "!"  => Operators.logicalNot
           case "++" => Operators.preIncrement
           case "--" => Operators.preDecrement
         }
@@ -336,10 +339,11 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   override def visit(astConstant: Constant): Unit = {
     val constantType = deriveConstantTypeFromCode(astConstant.getEscapedCodeStr)
-    val cpgConstant = adapter.createNodeBuilder(NodeKind.LITERAL)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(constantType))
-        .addCommons(astConstant, context)
-        .createNode(astConstant)
+    val cpgConstant = adapter
+      .createNodeBuilder(NodeKind.LITERAL)
+      .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(constantType))
+      .addCommons(astConstant, context)
+      .createNode(astConstant)
 
     addAstChild(cpgConstant)
   }
@@ -373,11 +377,12 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
         Defines.anyTypeName
     }
 
-    val cpgIdentifier = adapter.createNodeBuilder(NodeKind.IDENTIFIER)
-        .addProperty(NodeProperty.NAME, identifierName)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(identifierTypeName))
-        .addCommons(astIdentifier, context)
-        .createNode(astIdentifier)
+    val cpgIdentifier = adapter
+      .createNodeBuilder(NodeKind.IDENTIFIER)
+      .addProperty(NodeProperty.NAME, identifierName)
+      .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(identifierTypeName))
+      .addCommons(astIdentifier, context)
+      .createNode(astIdentifier)
 
     addAstChild(cpgIdentifier)
 
@@ -393,7 +398,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astConditionalExpr: ConditionalExpression): Unit = {
-    val cpgConditionalExpr = createCallNode(astConditionalExpr, "<operator>.conditionalExpression")
+    val cpgConditionalExpr =
+      createCallNode(astConditionalExpr, "<operator>.conditionalExpression")
 
     addAstChild(cpgConditionalExpr)
 
@@ -408,11 +414,13 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     // given as parameter.
     val classOfExression = expression.getClass
     if (classOfExression != classOf[Expression]) {
-      throw new RuntimeException(s"Only direct instances of Expressions expected " +
-        s"but ${classOfExression.getSimpleName} found")
+      throw new RuntimeException(
+        s"Only direct instances of Expressions expected " +
+          s"but ${classOfExression.getSimpleName} found")
     }
 
-    val cpgBlock = adapter.createNodeBuilder(NodeKind.BLOCK)
+    val cpgBlock = adapter
+      .createNodeBuilder(NodeKind.BLOCK)
       .addProperty(NodeProperty.CODE, "")
       .addProperty(NodeProperty.ORDER, context.childNum)
       .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
@@ -488,7 +496,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
         statement.accept(this)
       }
     } else {
-      val cpgBlock = adapter.createNodeBuilder(NodeKind.BLOCK)
+      val cpgBlock = adapter
+        .createNodeBuilder(NodeKind.BLOCK)
         .addProperty(NodeProperty.CODE, "")
         .addProperty(NodeProperty.ORDER, context.childNum)
         .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
@@ -510,9 +519,10 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astReturn: ReturnStatement): Unit = {
-    val cpgReturn = adapter.createNodeBuilder(NodeKind.RETURN)
-        .addCommons(astReturn, context)
-        .createNode(astReturn)
+    val cpgReturn = adapter
+      .createNodeBuilder(NodeKind.RETURN)
+      .addCommons(astReturn, context)
+      .createNode(astReturn)
 
     addAstChild(cpgReturn)
 
@@ -531,7 +541,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     val declTypeName = identifierDecl.getType.getEscapedCodeStr
 
     if (context.parentIsClassDef) {
-      val cpgMember = adapter.createNodeBuilder(NodeKind.MEMBER)
+      val cpgMember = adapter
+        .createNodeBuilder(NodeKind.MEMBER)
         .addProperty(NodeProperty.CODE, identifierDecl.getEscapedCodeStr)
         .addProperty(NodeProperty.NAME, identifierDecl.getName.getEscapedCodeStr)
         .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(declTypeName))
@@ -539,13 +550,15 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       addAstChild(cpgMember)
     } else {
       val localName = identifierDecl.getName.getEscapedCodeStr
-      val cpgLocal = adapter.createNodeBuilder(NodeKind.LOCAL)
+      val cpgLocal = adapter
+        .createNodeBuilder(NodeKind.LOCAL)
         .addProperty(NodeProperty.CODE, localName)
         .addProperty(NodeProperty.NAME, localName)
         .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(declTypeName))
         .createNode(identifierDecl)
 
-      val scopeParentNode = scope.addToScope(localName, (cpgLocal, declTypeName))
+      val scopeParentNode =
+        scope.addToScope(localName, (cpgLocal, declTypeName))
       // Here we on purpose do not use addAstChild because the LOCAL nodes
       // are not really in the AST (they also have no ORDER property).
       // So do not be confused that the format still demands an AST edge.
@@ -588,7 +601,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astArrayIndexing: ArrayIndexing): Unit = {
-    val cpgArrayIndexing = createCallNode(astArrayIndexing, Operators.computedMemberAccess)
+    val cpgArrayIndexing =
+      createCallNode(astArrayIndexing, Operators.computedMemberAccess)
 
     addAstChild(cpgArrayIndexing)
 
@@ -610,7 +624,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astMemberAccess: MemberAccess): Unit = {
-    val cpgMemberAccess = createCallNode(astMemberAccess, Operators.memberAccess)
+    val cpgMemberAccess =
+      createCallNode(astMemberAccess, Operators.memberAccess)
 
     addAstChild(cpgMemberAccess)
 
@@ -620,7 +635,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   override def visit(astPtrMemberAccess: PtrMemberAccess): Unit = {
-    val cpgPtrMemberAccess = createCallNode(astPtrMemberAccess, Operators.indirectMemberAccess)
+    val cpgPtrMemberAccess =
+      createCallNode(astPtrMemberAccess, Operators.indirectMemberAccess)
 
     addAstChild(cpgPtrMemberAccess)
 
@@ -653,7 +669,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
     var name = astClassDef.identifier.toString
     name = name.substring(1, name.length - 1)
 
-    val cpgTypeDecl = adapter.createNodeBuilder(NodeKind.TYPE_DECL)
+    val cpgTypeDecl = adapter
+      .createNodeBuilder(NodeKind.TYPE_DECL)
       .addProperty(NodeProperty.NAME, name)
       .addProperty(NodeProperty.FULL_NAME, name)
       .addProperty(NodeProperty.IS_EXTERNAL, false)
@@ -683,14 +700,16 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
   }
 
   private def newUnknownNode(astNode: AstNode): NodeType = {
-    adapter.createNodeBuilder(NodeKind.UNKNOWN)
+    adapter
+      .createNodeBuilder(NodeKind.UNKNOWN)
       .addProperty(NodeProperty.PARSER_TYPE_NAME, astNode.getClass.getSimpleName)
       .addCommons(astNode, context)
       .createNode(astNode)
   }
 
   private def createCallNode(astNode: AstNode, methodName: String): NodeType = {
-    val cpgNode = adapter.createNodeBuilder(NodeKind.CALL)
+    val cpgNode = adapter
+      .createNodeBuilder(NodeKind.CALL)
       .addProperty(NodeProperty.NAME, methodName)
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
@@ -699,7 +718,8 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
       .addCommons(astNode, context)
       .createNode(astNode)
 
-    adapter.createNodeBuilder(NodeKind.METHOD_INST)
+    adapter
+      .createNodeBuilder(NodeKind.METHOD_INST)
       .addProperty(NodeProperty.NAME, methodName)
       .addProperty(NodeProperty.FULL_NAME, methodName)
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
@@ -716,11 +736,12 @@ class AstToCpgConverter[NodeBuilderType,NodeType]
 
   private def createTypeNodes(): Unit = {
     typeNames.foreach { typeName =>
-      adapter.createNodeBuilder(NodeKind.TYPE)
-      .addProperty(NodeProperty.NAME, typeName)
-      .addProperty(NodeProperty.FULL_NAME, typeName)
-      .addProperty(NodeProperty.TYPE_DECL_FULL_NAME, typeName)
-      .createNode()
+      adapter
+        .createNodeBuilder(NodeKind.TYPE)
+        .addProperty(NodeProperty.NAME, typeName)
+        .addProperty(NodeProperty.FULL_NAME, typeName)
+        .addProperty(NodeProperty.TYPE_DECL_FULL_NAME, typeName)
+        .createNode()
     }
   }
 
