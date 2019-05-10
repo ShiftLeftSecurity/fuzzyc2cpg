@@ -6,14 +6,13 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Optional;
 
-import io.shiftleft.cpgloading.ProtoCpgLoader;
-import io.shiftleft.cpgloading.tinkergraph.ProtoToCpg;
+import io.shiftleft.codepropertygraph.Cpg;
+import io.shiftleft.codepropertygraph.cpgloading.ProtoCpgLoader;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
-import io.shiftleft.queryprimitives.steps.starters.Cpg;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,13 +56,12 @@ public class OutputModule implements CpgOutputModule {
       mergedBuilder.mergeFrom(builder.build());
     });
 
-    ProtoToCpg protoToCpg = new ProtoToCpg();
-    ProtoCpgLoader protoCpgLoader = new ProtoCpgLoader(protoToCpg);
+    ProtoCpgLoader protoCpgLoader = new ProtoCpgLoader();
 
     byte[] bytes = mergedBuilder.build().toByteArray();
     InputStream inputStream = new ByteArrayInputStream(bytes);
     try {
-      cpg = protoCpgLoader.loadFromInputStream(inputStream);
+      cpg = protoCpgLoader.loadFromInputStream(inputStream, Optional.empty(), Optional.empty());
     } catch (IOException e) {
       System.err.println("Error loading CPG from byte array input stream");
       cpg = null;

@@ -1,8 +1,8 @@
 package io.shiftleft.fuzzyc2cpg.output.inmemory;
 
+import io.shiftleft.codepropertygraph.Cpg;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
-import io.shiftleft.queryprimitives.steps.starters.Cpg;
 
 public class OutputModuleFactory implements CpgOutputModuleFactory<Cpg> {
 
