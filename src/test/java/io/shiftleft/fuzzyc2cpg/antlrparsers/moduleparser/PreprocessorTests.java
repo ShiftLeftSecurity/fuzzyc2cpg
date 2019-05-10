@@ -66,4 +66,16 @@ public class PreprocessorTests extends FunctionDefinitionTests
 		assertTrue(output.contains("(water abc)"));
 	}
 
+	@Test
+	public void testPreprocPlusDecl() {
+		String input = "#ifndef FUNCTIONS_H\n" +
+				"#define FUNCTIONS_H\n " +
+				"void call_function();\n " +
+				"int glob;\n" +
+				"#endif\n";
+		ModuleParser parser = createParser(input);
+		String output = parser.code().toStringTree(parser);
+		assertTrue(output.contains("(type_name (base_type void))"));
+	}
+
 }
