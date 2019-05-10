@@ -229,6 +229,20 @@ public class ModuleBuildersTest
 		assertTrue(codeItem.getParameterList().size() == 0);
 	}
 
+	@Test
+	public void testPreprocPlusDecl() {
+		String input = "#ifndef FUNCTIONS_H\n" +
+				"#define FUNCTIONS_H\n " +
+				"void call_function();\n " +
+				"int glob;\n" +
+				"#endif\n";
+
+		List<AstNode> codeItems = parseInput(input);
+		IdentifierDeclStatement decl = (IdentifierDeclStatement) codeItems.get(0);
+		assertEquals("void ( )", ((IdentifierDecl) decl.getChild(0)).getType().completeType);
+		assertEquals("void ( )", ((IdentifierDecl) decl.getChild(0)).getType().baseType);
+	}
+
 	private List<AstNode> parseInput(String input)
 	{
 		AntlrCModuleParserDriver parser = new AntlrCModuleParserDriver();
