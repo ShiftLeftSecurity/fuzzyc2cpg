@@ -1,7 +1,7 @@
 package io.shiftleft.fuzzyc2cpg
 
+import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.output.inmemory.OutputModuleFactory
-import io.shiftleft.queryprimitives.steps.starters.Cpg
 
 case class CpgTestFixture(projectName: String) {
 
