@@ -449,7 +449,10 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
   }
 
   override def visit(throwStatement: ThrowStatement): Unit = {
-    throwStatement.getThrowExpression.accept(this)
+    val throwExpression = throwStatement.getThrowExpression
+    if (throwExpression != null) {
+      throwExpression.accept(this)
+    }
     // TODO at the moment we do not handle exception handling
     // and thus simply ignore the influence of 'throw' on the
     // cfg.

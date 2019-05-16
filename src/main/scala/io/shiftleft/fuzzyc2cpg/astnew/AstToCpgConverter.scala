@@ -467,7 +467,10 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     addAstChild(cpgThrow)
 
     pushContext(cpgThrow, 1)
-    astThrow.getThrowExpression.accept(this)
+    val throwExpression = astThrow.getThrowExpression
+    if (throwExpression != null) {
+      throwExpression.accept(this)
+    }
     popContext()
   }
 
