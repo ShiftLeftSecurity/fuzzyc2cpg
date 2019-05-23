@@ -193,8 +193,9 @@ new_expression: '::'? NEW type_name '[' conditional_expression? ']'
 
 unary_op_and_cast_expr: unary_operator cast_expression;
 
-sizeof_expression: sizeof '(' sizeof_operand ')'
-                 | sizeof sizeof_operand2;
+sizeof_expression: sizeof sizeof_operand2
+                 | sizeof '(' sizeof_operand2 ')'
+                 | sizeof '(' sizeof_operand ')';
 
 sizeof: 'sizeof';
 

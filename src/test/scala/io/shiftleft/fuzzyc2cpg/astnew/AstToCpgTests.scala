@@ -535,6 +535,68 @@ class AstToCpgTests extends WordSpec with Matchers {
         expectations = ("x", 1), ("a", 2)
       )
     }
+
+    "be correct for sizeof operator on identifier with brackets" in new Fixture(
+      """
+        |void method() {
+        |  int a;
+        |  sizeof(a);
+        |}
+      """.stripMargin
+    ) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      val sizeof = block.expandAst(NodeTypes.CALL)
+      sizeof.checkForSingle(NodeKeys.NAME, Operators.sizeOf)
+
+      val arguments = sizeof.expandAst(NodeTypes.IDENTIFIER)
+      arguments.checkForSingle(NodeKeys.NAME, "a")
+      arguments.checkForSingle(NodeKeys.ARGUMENT_INDEX, new Integer(1))
+    }
+
+    "be correct for sizeof operator on identifier without brackets" in new Fixture(
+      """
+        |void method() {
+        |  int a;
+        |  sizeof a ;
+        |}
+      """.stripMargin
+    ) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      val sizeof = block.expandAst(NodeTypes.CALL)
+      sizeof.checkForSingle(NodeKeys.NAME, Operators.sizeOf)
+
+      val arguments = sizeof.expandAst(NodeTypes.IDENTIFIER)
+      arguments.checkForSingle(NodeKeys.NAME, "a")
+      arguments.checkForSingle(NodeKeys.ARGUMENT_INDEX, new Integer(1))
+    }
+
+    "be correct for sizeof operator on type" in new Fixture(
+      """
+        |void method() {
+        |  sizeof(int);
+        |}
+      """.stripMargin
+    ) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+
+      val sizeof = block.expandAst(NodeTypes.CALL)
+      sizeof.checkForSingle(NodeKeys.NAME, Operators.sizeOf)
+
+      // For us it is undecidable whether "int" is a type or an Identifier
+      // Thus the implementation always goes for Identifier which we encode
+      // here in the tests.
+      val arguments = sizeof.expandAst(NodeTypes.IDENTIFIER)
+      arguments.checkForSingle(NodeKeys.NAME, "int")
+      arguments.checkForSingle(NodeKeys.ARGUMENT_INDEX, new Integer(1))
+    }
   }
 
   "Structural AST layout" should {
