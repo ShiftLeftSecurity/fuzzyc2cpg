@@ -7,7 +7,7 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.SizeofExpression
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.{ElseStatement, IfStatement}
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Label, Statement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionHolder, ExpressionStatement, IdentifierDeclStatement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters._
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump._
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
@@ -79,7 +79,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     // TODO at the moment we discard the case labels
     if (pendingCaseLabels.nonEmpty) {
       // Under normal conditions this is always true.
-      // But if the parser missed a switch statment, caseStack
+      // But if the parser missed a switch statement, caseStack
       // might by empty.
       if (caseStack.numberOfLayers > 0) {
         val containsDefaultLabel = pendingCaseLabels.contains("default")
@@ -257,11 +257,11 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     // We only end up here for expressions chained by ','.
     // Those expressions are than the children of the expression
     // given as parameter.
-    val classOfExression = expression.getClass
-    if (classOfExression != classOf[Expression]) {
+    val classOfExpression = expression.getClass
+    if (classOfExpression != classOf[Expression]) {
       throw new RuntimeException(
         s"Only direct instances of Expressions expected " +
-          s"but ${classOfExression.getSimpleName} found")
+          s"but ${classOfExpression.getSimpleName} found")
     }
 
     acceptChildren(expression)
@@ -339,14 +339,14 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     }
   }
 
-  override def visit(ifStatment: IfStatement): Unit = {
-    ifStatment.getCondition.accept(this)
+  override def visit(ifStatement: IfStatement): Unit = {
+    ifStatement.getCondition.accept(this)
     val conditionFringe = fringe
     fringe = fringe.setCfgEdgeType(TrueEdge)
 
-    ifStatment.getStatement.accept(this)
+    ifStatement.getStatement.accept(this)
 
-    Option(ifStatment.getElseNode) match {
+    Option(ifStatement.getElseNode) match {
       case Some(elseStatement) =>
         val ifBlockFringe = fringe
         fringe = conditionFringe.setCfgEdgeType(FalseEdge)
@@ -428,13 +428,13 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     val switchFringe = fringe
 
     caseStack.getTopElements.foreach {
-      case (caseNode, isDefault) =>
+      case (caseNode, _) =>
         fringe = conditionFringe
         extendCfg(caseNode)
     }
 
     val hasDefaultCase = caseStack.getTopElements.exists {
-      case (caseNode, isDefault) =>
+      case (_, isDefault) =>
         isDefault
     }
 

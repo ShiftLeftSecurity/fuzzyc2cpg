@@ -1,7 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
-import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, NodeTypes, Operators}
-import io.shiftleft.fuzzyc2cpg.{Defines, Utils}
+import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, Operators}
+import io.shiftleft.fuzzyc2cpg.Defines
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
@@ -17,7 +17,7 @@ import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.proto.cpg.Cpg.DispatchTypes
-import org.slf4j.{LoggerFactory, MDC}
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
@@ -536,7 +536,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
 
   override def visit(astIdentifierDeclStmt: IdentifierDeclStatement): Unit = {
     astIdentifierDeclStmt.getIdentifierDeclList.asScala.foreach { identifierDecl =>
-      identifierDecl.accept(this);
+      identifierDecl.accept(this)
     }
   }
 
