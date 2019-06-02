@@ -27,10 +27,8 @@ class Fuzzyc2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
 
     val filenameToNamespaceBlock = createStructuralCpg(sourceFileNames, outputModuleFactory)
 
-    // TODO Iterating over `filenameToNamspaceblock` in order to process each
-    // source file exactly ones works if we assume that there is exactly one
-    // namespaceblock connected with each file. This is true for our current
-    // parser, but false for C++ code.
+    // TODO improve fuzzyc2cpg namespace support. Currently, everything
+    // is in the same global namespace so the code below is correctly.
     filenameToNamespaceBlock.par.foreach(createCpgForCompilationUnit)
     outputModuleFactory.persist()
   }
