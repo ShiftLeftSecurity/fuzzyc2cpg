@@ -26,6 +26,11 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     val sourceFileNames = SourceFiles.determine(inputPaths.toList).sorted
 
     val filenameToNamespaceBlock = createStructuralCpg(sourceFileNames, outputModuleFactory)
+
+    // TODO Iterating over `filenameToNamspaceblock` in order to process each
+    // source file exactly ones works if we assume that there is exactly one
+    // namespaceblock connected with each file. This is true for our current
+    // parser, but false for C++ code.
     filenameToNamespaceBlock.par.foreach(createCpgForCompilationUnit)
     outputModuleFactory.persist()
   }
@@ -93,9 +98,12 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
       new AstVisitor(outputModuleFactory, cpg, namespaceBlock)
     driver.addObserver(astVisitor)
     driver.parseAndWalkFile(filename)
-    outputModuleFactory.persist()
 
-    outputModuleFactory.create().persistCpg(cpg)
+    val outputModule = outputModuleFactory.create()
+    outputModule.setOutputIdentifier(
+      s"$filename types"
+    )
+    outputModule.persistCpg(cpg)
   }
 
 }
