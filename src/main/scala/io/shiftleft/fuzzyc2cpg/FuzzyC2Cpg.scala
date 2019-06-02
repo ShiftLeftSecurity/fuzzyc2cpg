@@ -2,7 +2,6 @@ package io.shiftleft.fuzzyc2cpg
 
 import java.nio.file.Path
 
-import better.files.File
 import io.shiftleft.codepropertygraph.generated.Languages
 import io.shiftleft.fuzzyc2cpg.Utils.{getGlobalNamespaceBlockFullName, newEdge, newNode}
 import io.shiftleft.fuzzyc2cpg.output.protobuf.OutputModuleFactory
@@ -13,6 +12,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.slf4j.LoggerFactory
 import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
+import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 
 class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
 
@@ -21,22 +21,37 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
       .asInstanceOf[CpgOutputModuleFactory[T]])
   }
 
-
   def runAndOutput(fileAndDirNames: Array[String]) = {
     val inputPaths = fileAndDirNames
     val sourceFileNames = SourceFiles.determine(inputPaths.toList).sorted
 
     val filenameToNamespaceBlock = createStructuralCpg(sourceFileNames, outputModuleFactory)
-    filenameToNamespaceBlock.par.foreach(createMethodBodyCpg)
+    filenameToNamespaceBlock.par.foreach(createCpgForCompilationUnit)
     outputModuleFactory.persist()
   }
 
-  private def createStructuralCpg(filenames: List[String], cpgOutputModuleFactory: CpgOutputModuleFactory[T]) : List[(String, CpgStruct.Node)] = {
-    val cpg = CpgStruct.newBuilder()
-    addMetaDataNode(cpg)
-    addAnyTypeAndNamespaceBlock(cpg)
+  private def createStructuralCpg(filenames: List[String], cpgOutputModuleFactory: CpgOutputModuleFactory[T]):
+    List[(String, CpgStruct.Node)] = {
 
-    val filenameToNamespaceBlock =
+    def addMetaDataNode(cpg : CpgStruct.Builder): Unit = {
+      val metaNode = newNode(NodeType.META_DATA)
+        .addStringProperty(NodePropertyName.LANGUAGE, Languages.C)
+        .build
+      cpg.addNode(metaNode)
+    }
+
+    def addAnyTypeAndNamespaceBlock(cpg : CpgStruct.Builder): Unit = {
+      val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None)
+      cpg.addNode(globalNamespaceBlockNotInFileNode)
+    }
+
+    def createFileNode(pathToFile: Path): Node = {
+      newNode(NodeType.FILE)
+        .addStringProperty(NodePropertyName.NAME, pathToFile.toString)
+        .build()
+    }
+
+    def createFilesAndNamespaceBlocks(cpg: CpgStruct.Builder) : List[(String, CpgStruct.Node)] =
       filenames.map{filename =>
         val pathToFile = new java.io.File(filename).toPath
         val fileNode = createFileNode(pathToFile)
@@ -44,35 +59,18 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
         cpg.addNode(fileNode)
         cpg.addNode(namespaceBlock)
         cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
-
         filename -> namespaceBlock
-      }
+    }
 
+    val cpg = CpgStruct.newBuilder()
+    addMetaDataNode(cpg)
+    addAnyTypeAndNamespaceBlock(cpg)
+    val filenameToNamespaceBlock = createFilesAndNamespaceBlocks(cpg)
     val outputModule = outputModuleFactory.create()
     outputModule.setOutputIdentifier("__structural__")
     outputModule.persistCpg(cpg)
-
     filenameToNamespaceBlock
-  }
 
-  private def addMetaDataNode(cpg : CpgStruct.Builder): Unit = {
-    val metaNode = newNode(NodeType.META_DATA)
-      .addStringProperty(NodePropertyName.LANGUAGE, Languages.C)
-      .build
-
-    cpg.addNode(metaNode)
-  }
-
-  private def addAnyTypeAndNamespaceBlock(cpg : CpgStruct.Builder): Unit = {
-    val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None)
-    cpg.addNode(globalNamespaceBlockNotInFileNode)
-  }
-
-
-  private def createFileNode(pathToFile: Path): Node = {
-    newNode(NodeType.FILE)
-      .addStringProperty(NodePropertyName.NAME, pathToFile.toString)
-      .build()
   }
 
   private def createNamespaceBlockNode(filePath: Option[Path]): Node = {
@@ -82,9 +80,22 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
       .build
   }
 
-  def createMethodBodyCpg(filenameAndNamespaceBlock: (String, CpgStruct.Node)) = {
+  def createCpgForCompilationUnit(filenameAndNamespaceBlock: (String, CpgStruct.Node)) = {
     val (filename, namespaceBlock) = filenameAndNamespaceBlock
+    val cpg = CpgStruct.newBuilder
 
+    // We call the module parser here and register the `astVisitor` to
+    // receive callbacks as we walk the tree. The method body parser
+    // will the invoked by `astVisitor` as we walk the tree
+
+    val driver = new AntlrCModuleParserDriver()
+    val astVisitor =
+      new AstVisitor(outputModuleFactory, cpg, namespaceBlock)
+    driver.addObserver(astVisitor)
+    driver.parseAndWalkFile(filename)
+    outputModuleFactory.persist()
+
+    outputModuleFactory.create().persistCpg(cpg)
   }
 
 }
