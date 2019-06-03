@@ -44,7 +44,7 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_]) extend
     * */
   override def postVisitDirectory(dir: Path): Unit = {}
 
-  private def addAnyTypeAndNamespacBlock(): Unit = {
+  private def addAnyTypeAndNamespaceBlock(): Unit = {
     val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None)
 
     structureCpg.addNode(globalNamespaceBlockNotInFileNode)
@@ -73,15 +73,12 @@ class FileWalkerCallbacks(outputModuleFactory: CpgOutputModuleFactory[_]) extend
 
   override def shutdown(): Unit = {
     addMetaDataNode()
-    addAnyTypeAndNamespacBlock()
+    addAnyTypeAndNamespaceBlock()
     outputStructuralCpg()
     outputModuleFactory.persist()
   }
 
   private def outputStructuralCpg(): Unit = {
-    val outputFilename = Paths
-      .get(Config.outputDirectory, "structural-cpg.proto")
-      .toString();
     val outputModule = outputModuleFactory.create()
     outputModule.setOutputIdentifier("__structural__")
     outputModule.persistCpg(structureCpg);

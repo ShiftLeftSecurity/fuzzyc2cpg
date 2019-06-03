@@ -108,7 +108,6 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   override def visit(astFunction: FunctionDefBase): Unit = {
-    val name = astFunction.getName
     val returnType = if (astFunction.getReturnType != null) {
       astFunction.getReturnType.getEscapedCodeStr
     } else {
