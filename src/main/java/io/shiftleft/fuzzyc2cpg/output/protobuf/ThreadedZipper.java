@@ -137,8 +137,10 @@ class ThreadedZipper extends Thread {
     public ZipEntry(File file, FileSystem fs) throws IOException {
       this.from = Paths.get(file.getAbsolutePath());
       this.to = fs.getPath(protoDir.relativize(from).toString());
-      if (Files.notExists(to.getParent())) {
-        Files.createDirectory(to.getParent());
+
+      Path parent = to.getParent();
+      if (parent != null && Files.notExists(parent)) {
+        Files.createDirectory(parent);
       }
     }
 

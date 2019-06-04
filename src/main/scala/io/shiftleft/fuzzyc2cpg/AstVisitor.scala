@@ -25,6 +25,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_], structureCpg: C
     * */
   override def visit(functionDef: FunctionDef): Unit = {
     val outputModule = outputModuleFactory.create()
+    outputModule.setOutputSubDir("methods")
     outputModule.setOutputIdentifier(
       s"${fileNameOption.get}${functionDef.getName}" +
         s"${functionDef.getLocation.startLine}${functionDef.getLocation.endLine}")

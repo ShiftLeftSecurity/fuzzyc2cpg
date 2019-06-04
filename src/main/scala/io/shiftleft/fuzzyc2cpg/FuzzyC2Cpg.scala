@@ -71,6 +71,7 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     val filenameToNamespaceBlock = createFilesAndNamespaceBlocks(cpg)
     val outputModule = outputModuleFactory.create()
     outputModule.setOutputIdentifier("__structural__")
+    outputModule.setOutputSubDir("structure")
     outputModule.persistCpg(cpg)
     filenameToNamespaceBlock
 
@@ -98,6 +99,7 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     driver.parseAndWalkFile(filename)
 
     val outputModule = outputModuleFactory.create()
+    outputModule.setOutputSubDir("types")
     outputModule.setOutputIdentifier(
       s"$filename types"
     )
