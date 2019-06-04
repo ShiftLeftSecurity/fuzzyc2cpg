@@ -17,6 +17,13 @@ public interface CpgOutputModule {
   void setOutputIdentifier(String identifier);
 
   /**
+   * We allow CPGs to be stored in sub directories. This makes
+   * it possible to encode information about what can be found
+   * in the CPG as part of the path name.
+   * */
+  void setOutputSubDir(String subdir);
+
+  /**
    * Persists the individual CPG.
    *
    * @param cpg a CPG to be persisted (in memory or disk)

@@ -77,21 +77,17 @@ class ThreadedZipper extends Thread {
           logger.debug("Zipping " + inputFile.getName() + " file");
           doCopy(new ZipEntry(inputFile, zipFileSystem));
         } else {
-          // loop over sorted files
-          File[] files = inputFile.listFiles();
-          if (files == null) {
-            logger.error("Couldn't list files in " + inputFile);
-            return;
-          }
-          Arrays.sort(files);
 
-          List<ZipEntry> entries = Arrays.stream(files).flatMap(f -> {
-            if (f.isFile()) {
-              return Stream.of(new ZipEntry(f, zipFileSystem));
-            } else {
-              return Stream.empty();
-            }
-          }).collect(Collectors.toList());
+          List<ZipEntry> entries = Files.walk(inputFile.toPath()).filter(Files::isRegularFile)
+                  .sorted()
+                  .flatMap(f -> {
+                    try {
+                      return Stream.of(new ZipEntry(f.toFile(), zipFileSystem));
+                    } catch (IOException e) {
+                      logger.warn(e.getMessage());
+                      return Stream.empty();
+                    }
+                  }).collect(Collectors.toList());
 
           // create the few special entries in sorted order, while the thread pool will create
           // the rest randomly
@@ -109,11 +105,7 @@ class ThreadedZipper extends Thread {
           }
           // force create ZIP entries in sorted order before copying in thread pool
           entries.forEach(entry ->
-              pool.submit(new Runnable() {
-                public void run() {
-                  doCopy(entry);
-                }
-              })
+              pool.submit(() -> doCopy(entry))
           );
 
           // NOTE: Abandon hope all ye who enter here.
@@ -142,9 +134,12 @@ class ThreadedZipper extends Thread {
     private Path from;
     private Path to;
 
-    public ZipEntry(File file, FileSystem fs) {
+    public ZipEntry(File file, FileSystem fs) throws IOException {
       this.from = Paths.get(file.getAbsolutePath());
-      this.to = fs.getPath(from.getFileName().toString());
+      this.to = fs.getPath(protoDir.relativize(from).toString());
+      if (Files.notExists(to.getParent())) {
+        Files.createDirectory(to.getParent());
+      }
     }
 
     public Path getFrom() {

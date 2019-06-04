@@ -27,6 +27,8 @@ public class OutputModule implements CpgOutputModule {
   private boolean keepInternalGraph;
 
   private String outputIdentifier;
+  private String outputSubDir = "";
+
 
   public OutputModule(boolean keepInternalGraph,
                       boolean writeToDisk,
@@ -44,6 +46,11 @@ public class OutputModule implements CpgOutputModule {
   @Override
   public void setOutputIdentifier(String identifier) {
     outputIdentifier = identifier;
+  }
+
+  @Override
+  public void setOutputSubDir(String outputSubDir) {
+    this.outputSubDir = outputSubDir;
   }
 
   /**
@@ -106,6 +113,11 @@ public class OutputModule implements CpgOutputModule {
     hasher.putUnencodedChars(outputIdentifier);
     hasher.putInt(postfix);
 
-    return protoTempDir.toString() + File.separator + hasher.hash() + ProtoSuffix;
+    String dir = protoTempDir.toString() + File.separator;
+    if (!outputSubDir.equals("")) {
+      dir += outputSubDir + File.separator;
+      new File(dir).mkdirs();
+    }
+    return dir + hasher.hash() + ProtoSuffix;
   }
 }

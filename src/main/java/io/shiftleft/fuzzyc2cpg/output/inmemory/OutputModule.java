@@ -38,6 +38,11 @@ public class OutputModule implements CpgOutputModule {
   }
 
   @Override
+  public void setOutputSubDir(String subdir) {
+
+  }
+
+  @Override
   public void persistCpg(CpgStruct.Builder cpg) {
 
     synchronized (cpgBuilders) {
