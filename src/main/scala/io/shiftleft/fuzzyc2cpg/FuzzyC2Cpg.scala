@@ -14,7 +14,7 @@ import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 
-class Fuzzyc2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
+class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
 
   def this(outputPath : String) = {
     this(new OutputModuleFactory(outputPath, true, false)
@@ -106,7 +106,7 @@ class Fuzzyc2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
 
 }
 
-object Fuzzyc2Cpg extends App {
+object FuzzyC2Cpg extends App {
 
   val DEFAULT_CPG_OUT_FILE = "cpg.bin.zip"
 
@@ -114,7 +114,7 @@ object Fuzzyc2Cpg extends App {
 
   parseConfig.foreach{ config =>
     try {
-      new Fuzzyc2Cpg(config.outputPath).runAndOutput(config.inputPaths.toArray)
+      new FuzzyC2Cpg(config.outputPath).runAndOutput(config.inputPaths.toArray)
     } catch {
       case exception: Exception =>
         logger.error("Failed to generate CPG.", exception)
