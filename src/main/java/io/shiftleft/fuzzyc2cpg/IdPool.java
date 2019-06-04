@@ -1,11 +1,13 @@
 package io.shiftleft.fuzzyc2cpg;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class IdPool {
 
-  static long currentId = 1;
+  private static AtomicLong currentId = new AtomicLong(1);
 
   public static long getNextId() {
-    return currentId++;
+    return currentId.incrementAndGet();
   }
 
 }
