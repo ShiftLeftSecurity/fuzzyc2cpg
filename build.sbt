@@ -9,7 +9,7 @@ libraryDependencies ++= Seq(
   "org.antlr" % "antlr4-runtime" % "4.7.2",
   "io.shiftleft" % "codepropertygraph" % cpgVersion,
   "io.shiftleft" % "codepropertygraph-protos" % cpgVersion,
-  "org.slf4j" % "slf4j-simple" % "1.7.25",
+  "org.slf4j" % "slf4j-simple" % "1.7.25" % Runtime,
   "commons-cli" % "commons-cli" % "1.4",
   "com.github.pathikrit" %% "better-files"  % "3.1.0",
   "com.novocode" % "junit-interface" % "0.11" % Test,
