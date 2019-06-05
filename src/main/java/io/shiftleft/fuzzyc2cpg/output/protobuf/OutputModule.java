@@ -104,6 +104,16 @@ public class OutputModule implements CpgOutputModule {
     return outputFilename;
   }
 
+  // You might be thinking that it would be much wiser to choose
+  // filenames that actually tell us which file the CPG was generated from.
+  // If one wanted to do that, one would first need to use an encoding in
+  // order to ensure that path separators are not used in zip file entries.
+  // Even then though, we have no control over the length of names, and so
+  // they need to be truncated such that they can be used on different
+  // platforms. Long story short, hashing here means that we lose the ability
+  // to encode any useful information in the filename, however, we end up
+  // with a more resilient file format that works well on multiple platforms.
+
   private String generateOutputFilename(int postfix) {
     HashFunction hashFunction = Hashing.murmur3_128();
 
