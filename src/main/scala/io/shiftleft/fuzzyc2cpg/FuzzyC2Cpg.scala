@@ -25,7 +25,7 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     val inputPaths = fileAndDirNames
     val sourceFileNames = SourceFiles.determine(inputPaths.toList).sorted
 
-    val filenameToNamespaceBlock = createStructuralCpg(sourceFileNames, outputModuleFactory)
+    val filenameToNamespaceBlock = createFilesAndNamespaceBlocks(sourceFileNames, outputModuleFactory)
 
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
@@ -33,7 +33,7 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     outputModuleFactory.persist()
   }
 
-  private def createStructuralCpg(filenames: List[String], cpgOutputModuleFactory: CpgOutputModuleFactory[T]):
+  private def createFilesAndNamespaceBlocks(filenames: List[String], cpgOutputModuleFactory: CpgOutputModuleFactory[T]):
     List[(String, CpgStruct.Node)] = {
 
     def addMetaDataNode(cpg : CpgStruct.Builder): Unit = {
@@ -70,8 +70,8 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     addAnyTypeAndNamespaceBlock(cpg)
     val filenameToNamespaceBlock = createFilesAndNamespaceBlocks(cpg)
     val outputModule = outputModuleFactory.create()
-    outputModule.setOutputIdentifier("__structural__")
-    outputModule.setOutputSubDir("structure")
+    outputModule.setOutputIdentifier("__filesandnamespaceblocks__")
+    outputModule.setOutputSubDir("filesandnamespaceblocks")
     outputModule.persistCpg(cpg)
     filenameToNamespaceBlock
 
