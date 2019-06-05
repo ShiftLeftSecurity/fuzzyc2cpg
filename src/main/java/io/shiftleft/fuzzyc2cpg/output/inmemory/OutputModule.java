@@ -9,12 +9,14 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.shiftleft.codepropertygraph.Cpg;
+import io.shiftleft.codepropertygraph.cpgloading.OnDiskOverflowConfig;
 import io.shiftleft.codepropertygraph.cpgloading.ProtoCpgLoader;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
 
 public class OutputModule implements CpgOutputModule {
   private static Logger logger = LoggerFactory.getLogger(OutputModule.class);
@@ -66,7 +68,7 @@ public class OutputModule implements CpgOutputModule {
     byte[] bytes = mergedBuilder.build().toByteArray();
     InputStream inputStream = new ByteArrayInputStream(bytes);
     try {
-      cpg = protoCpgLoader.loadFromInputStream(inputStream, Optional.empty(), Optional.empty());
+      cpg = protoCpgLoader.loadFromInputStream(inputStream, Optional.empty());
     } catch (IOException e) {
       System.err.println("Error loading CPG from byte array input stream");
       cpg = null;
