@@ -54,15 +54,13 @@ public class OutputModule implements CpgOutputModule {
   }
 
   /**
-   * This is called for each code property graph. There is one
-   * code property graph per method, and one graph for the overall
-   * program structure.
+   * This is called for each code property graph.
    * */
 
   @Override
   public void persistCpg(CpgStruct.Builder cpg) throws IOException {
     CpgStruct buildCpg = cpg.build();
-    if (writeToDisk) {
+    if (writeToDisk && buildCpg.getSerializedSize() > 0) {
       String outputFilename = getOutputFileName();
       try (FileOutputStream outStream = new FileOutputStream(outputFilename)) {
         buildCpg.writeTo(outStream);
