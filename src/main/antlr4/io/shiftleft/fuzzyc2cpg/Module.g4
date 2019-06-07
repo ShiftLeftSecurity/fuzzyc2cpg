@@ -67,7 +67,9 @@ assign_expr_w__l2: assign_water_l2* (('{' assign_expr_w__l2 '}' | '(' assign_exp
 
 constant_expr_w_: no_squares* ('[' constant_expr_w_ ']' no_squares*)*;
 
-simple_decl : (TYPEDEF? template_decl_start?) var_decl;
+simple_decl : (storage_class_specifier* template_decl_start?) var_decl;
+
+storage_class_specifier: (EXTERN | TYPEDEF);
 
 var_decl : class_def init_declarator_list? #declByClass
          | type_name init_declarator_list #declByType
