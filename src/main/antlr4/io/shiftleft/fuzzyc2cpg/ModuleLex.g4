@@ -10,6 +10,7 @@ SWITCH: 'switch'; DO: 'do';
 GOTO: 'goto'; RETURN: 'return';
 
 TYPEDEF: 'typedef';
+EXTERN: 'extern';
 VOID: 'void'; UNSIGNED: 'unsigned'; SIGNED: 'signed';
 LONG: 'long'; CV_QUALIFIER :  'const' | 'volatile';
 
