@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.parser;
 
+import io.shiftleft.fuzzyc2cpg.Utils;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
@@ -92,6 +93,24 @@ abstract public class AntlrParserDriver {
       int line = token.getLine();
       String text = token.getText();
       // We can add to `CPG` here
+
+      Cpg.CpgStruct.Node commentNode = Utils.newNode(Cpg.CpgStruct.Node.NodeType.UNKNOWN)
+              .addProperty(Cpg.CpgStruct.Node.Property.newBuilder()
+                      .setName(Cpg.NodePropertyName.LINE_NUMBER)
+                      .setValue(Cpg.PropertyValue.newBuilder().setIntValue(line)))
+              .addProperty(Cpg.CpgStruct.Node.Property.newBuilder()
+                      .setName(Cpg.NodePropertyName.CODE)
+                      .setValue(Cpg.PropertyValue.newBuilder().setStringValue(text))
+              )
+              .build();
+
+      cpg.addNode(commentNode);
+
+      cpg.addEdge(Cpg.CpgStruct.Edge.newBuilder()
+              .setType(Cpg.CpgStruct.Edge.EdgeType.AST)
+              .setSrc(fileNode.getKey())
+              .setDst(commentNode.getKey())
+      );
 
     }
   }
