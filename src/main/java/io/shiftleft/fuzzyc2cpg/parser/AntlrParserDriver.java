@@ -10,18 +10,13 @@ import java.util.Stack;
 import java.util.function.Consumer;
 
 import jdk.nashorn.internal.runtime.ParserException;
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.DefaultErrorStrategy;
-import org.antlr.v4.runtime.Lexer;
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+
+import static org.antlr.v4.runtime.Token.EOF;
 
 abstract public class AntlrParserDriver {
   // TODO: This class does two things:
@@ -51,11 +46,28 @@ abstract public class AntlrParserDriver {
   public abstract Lexer createLexer(CharStream input);
 
   public void parseAndWalkFile(String filename) throws ParserException {
+    handleHiddenTokens(filename);
     TokenSubStream stream = createTokenStreamFromFile(filename);
     initializeContextWithFile(filename, stream);
 
     ParseTree tree = parseTokenStream(stream);
     walkTree(tree);
+  }
+
+  private void handleHiddenTokens(String filename) {
+    CommonTokenStream tokenStream = createStreamOfHiddenTokensFromFile(filename);
+    TokenSource tokenSource = tokenStream.getTokenSource();
+
+    while (true){
+      Token token = tokenSource.nextToken();
+      if (token.getChannel() == Token.HIDDEN_CHANNEL) {
+        System.out.println(token);
+      }
+
+      if (token.getType() == EOF) {
+        break;
+      }
+    }
   }
 
   public void parseAndWalkTokenStream(TokenSubStream tokens)
@@ -92,17 +104,27 @@ abstract public class AntlrParserDriver {
   protected TokenSubStream createTokenStreamFromFile(String filename)
       throws ParserException {
 
-    CharStream input;
-    try {
-      input = CharStreams.fromFileName(filename);
-    } catch (IOException exception) {
-      throw new ParserException("");
-    }
-
+    CharStream input = createInputStreamForFile(filename);
     Lexer lexer = createLexer(input);
     TokenSubStream tokens = new TokenSubStream(lexer);
     return tokens;
 
+  }
+
+  private CharStream createInputStreamForFile(String filename) {
+
+    try {
+      return CharStreams.fromFileName(filename);
+    } catch (IOException exception) {
+      throw new ParserException("");
+    }
+
+  }
+
+  protected CommonTokenStream createStreamOfHiddenTokensFromFile(String filename) {
+    CharStream input = createInputStreamForFile(filename);
+    Lexer lexer = createLexer(input);
+    return new CommonTokenStream(lexer, Token.HIDDEN_CHANNEL);
   }
 
   protected void walkTree(ParseTree tree) {
