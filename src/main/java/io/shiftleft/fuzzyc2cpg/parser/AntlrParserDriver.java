@@ -60,13 +60,14 @@ abstract public class AntlrParserDriver {
 
     while (true){
       Token token = tokenSource.nextToken();
-      if (token.getChannel() == Token.HIDDEN_CHANNEL) {
-        System.out.println(token);
-      }
-
       if (token.getType() == EOF) {
         break;
       }
+      if (token.getChannel() != Token.HIDDEN_CHANNEL) {
+        continue;
+      }
+      int line = token.getLine();
+      String text = token.getText();
     }
   }
 
