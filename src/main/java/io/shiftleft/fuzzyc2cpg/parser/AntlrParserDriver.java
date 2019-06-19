@@ -94,7 +94,7 @@ abstract public class AntlrParserDriver {
       String text = token.getText();
       // We can add to `CPG` here
 
-      Cpg.CpgStruct.Node commentNode = Utils.newNode(Cpg.CpgStruct.Node.NodeType.UNKNOWN)
+      Cpg.CpgStruct.Node commentNode = Utils.newNode(Cpg.CpgStruct.Node.NodeType.COMMENT)
               .addProperty(Cpg.CpgStruct.Node.Property.newBuilder()
                       .setName(Cpg.NodePropertyName.LINE_NUMBER)
                       .setValue(Cpg.PropertyValue.newBuilder().setIntValue(line)))
