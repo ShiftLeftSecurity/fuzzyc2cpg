@@ -103,13 +103,13 @@ fragment
 HexDigit : ('0'..'9'|'a'..'f'|'A'..'F') ;
 
 COMMENT
-    :   '/*' .*? '*/'    -> skip 
+    :   '/*' .*? '*/'    -> channel(HIDDEN)
     ;
 WHITESPACE  :   [ \r\t\u000C\n]+ -> skip
     ;
 
 CPPCOMMENT
-    : '//' ~[\r\n]* '\r'? '\n' -> skip
+    : '//' ~[\r\n]* '\r'? '\n' -> channel(HIDDEN)
     ;
     
 ELLIPSIS : '...';

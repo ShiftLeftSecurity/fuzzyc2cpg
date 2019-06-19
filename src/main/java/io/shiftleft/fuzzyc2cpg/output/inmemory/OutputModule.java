@@ -56,12 +56,10 @@ public class OutputModule implements CpgOutputModule {
       mergedBuilder.mergeFrom(builder.build());
     });
 
-    ProtoCpgLoader protoCpgLoader = new ProtoCpgLoader();
-
     byte[] bytes = mergedBuilder.build().toByteArray();
     InputStream inputStream = new ByteArrayInputStream(bytes);
     try {
-      cpg = protoCpgLoader.loadFromInputStream(inputStream, Optional.empty(), Optional.empty());
+      cpg = ProtoCpgLoader.loadFromInputStream(inputStream, Optional.empty());
     } catch (IOException e) {
       System.err.println("Error loading CPG from byte array input stream");
       cpg = null;

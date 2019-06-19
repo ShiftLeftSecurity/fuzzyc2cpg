@@ -25,16 +25,16 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     val inputPaths = fileAndDirNames
     val sourceFileNames = SourceFiles.determine(inputPaths.toList).sorted
 
-    val filenameToNamespaceBlock = createStructuralCpg(sourceFileNames, outputModuleFactory)
+    val filenameToNodes = createStructuralCpg(sourceFileNames, outputModuleFactory)
 
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
-    filenameToNamespaceBlock.par.foreach(createCpgForCompilationUnit)
+    filenameToNodes.par.foreach(createCpgForCompilationUnit)
     outputModuleFactory.persist()
   }
 
   private def createStructuralCpg(filenames: List[String], cpgOutputModuleFactory: CpgOutputModuleFactory[T]):
-    List[(String, CpgStruct.Node)] = {
+    List[(String, NodesForFile)] = {
 
     def addMetaDataNode(cpg : CpgStruct.Builder): Unit = {
       val metaNode = newNode(NodeType.META_DATA)
@@ -54,7 +54,7 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
         .build()
     }
 
-    def createFilesAndNamespaceBlocks(cpg: CpgStruct.Builder) : List[(String, CpgStruct.Node)] =
+    def createNodesForFiles(cpg: CpgStruct.Builder) : List[(String, NodesForFile)] =
       filenames.map{filename =>
         val pathToFile = new java.io.File(filename).toPath
         val fileNode = createFileNode(pathToFile)
@@ -62,19 +62,20 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
         cpg.addNode(fileNode)
         cpg.addNode(namespaceBlock)
         cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
-        filename -> namespaceBlock
+        filename -> new NodesForFile(fileNode, namespaceBlock)
     }
 
     val cpg = CpgStruct.newBuilder()
     addMetaDataNode(cpg)
     addAnyTypeAndNamespaceBlock(cpg)
-    val filenameToNamespaceBlock = createFilesAndNamespaceBlocks(cpg)
+    val filenameToNodes = createNodesForFiles(cpg)
     val outputModule = outputModuleFactory.create()
     outputModule.setOutputIdentifier("__structural__")
     outputModule.persistCpg(cpg)
-    filenameToNamespaceBlock
-
+    filenameToNodes
   }
+
+  case class NodesForFile(fileNode : CpgStruct.Node, namespaceBlockNode: CpgStruct.Node) {}
 
   private def createNamespaceBlockNode(filePath: Option[Path]): Node = {
     newNode(NodeType.NAMESPACE_BLOCK)
@@ -83,8 +84,9 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
       .build
   }
 
-  def createCpgForCompilationUnit(filenameAndNamespaceBlock: (String, CpgStruct.Node)) = {
-    val (filename, namespaceBlock) = filenameAndNamespaceBlock
+  def createCpgForCompilationUnit(filenameAndNodes: (String, NodesForFile)) = {
+    val (filename, nodesForFile) = filenameAndNodes
+    val (fileNode, namespaceBlock) = (nodesForFile.fileNode, nodesForFile.namespaceBlockNode)
     val cpg = CpgStruct.newBuilder
 
     // We call the module parser here and register the `astVisitor` to
@@ -95,6 +97,10 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     val astVisitor =
       new AstVisitor(outputModuleFactory, cpg, namespaceBlock)
     driver.addObserver(astVisitor)
+    driver.setOutputModuleFactory(outputModuleFactory);
+    driver.setCpg(cpg);
+    driver.setNamespaceBlock(namespaceBlock);
+    driver.setFileNode(fileNode)
     driver.parseAndWalkFile(filename)
 
     val outputModule = outputModuleFactory.create()
