@@ -323,6 +323,12 @@ class AstToCfgTests extends WordSpec with Matchers {
       new Fixture("for (;;) ;") {
         succOf("ENTRY") shouldBe expected()
       }
+
+    "be correct when empty for-loop is skipped" in
+      new Fixture("for (;;) {}; return;") {
+        succOf("ENTRY") shouldBe expected(("return;", AlwaysEdge))
+        succOf("return;") shouldBe expected(("EXIT", AlwaysEdge))
+      }
   }
 
   "Cfg for goto" should {
