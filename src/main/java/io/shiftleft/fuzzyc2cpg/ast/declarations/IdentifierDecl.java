@@ -10,6 +10,7 @@ public class IdentifierDecl extends AstNode {
   private IdentifierDeclType type;
   private Identifier name;
   private AssignmentExpression assignment;
+  private boolean isTypedef = false;
 
   public void addChild(AstNode node) {
     if (node instanceof Identifier) {
@@ -47,6 +48,14 @@ public class IdentifierDecl extends AstNode {
 
   private void setAssignment(AssignmentExpression assignment) {
     this.assignment = assignment;
+  }
+
+  public void setIsTypedef(boolean value) {
+    isTypedef = value;
+  }
+
+  public boolean isTypedef() {
+    return isTypedef;
   }
 
   public void accept(ASTNodeVisitor visitor) {
