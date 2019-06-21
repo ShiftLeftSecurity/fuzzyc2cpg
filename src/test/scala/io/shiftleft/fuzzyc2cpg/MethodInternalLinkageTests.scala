@@ -4,7 +4,7 @@ import gremlin.scala._
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes}
 import org.scalatest.{Matchers, WordSpec}
 
-class MethodInternalLinkageTests extends WordSpec with Matchers with TravesalUtils {
+class MethodInternalLinkageTests extends WordSpec with Matchers with TraversalUtils {
   val fixture = CpgTestFixture("methodinternallinkage")
 
   implicit class VertexListWrapper(vertexList: List[Vertex]) {

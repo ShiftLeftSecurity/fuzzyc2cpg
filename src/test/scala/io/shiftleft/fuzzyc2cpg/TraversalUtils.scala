@@ -4,7 +4,7 @@ import gremlin.scala.Vertex
 import io.shiftleft.codepropertygraph.generated.{NodeKeys, NodeTypes}
 import org.scalatest.Matchers
 
-trait TravesalUtils extends Matchers {
+trait TraversalUtils extends Matchers {
   val fixture: CpgTestFixture
 
   def getMethod(name: String): List[Vertex] = {
