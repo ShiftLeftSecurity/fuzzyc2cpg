@@ -93,9 +93,9 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
   private var fringe = List[FringeElement]().add(entryNode, AlwaysEdge)
   private var markerStack = List[Option[NodeType]]() // Used to track the start of yet to be processed
   // cfg parts.
-  private var breakStack = new LayeredStack[NodeType]()
-  private var continueStack = new LayeredStack[NodeType]()
-  private var caseStack = new LayeredStack[(NodeType, Boolean)]()
+  private val breakStack = new LayeredStack[NodeType]()
+  private val continueStack = new LayeredStack[NodeType]()
+  private val caseStack = new LayeredStack[(NodeType, Boolean)]()
   private var gotos = List[(NodeType, String)]()
   private var returns = List[NodeType]()
   private var labeledNodes = Map[String, NodeType]()
@@ -141,7 +141,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     extendCfg(arrayIndexing)
   }
 
-  // TODO This also handles || and && for which we do not correctly model the lazyness.
+  // TODO This also handles || and && for which we do not correctly model the laziness.
   override def visit(binaryExpression: BinaryExpression): Unit = {
     binaryExpression.getLeft.accept(this)
     binaryExpression.getRight.accept(this)
