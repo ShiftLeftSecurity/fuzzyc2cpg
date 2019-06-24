@@ -9,6 +9,10 @@ package io.shiftleft.fuzzyc2cpg.scope
 class Scope[I, V, S] {
   private var stack = List[ScopeElement[I, V, S]]()
 
+  def isEmpty: Boolean = {
+    stack.isEmpty
+  }
+
   def pushNewScope(scopeNode: S): Unit = {
     stack = ScopeElement[I, V, S](scopeNode) :: stack
   }
