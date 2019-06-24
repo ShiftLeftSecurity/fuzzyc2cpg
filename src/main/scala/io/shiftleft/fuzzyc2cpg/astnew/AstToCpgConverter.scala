@@ -561,24 +561,28 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
         .createNode(identifierDecl)
       addAstChild(cpgMember)
     } else {
-      val localName = identifierDecl.getName.getEscapedCodeStr
-      val cpgLocal = adapter
-        .createNodeBuilder(NodeKind.LOCAL)
-        .addProperty(NodeProperty.CODE, localName)
-        .addProperty(NodeProperty.NAME, localName)
-        .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(declTypeName))
-        .createNode(identifierDecl)
+      // We only process file level identifier declarations if they are typedefs.
+      // Everything else is ignored.
+      if (!scope.isEmpty) {
+        val localName = identifierDecl.getName.getEscapedCodeStr
+        val cpgLocal = adapter
+          .createNodeBuilder(NodeKind.LOCAL)
+          .addProperty(NodeProperty.CODE, localName)
+          .addProperty(NodeProperty.NAME, localName)
+          .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(declTypeName))
+          .createNode(identifierDecl)
 
-      val scopeParentNode =
-        scope.addToScope(localName, (cpgLocal, declTypeName))
-      // Here we on purpose do not use addAstChild because the LOCAL nodes
-      // are not really in the AST (they also have no ORDER property).
-      // So do not be confused that the format still demands an AST edge.
-      adapter.addEdge(EdgeKind.AST, cpgLocal, scopeParentNode)
+        val scopeParentNode =
+          scope.addToScope(localName, (cpgLocal, declTypeName))
+        // Here we on purpose do not use addAstChild because the LOCAL nodes
+        // are not really in the AST (they also have no ORDER property).
+        // So do not be confused that the format still demands an AST edge.
+        adapter.addEdge(EdgeKind.AST, cpgLocal, scopeParentNode)
 
-      val assignmentExpression = identifierDecl.getAssignment
-      if (assignmentExpression != null) {
-        assignmentExpression.accept(this)
+        val assignmentExpression = identifierDecl.getAssignment
+        if (assignmentExpression != null) {
+          assignmentExpression.accept(this)
+        }
       }
     }
   }
