@@ -109,9 +109,12 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
     IdentifierDeclStatement stmt = new IdentifierDeclStatement();
     // stmt.initializeFromContext(ctx);
 
+    boolean isTypedef = ctx.getParent().start.getText().equals("typedef");
+
     Iterator<IdentifierDecl> it = declarations.iterator();
     while (it.hasNext()) {
       IdentifierDecl decl = it.next();
+      decl.setIsTypedef(isTypedef);
       stmt.addChild(decl);
     }
 

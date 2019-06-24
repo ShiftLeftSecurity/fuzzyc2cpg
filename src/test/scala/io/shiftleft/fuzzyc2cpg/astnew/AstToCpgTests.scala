@@ -678,6 +678,19 @@ class AstToCpgTests extends WordSpec with Matchers {
       val memberFoo2 = typeDeclFoo2.expandAst(NodeTypes.MEMBER)
       memberFoo2.checkForSingle(NodeKeys.CODE, "z")
     }
+
+    "be correct for typedef" in new Fixture(
+      """
+        |typedef struct foo {
+        |} abc;
+      """.stripMargin
+    ) {
+      val aliasTypeDecl = getTypeDecl("abc")
+
+      aliasTypeDecl.checkForSingle(NodeKeys.FULL_NAME, "abc")
+      aliasTypeDecl.checkForSingle(NodeKeys.ALIAS_TYPE_FULL_NAME, "foo")
+    }
+
   }
 
   "AST" should {

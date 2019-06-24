@@ -542,7 +542,17 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   override def visit(identifierDecl: IdentifierDecl): Unit = {
     val declTypeName = identifierDecl.getType.getEscapedCodeStr
 
-    if (context.parentIsClassDef) {
+    if (identifierDecl.isTypedef) {
+      val aliasTypeDecl = adapter
+        .createNodeBuilder(NodeKind.TYPE_DECL)
+        .addProperty(NodeProperty.NAME, identifierDecl.getName.getEscapedCodeStr)
+        .addProperty(NodeProperty.FULL_NAME, identifierDecl.getName.getEscapedCodeStr)
+        .addProperty(NodeProperty.IS_EXTERNAL, false)
+        .addProperty(NodeProperty.ALIAS_TYPE_FULL_NAME, registerType(declTypeName))
+        .createNode(identifierDecl)
+
+      addAstChild(aliasTypeDecl)
+    } else if (context.parentIsClassDef) {
       val cpgMember = adapter
         .createNodeBuilder(NodeKind.MEMBER)
         .addProperty(NodeProperty.CODE, identifierDecl.getEscapedCodeStr)

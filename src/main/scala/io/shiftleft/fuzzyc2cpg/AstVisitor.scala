@@ -58,7 +58,12 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_], structureCpg: C
   /**
     * Callback triggered for every global identifier declaration
     * */
-  override def visit(node: IdentifierDeclStatement): Unit = {}
+  override def visit(identifierDeclStmt: IdentifierDeclStatement): Unit = {
+    val cpgAdapter = new ProtoCpgAdapter(structureCpg)
+    val astToCpgConverter =
+      new AstToCpgConverter(fileNameOption.get, astParentNode, cpgAdapter)
+    astToCpgConverter.convert(identifierDeclStmt)
+  }
 
   override def begin(): Unit = {}
 
