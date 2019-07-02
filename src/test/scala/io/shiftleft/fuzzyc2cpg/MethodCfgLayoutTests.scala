@@ -58,6 +58,17 @@ class MethodCfgLayoutTests extends WordSpec with Matchers with TraversalUtils {
       result = result.expandCfg()
       result.checkForSingle(NodeTypes.METHOD_RETURN)
     }
+
+    "be correct in method3" in {
+      var result = getMethod("method3").expandCfg()
+      result.checkForSingleProperty(NodeTypes.IDENTIFIER, NodeKeys.NAME, "x")
+
+      result = result.expandCfg()
+      result.checkForSingleProperty(NodeTypes.LITERAL, NodeKeys.CODE, "1")
+
+      result = result.expandCfg()
+      result.checkForSingleProperty(NodeTypes.RETURN, NodeKeys.CODE, "return 1")
+    }
   }
 
 }

@@ -9,3 +9,10 @@ void method2() {
 
   x = y + z;
 }
+
+void method3(int x) {
+  switch x {
+  default:
+    return 1;
+  }
+}
