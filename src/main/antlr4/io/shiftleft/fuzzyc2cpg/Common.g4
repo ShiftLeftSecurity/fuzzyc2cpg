@@ -139,10 +139,11 @@ func_ptrs: ptrs;
 
 
 
-class_def: CLASS_KEY class_name? base_classes? OPENING_CURLY {skipToEndOfObject(); } ;
+class_def: CLASS_KEY gcc_attribute? class_name? base_classes? OPENING_CURLY {skipToEndOfObject(); } ;
 class_name: identifier;
 base_classes: ':' base_class (',' base_class)*;
 base_class: VIRTUAL? access_specifier? identifier;
+
 
 type_name : (CV_QUALIFIER* (CLASS_KEY | UNSIGNED | SIGNED)?
             base_type ('<' template_param_list '>')? ('::' base_type ('<' template_param_list '>')? )*) CV_QUALIFIER?
@@ -152,7 +153,7 @@ type_name : (CV_QUALIFIER* (CLASS_KEY | UNSIGNED | SIGNED)?
 
 base_type: (ALPHA_NUMERIC | VOID | LONG | LONG)+;
 
-
+gcc_attribute: GCC_ATTRIBUTE '(' '(' identifier ')' ')';
 
 expr: assign_expr (',' expr)?;
 

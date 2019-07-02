@@ -30,6 +30,8 @@ OPERATOR: 'operator';
 TEMPLATE: 'template';
 NEW: 'new';
 
+GCC_ATTRIBUTE : '__attribute__';
+
 CLASS_KEY: ('struct' | 'class' | 'union' | 'enum');
 
 ALPHA_NUMERIC: [a-zA-Z_~][a-zA-Z0-9_]*;
@@ -113,5 +115,6 @@ CPPCOMMENT
     ;
     
 ELLIPSIS : '...';
+
 
 OTHER : . -> skip ;
