@@ -153,7 +153,7 @@ type_name : (CV_QUALIFIER* (CLASS_KEY | UNSIGNED | SIGNED)?
 
 base_type: (ALPHA_NUMERIC | VOID | LONG | LONG)+;
 
-gcc_attribute: GCC_ATTRIBUTE identifier ')' ')';
+gcc_attribute: GCC_ATTRIBUTE '(' '(' identifier ')' ')';
 
 expr: assign_expr (',' expr)?;
 
