@@ -417,12 +417,17 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
   }
 
   override def visit(switchStatement: SwitchStatement): Unit = {
-    breakStack.pushLayer()
-    caseStack.pushLayer()
-
     switchStatement.getCondition.accept(this)
     val conditionFringe = fringe.setCfgEdgeType(CaseEdge)
     fringe = fringe.empty()
+
+    // We can only push the break and case stacks after we processed the condition
+    // in order to allow for nested switches with no nodes CFG nodes in between
+    // an outer switch case label and the inner switch condition.
+    // This is ok because in C/C++ it is not allowed to have another switch
+    // statement in the condition of a switch statement.
+    breakStack.pushLayer()
+    caseStack.pushLayer()
 
     switchStatement.getStatement.accept(this)
     val switchFringe = fringe

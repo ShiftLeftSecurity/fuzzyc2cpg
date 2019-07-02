@@ -403,6 +403,14 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("break;") shouldBe expected(("EXIT", AlwaysEdge))
         succOf("z") shouldBe expected(("EXIT", AlwaysEdge))
       }
+
+    "be correct for nested switch" in
+      new Fixture("switch (x) { default: switch(y) { default: z; } }") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge))
+        succOf("y") shouldBe expected(("z", CaseEdge))
+        succOf("z") shouldBe expected(("EXIT", AlwaysEdge))
+      }
   }
 
   "Cfg for if" should {
