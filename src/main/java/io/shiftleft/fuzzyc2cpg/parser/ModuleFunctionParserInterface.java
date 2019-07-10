@@ -23,8 +23,8 @@ public class ModuleFunctionParserInterface {
     try {
       driver.parseAndWalkString(text);
     } catch (RuntimeException ex) {
-      System.err.println("Error parsing function "
-          + ctx.function_name().getText() + ". skipping.");
+      System.err.println("Info: "
+          + ctx.function_name().getText() + " was skipped.");
       //ex.printStackTrace();
     }
     CompoundStatement result = driver.getResult();
