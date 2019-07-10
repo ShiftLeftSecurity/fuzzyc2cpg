@@ -109,7 +109,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
           case Some(labeledNode) =>
             adapter.newCfgEdge(labeledNode, goto, AlwaysEdge)
           case None =>
-            logger.warn("Unable to wire goto statement. Missing label {}.", label)
+            logger.info("Unable to wire goto statement. Missing label {}.", label)
         }
     }
   }

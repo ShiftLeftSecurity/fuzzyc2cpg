@@ -7,8 +7,13 @@ import io.shiftleft.fuzzyc2cpg.parser.functions.AntlrCFunctionParserDriver;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.misc.Interval;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ModuleFunctionParserInterface {
+
+  static Logger logger = LoggerFactory.getLogger(ModuleFunctionParserInterface.class);
+
   // Extracts compound statement from input stream
   // as a string and passes that string to the
   // function parser. The resulting 'CompoundStatement'
@@ -23,8 +28,7 @@ public class ModuleFunctionParserInterface {
     try {
       driver.parseAndWalkString(text);
     } catch (RuntimeException ex) {
-      System.err.println("Error parsing function "
-          + ctx.function_name().getText() + ". skipping.");
+      logger.info(ctx.function_name().getText() + " was skipped.");
       //ex.printStackTrace();
     }
     CompoundStatement result = driver.getResult();
