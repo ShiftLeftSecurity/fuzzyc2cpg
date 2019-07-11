@@ -14,11 +14,11 @@ import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 
-class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
+class FuzzyC2Cpg(outputModuleFactory : CpgOutputModuleFactory) {
 
   def this(outputPath : String) = {
     this(new OutputModuleFactory(outputPath, true, false)
-      .asInstanceOf[CpgOutputModuleFactory[T]])
+      .asInstanceOf[CpgOutputModuleFactory])
   }
 
   def runAndOutput(fileAndDirNames: Array[String]) = {
@@ -33,7 +33,7 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     outputModuleFactory.persist()
   }
 
-  private def createStructuralCpg(filenames: List[String], cpgOutputModuleFactory: CpgOutputModuleFactory[T]):
+  private def createStructuralCpg(filenames: List[String], cpgOutputModuleFactory: CpgOutputModuleFactory):
     List[(String, NodesForFile)] = {
 
     def addMetaDataNode(cpg : CpgStruct.Builder): Unit = {
