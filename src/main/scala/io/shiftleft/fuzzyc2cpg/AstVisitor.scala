@@ -15,7 +15,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import org.antlr.v4.runtime.ParserRuleContext
 
-class AstVisitor(outputModuleFactory: CpgOutputModuleFactory[_], structureCpg: CpgStruct.Builder, astParentNode: Node)
+class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgStruct.Builder, astParentNode: Node)
     extends ASTNodeVisitor
     with AntlrParserDriverObserver {
   private var fileNameOption = Option.empty[String]

@@ -14,11 +14,12 @@ import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 
-class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
+class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
-  def this(outputPath : String) = {
-    this(new OutputModuleFactory(outputPath, true, false)
-      .asInstanceOf[CpgOutputModuleFactory[T]])
+  def this(outputPath: String) = {
+    this(
+      new OutputModuleFactory(outputPath, true, false)
+        .asInstanceOf[CpgOutputModuleFactory])
   }
 
   def runAndOutput(fileAndDirNames: Array[String]) = {
@@ -33,17 +34,17 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     outputModuleFactory.persist()
   }
 
-  private def createStructuralCpg(filenames: List[String], cpgOutputModuleFactory: CpgOutputModuleFactory[T]):
-    List[(String, NodesForFile)] = {
+  private def createStructuralCpg(filenames: List[String],
+                                  cpgOutputModuleFactory: CpgOutputModuleFactory): List[(String, NodesForFile)] = {
 
-    def addMetaDataNode(cpg : CpgStruct.Builder): Unit = {
+    def addMetaDataNode(cpg: CpgStruct.Builder): Unit = {
       val metaNode = newNode(NodeType.META_DATA)
         .addStringProperty(NodePropertyName.LANGUAGE, Languages.C)
         .build
       cpg.addNode(metaNode)
     }
 
-    def addAnyTypeAndNamespaceBlock(cpg : CpgStruct.Builder): Unit = {
+    def addAnyTypeAndNamespaceBlock(cpg: CpgStruct.Builder): Unit = {
       val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None)
       cpg.addNode(globalNamespaceBlockNotInFileNode)
     }
@@ -54,8 +55,8 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
         .build()
     }
 
-    def createNodesForFiles(cpg: CpgStruct.Builder) : List[(String, NodesForFile)] =
-      filenames.map{filename =>
+    def createNodesForFiles(cpg: CpgStruct.Builder): List[(String, NodesForFile)] =
+      filenames.map { filename =>
         val pathToFile = new java.io.File(filename).toPath
         val fileNode = createFileNode(pathToFile)
         val namespaceBlock = createNamespaceBlockNode(Some(pathToFile))
@@ -63,7 +64,7 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
         cpg.addNode(namespaceBlock)
         cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
         filename -> new NodesForFile(fileNode, namespaceBlock)
-    }
+      }
 
     val cpg = CpgStruct.newBuilder()
     addMetaDataNode(cpg)
@@ -75,7 +76,7 @@ class FuzzyC2Cpg[T](outputModuleFactory : CpgOutputModuleFactory[T]) {
     filenameToNodes
   }
 
-  case class NodesForFile(fileNode : CpgStruct.Node, namespaceBlockNode: CpgStruct.Node) {}
+  case class NodesForFile(fileNode: CpgStruct.Node, namespaceBlockNode: CpgStruct.Node) {}
 
   private def createNamespaceBlockNode(filePath: Option[Path]): Node = {
     newNode(NodeType.NAMESPACE_BLOCK)
@@ -118,7 +119,7 @@ object FuzzyC2Cpg extends App {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  parseConfig.foreach{ config =>
+  parseConfig.foreach { config =>
     try {
       new FuzzyC2Cpg(config.outputPath).runAndOutput(config.inputPaths.toArray)
     } catch {

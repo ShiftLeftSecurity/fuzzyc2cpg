@@ -40,7 +40,7 @@ abstract public class AntlrParserDriver {
   private CommonParserContext context = null;
 
   private List<AntlrParserDriverObserver> observers = new ArrayList<>();
-  private CpgOutputModuleFactory<?> outputModuleFactory;
+  private CpgOutputModuleFactory outputModuleFactory;
   private Cpg.CpgStruct.Builder cpg;
   private Cpg.CpgStruct.Node namespaceBlock;
   private Cpg.CpgStruct.Node fileNode;
@@ -49,7 +49,7 @@ abstract public class AntlrParserDriver {
     super();
   }
 
-  public void setOutputModuleFactory(CpgOutputModuleFactory<?> factory) {
+  public void setOutputModuleFactory(CpgOutputModuleFactory factory) {
     this.outputModuleFactory = factory;
   }
 

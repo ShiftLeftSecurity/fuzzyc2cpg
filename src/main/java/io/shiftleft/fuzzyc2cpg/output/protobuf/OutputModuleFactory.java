@@ -2,18 +2,16 @@ package io.shiftleft.fuzzyc2cpg.output.protobuf;
 
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
-import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 
-public class OutputModuleFactory implements CpgOutputModuleFactory<List<CpgStruct>> {
+public class OutputModuleFactory implements CpgOutputModuleFactory {
 
   private final List<OutputModule> outputModules = new ArrayList<>();
   private final boolean writeToDisk;
@@ -37,21 +35,6 @@ public class OutputModuleFactory implements CpgOutputModuleFactory<List<CpgStruc
       outputModules.add(outputModule);
     }
     return outputModule;
-  }
-
-  @Override
-  public List<CpgStruct> getInternalGraph() {
-    if (!keepInternalGraph) {
-      throw new RuntimeException("Requested internal graph but `keepInternalGraph` is false");
-    }
-    List<CpgStruct> result;
-
-    synchronized (this) {
-      result = outputModules.stream()
-          .map(OutputModule::getProtoCpg)
-          .collect(Collectors.toList());
-    }
-    return result;
   }
 
   /**

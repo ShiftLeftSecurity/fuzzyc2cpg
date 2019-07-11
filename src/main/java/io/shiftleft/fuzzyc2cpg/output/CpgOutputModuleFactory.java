@@ -4,9 +4,8 @@ import java.io.IOException;
 
 /**
  * Output module factory.
- * @param <T> The internal type of the graph
  */
-public interface CpgOutputModuleFactory<T> {
+public interface CpgOutputModuleFactory {
 
   /**
    * A CpgOutputModule associated with the given factory.
@@ -14,13 +13,6 @@ public interface CpgOutputModuleFactory<T> {
    * @return a singleton output module
    */
   CpgOutputModule create() throws IOException;
-
-  /**
-   * An internal representation of the graph.
-   *
-   * @return the internally constructed graph
-   */
-  T getInternalGraph();
 
   /**
    * A finalization method that potentially combines all CPGs added to any of the

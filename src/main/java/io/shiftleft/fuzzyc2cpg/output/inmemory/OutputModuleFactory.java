@@ -4,7 +4,7 @@ import io.shiftleft.codepropertygraph.Cpg;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
 
-public class OutputModuleFactory implements CpgOutputModuleFactory<Cpg> {
+public class OutputModuleFactory implements CpgOutputModuleFactory {
 
   private OutputModule outputModule;
 
@@ -18,7 +18,11 @@ public class OutputModuleFactory implements CpgOutputModuleFactory<Cpg> {
     return outputModule;
   }
 
-  @Override
+  /**
+   * An internal representation of the graph.
+   *
+   * @return the internally constructed graph
+   */
   public Cpg getInternalGraph() {
     return outputModule.getInternalGraph();
   }
