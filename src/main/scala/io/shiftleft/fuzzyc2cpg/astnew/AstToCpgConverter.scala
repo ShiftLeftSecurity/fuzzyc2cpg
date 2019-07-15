@@ -398,7 +398,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
 
   override def visit(astConditionalExpr: ConditionalExpression): Unit = {
     val cpgConditionalExpr =
-      createCallNode(astConditionalExpr, "<operator>.conditionalExpression")
+      newConditionNode(astConditionalExpr);
 
     addAstChild(cpgConditionalExpr)
 
@@ -411,11 +411,11 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     // We only end up here for expressions chained by ','.
     // Those expressions are than the children of the expression
     // given as parameter.
-    val classOfExression = expression.getClass
-    if (classOfExression != classOf[Expression]) {
+    val classOfExpression = expression.getClass
+    if (classOfExpression != classOf[Expression]) {
       throw new RuntimeException(
         s"Only direct instances of Expressions expected " +
-          s"but ${classOfExression.getSimpleName} found")
+          s"but ${classOfExpression.getSimpleName} found")
     }
 
     val cpgBlock = adapter
@@ -440,7 +440,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   override def visit(astBlockStarter: BlockStarter): Unit = {
-    val cpgBlockStarter = newUnknownNode(astBlockStarter)
+    val cpgBlockStarter = newConditionNode(astBlockStarter)
 
     addAstChild(cpgBlockStarter)
 
@@ -474,7 +474,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   override def visit(astIfStmt: IfStatement): Unit = {
-    val cpgIfStmt = newUnknownNode(astIfStmt)
+    val cpgIfStmt = newConditionNode(astIfStmt)
 
     addAstChild(cpgIfStmt)
 
@@ -718,6 +718,14 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   private def newUnknownNode(astNode: AstNode): NodeType = {
     adapter
       .createNodeBuilder(NodeKind.UNKNOWN)
+      .addProperty(NodeProperty.PARSER_TYPE_NAME, astNode.getClass.getSimpleName)
+      .addCommons(astNode, context)
+      .createNode(astNode)
+  }
+
+  private def newConditionNode(astNode: AstNode): NodeType = {
+    adapter
+      .createNodeBuilder(NodeKind.CONDITION)
       .addProperty(NodeProperty.PARSER_TYPE_NAME, astNode.getClass.getSimpleName)
       .addCommons(astNode, context)
       .createNode(astNode)

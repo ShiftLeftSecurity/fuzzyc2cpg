@@ -322,7 +322,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      val whileStmt = block.expandAst(NodeTypes.UNKNOWN)
+      val whileStmt = block.expandAst(NodeTypes.CONDITION)
       whileStmt.check(1, whileStmt => whileStmt.value2(NodeKeys.PARSER_TYPE_NAME),
         expectations = "WhileStatement")
 
@@ -348,7 +348,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
-      val ifStmt = block.expandAst(NodeTypes.UNKNOWN)
+      val ifStmt = block.expandAst(NodeTypes.CONDITION)
       ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
         expectations = "IfStatement")
 
@@ -376,7 +376,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
-      val ifStmt = block.expandAst(NodeTypes.UNKNOWN)
+      val ifStmt = block.expandAst(NodeTypes.CONDITION)
       ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
         expectations = "IfStatement")
 
@@ -389,7 +389,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val assignment = ifBlock.expandAst(NodeTypes.CALL)
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
-      val elseStmt = ifStmt.expandAst(NodeTypes.UNKNOWN)
+      val elseStmt = ifStmt.expandAst(NodeTypes.CONDITION)
       elseStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
         expectations = "ElseStatement")
 
@@ -400,7 +400,22 @@ class AstToCpgTests extends WordSpec with Matchers {
       assignmentInElse.checkForSingle(NodeKeys.NAME, Operators.assignment)
     }
 
-    "be correct for for-loop with multiple initalizations" in new Fixture(
+    "be correct for conditional expression" in new Fixture(
+      """
+        | void method() {
+        |   int x = (foo == 1) ? bar : 0;
+        | }
+      """.stripMargin
+    ) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+      val call = block.expandAst(NodeTypes.CALL)
+      val condition = call.expandAst(NodeTypes.CONDITION)
+      condition.check(1, _.value2(NodeKeys.CODE), expectations = "(foo == 1) ? bar : 0")
+    }
+
+    "be correct for for-loop with multiple initializations" in new Fixture(
       """
         |void method(int x, int y) {
         |  for ( x = 0, y = 0; x < 1; x += 1) {
@@ -412,7 +427,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      val forLoop = block.expandAst(NodeTypes.UNKNOWN)
+      val forLoop = block.expandAst(NodeTypes.CONDITION)
       forLoop.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
         expectations = "ForStatement")
 
