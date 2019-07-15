@@ -2,7 +2,7 @@ name := "fuzzyc2cpg"
 organization := "io.shiftleft"
 scalaVersion := "2.12.7"
 
-val cpgVersion = "0.9.263"
+val cpgVersion = "0.9.280"
 
 libraryDependencies ++= Seq(
   "com.github.scopt"   %% "scopt"          % "3.7.0",
@@ -20,6 +20,13 @@ libraryDependencies ++= Seq(
 // uncomment if you want to use a cpg version that has *just* been released
 // (it takes a few hours until it syncs to maven central)
 resolvers += "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public"
+ThisBuild / resolvers ++= Seq(
+  Resolver.mavenLocal,
+  "Artifactory release local" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local",
+  "Apache public" at "https://repository.apache.org/content/groups/public/",
+  "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public",
+  "Bedatadriven for SOOT dependencies" at "https://nexus.bedatadriven.com/content/groups/public"
+)
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 compile / javacOptions ++= Seq("-Xlint:all", "-Xlint:-cast", "-g")
