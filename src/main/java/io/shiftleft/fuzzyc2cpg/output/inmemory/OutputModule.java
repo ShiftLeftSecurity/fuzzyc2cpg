@@ -3,28 +3,21 @@ package io.shiftleft.fuzzyc2cpg.output.inmemory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 
 import io.shiftleft.codepropertygraph.Cpg;
 import io.shiftleft.codepropertygraph.cpgloading.ProtoCpgLoader;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class OutputModule implements CpgOutputModule {
-  private static Logger logger = LoggerFactory.getLogger(OutputModule.class);
 
-  private Map<Long, Vertex> nodeIdToVertex;
   private LinkedList<CpgStruct.Builder> cpgBuilders;
   private Cpg cpg;
 
   protected OutputModule() {
-    this.nodeIdToVertex = new HashMap<>();
     this.cpgBuilders = new LinkedList<>();
   }
 
@@ -39,7 +32,6 @@ public class OutputModule implements CpgOutputModule {
 
   @Override
   public void persistCpg(CpgStruct.Builder cpg) {
-
     synchronized (cpgBuilders) {
       cpgBuilders.add(cpg);
     }
@@ -56,14 +48,10 @@ public class OutputModule implements CpgOutputModule {
       mergedBuilder.mergeFrom(builder.build());
     });
 
-    byte[] bytes = mergedBuilder.build().toByteArray();
-    InputStream inputStream = new ByteArrayInputStream(bytes);
-    try {
-      cpg = ProtoCpgLoader.loadFromInputStream(inputStream, Optional.empty());
-    } catch (IOException e) {
-      System.err.println("Error loading CPG from byte array input stream");
-      cpg = null;
-    }
+    List<CpgStruct> list = new LinkedList<>();
+    list.add(mergedBuilder.build());
+    cpg = ProtoCpgLoader.loadFromListOfProtos(list, Optional.empty());
+
   }
 
 }
