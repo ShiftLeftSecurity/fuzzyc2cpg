@@ -396,25 +396,10 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     condition.getExpression.accept(this)
   }
 
-  private def conditionChild(node: AstNode): Option[Condition] = {
-    if (node.getChildCount == 0) {
-      None
-    }
-    node.getChildIterator.asScala
-      .filter(_.isInstanceOf[Condition])
-      .map(_.asInstanceOf[Condition])
-      .toList
-      .headOption
-  }
-
   override def visit(astConditionalExpr: ConditionalExpression): Unit = {
-    val cndChild = conditionChild(astConditionalExpr)
-    if (cndChild.isDefined) {
-      val cpgConditionalExpr = newConditionNode(cndChild.get, astConditionalExpr.getClass.getSimpleName)
-      addAstChild(cpgConditionalExpr)
-      pushContext(cpgConditionalExpr, 1)
-
-    }
+    val cpgConditionalExpr = newControlStructureNode(astConditionalExpr)
+    addAstChild(cpgConditionalExpr)
+    pushContext(cpgConditionalExpr, 1)
     acceptChildren(astConditionalExpr)
     popContext()
 
@@ -453,9 +438,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   override def visit(astBlockStarter: BlockStarter): Unit = {
-    val cndChild = conditionChild(astBlockStarter)
-
-    val cpgBlockStarter = newConditionNode(cndChild.getOrElse(astBlockStarter), astBlockStarter.getClass.getSimpleName)
+    val cpgBlockStarter = newControlStructureNode(astBlockStarter)
     addAstChild(cpgBlockStarter)
     pushContext(cpgBlockStarter, 1)
 
@@ -488,9 +471,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   override def visit(astIfStmt: IfStatement): Unit = {
-
-    val cndChild = conditionChild(astIfStmt)
-    val cpgIfStmt = newConditionNode(cndChild.getOrElse(astIfStmt), astIfStmt.getClass.getSimpleName)
+    val cpgIfStmt = newControlStructureNode(astIfStmt)
     addAstChild(cpgIfStmt)
     pushContext(cpgIfStmt, 1)
 
@@ -498,9 +479,6 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     astIfStmt.getStatement.accept(this)
     val astElseStmt = astIfStmt.getElseNode
     if (astElseStmt != null) {
-      if (astIfStmt.getCondition != null) {
-        astElseStmt.setCodeStr(s"!(${astIfStmt.getCondition.getEscapedCodeStr})")
-      }
       astElseStmt.accept(this)
     }
     popContext()
@@ -741,11 +719,10 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
       .createNode(astNode)
   }
 
-  private def newConditionNode(astNode: AstNode, parserTypeNameArg: String = ""): NodeType = {
-    val parserTypeName = if (parserTypeNameArg.isEmpty) { astNode.getClass.getSimpleName } else { parserTypeNameArg }
+  private def newControlStructureNode(astNode: AstNode): NodeType = {
     adapter
-      .createNodeBuilder(NodeKind.CONDITION)
-      .addProperty(NodeProperty.PARSER_TYPE_NAME, parserTypeName)
+      .createNodeBuilder(NodeKind.CONTROL_STRUCTURE)
+      .addProperty(NodeProperty.PARSER_TYPE_NAME, astNode.getClass.getSimpleName)
       .addCommons(astNode, context)
       .createNode(astNode)
   }

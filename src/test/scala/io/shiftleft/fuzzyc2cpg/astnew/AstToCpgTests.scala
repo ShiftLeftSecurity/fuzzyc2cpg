@@ -318,8 +318,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      val whileStmt = block.expandAst(NodeTypes.CONDITION)
-      whileStmt.check(1, _.value2(NodeKeys.CODE), expectations = "x < 1")
+      val whileStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
+      whileStmt.check(1, _.value2(NodeKeys.CODE), expectations = "while (x < 1)")
       whileStmt.check(1, whileStmt => whileStmt.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "WhileStatement")
 
       val lessThan = whileStmt.expandAst(NodeTypes.CALL)
@@ -343,7 +343,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
-      val ifStmt = block.expandAst(NodeTypes.CONDITION)
+      val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
       ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
@@ -369,7 +369,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
-      val ifStmt = block.expandAst(NodeTypes.CONDITION)
+      val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
       ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
@@ -381,9 +381,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       val assignment = ifBlock.expandAst(NodeTypes.CALL)
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
-      val elseStmt = ifStmt.expandAst(NodeTypes.CONDITION)
+      val elseStmt = ifStmt.expandAst(NodeTypes.CONTROL_STRUCTURE)
       elseStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ElseStatement")
-      elseStmt.check(1, _.value2(NodeKeys.CODE), "!(x > 0)")
+      elseStmt.check(1, _.value2(NodeKeys.CODE), "else")
 
       val elseBlock = elseStmt.expandAst(NodeTypes.BLOCK)
       elseBlock.checkForSingle()
@@ -403,8 +403,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val call = block.expandAst(NodeTypes.CALL)
-      val condition = call.expandAst(NodeTypes.CONDITION)
-      condition.check(1, _.value2(NodeKeys.CODE), expectations = "foo == 1")
+      val condition = call.expandAst(NodeTypes.CONTROL_STRUCTURE)
+      condition.check(1, _.value2(NodeKeys.CODE), expectations = "(foo == 1) ? bar : 0")
       condition.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ConditionalExpression")
     }
 
@@ -419,9 +419,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      val forLoop = block.expandAst(NodeTypes.CONDITION)
+      val forLoop = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
       forLoop.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ForStatement")
-      forLoop.check(1, _.value2(NodeKeys.CODE), expectations = "x < 1")
+      forLoop.check(1, _.value2(NodeKeys.CODE), expectations = "for ( x = 0, y = 0; x < 1; x += 1)")
 
       val initBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(1)
       initBlock.checkForSingle()
