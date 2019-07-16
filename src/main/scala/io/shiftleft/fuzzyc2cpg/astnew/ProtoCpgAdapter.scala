@@ -82,6 +82,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
       case NodeKind.TYPE_DECL           => Node.NodeType.TYPE_DECL
       case NodeKind.MEMBER              => Node.NodeType.MEMBER
       case NodeKind.NAMESPACE_BLOCK     => Node.NodeType.NAMESPACE_BLOCK
+      case NodeKind.CONTROL_STRUCTURE   => Node.NodeType.CONTROL_STRUCTURE
       case NodeKind.UNKNOWN             => Node.NodeType.UNKNOWN
     }
   }
