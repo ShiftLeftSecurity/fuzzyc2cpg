@@ -63,9 +63,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       vertexList.size shouldBe 1
     }
 
-    def check[A](count: Int,
-                 mapFunc: Vertex => A,
-                 expectations: A*): Unit = {
+    def check[A](count: Int, mapFunc: Vertex => A, expectations: A*): Unit = {
       vertexList.size shouldBe count
       vertexList.map(mapFunc).toSet shouldBe expectations.toSet
     }
@@ -132,29 +130,29 @@ class AstToCpgTests extends WordSpec with Matchers {
   }
 
   "Method AST layout" should {
-    "be correct for empty method" in new Fixture(
-      """
+    "be correct for empty method" in new Fixture("""
         |void method(int x) {
         |}"
       """.stripMargin) {
       val method = getMethod("method")
       method.expandAst(NodeTypes.BLOCK).checkForSingle()
 
-      method.expandAst(NodeTypes.METHOD_RETURN)
+      method
+        .expandAst(NodeTypes.METHOD_RETURN)
         .checkForSingle(NodeKeys.TYPE_FULL_NAME, "void")
 
-      method.expandAst(NodeTypes.METHOD_PARAMETER_IN)
+      method
+        .expandAst(NodeTypes.METHOD_PARAMETER_IN)
         .checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
     }
 
-    "be correct for decl assignment" in new Fixture(
-      """
+    "be correct for decl assignment" in new Fixture("""
         |void method() {
         |  int local = 1;
         |}
       """.stripMargin) {
       val method = getMethod("method")
-      val block= method.expandAst(NodeTypes.BLOCK)
+      val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
       val local = block.expandAst(NodeTypes.LOCAL)
@@ -165,26 +163,26 @@ class AstToCpgTests extends WordSpec with Matchers {
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
       val arguments = assignment.expandAst()
-      arguments.check(2,
+      arguments.check(
+        2,
         arg =>
           (arg.label,
-            arg.value2(NodeKeys.CODE),
-            arg.value2(NodeKeys.TYPE_FULL_NAME),
-            arg.value2(NodeKeys.ORDER),
-            arg.value2(NodeKeys.ARGUMENT_INDEX)),
-        expectations =
-          (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
-        (NodeTypes.LITERAL, "1", "int", 2, 2))
+           arg.value2(NodeKeys.CODE),
+           arg.value2(NodeKeys.TYPE_FULL_NAME),
+           arg.value2(NodeKeys.ORDER),
+           arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        expectations = (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
+        (NodeTypes.LITERAL, "1", "int", 2, 2)
+      )
     }
 
-    "be correct for decl assignment with identifier on right hand side" in new Fixture(
-      """
+    "be correct for decl assignment with identifier on right hand side" in new Fixture("""
         |void method(int x) {
         |  int local = x;
         |}
       """.stripMargin) {
       val method = getMethod("method")
-      val block= method.expandAst(NodeTypes.BLOCK)
+      val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
       val local = block.expandAst(NodeTypes.LOCAL)
@@ -195,68 +193,71 @@ class AstToCpgTests extends WordSpec with Matchers {
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
       val arguments = assignment.expandAst()
-      arguments.check(2,
+      arguments.check(
+        2,
         arg =>
           (arg.label,
-            arg.value2(NodeKeys.CODE),
-            arg.value2(NodeKeys.TYPE_FULL_NAME),
-            arg.value2(NodeKeys.ORDER),
-            arg.value2(NodeKeys.ARGUMENT_INDEX)),
-        expectations =
-          (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
-        (NodeTypes.IDENTIFIER, "x", "int", 2, 2))
+           arg.value2(NodeKeys.CODE),
+           arg.value2(NodeKeys.TYPE_FULL_NAME),
+           arg.value2(NodeKeys.ORDER),
+           arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        expectations = (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
+        (NodeTypes.IDENTIFIER, "x", "int", 2, 2)
+      )
     }
 
-    "be correct for decl assignment of multiple locals" in new Fixture(
-      """
+    "be correct for decl assignment of multiple locals" in new Fixture("""
         |void method(int x, int y) {
         |  int local = x, local2 = y;
         |}
       """.stripMargin) {
       val method = getMethod("method")
-      val block= method.expandAst(NodeTypes.BLOCK)
+      val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      block.expandAst(NodeTypes.LOCAL).check(2,
-        local =>
-          (local.label, local.value2(NodeKeys.CODE), local.value2(NodeKeys.TYPE_FULL_NAME)),
-        expectations =
-          (NodeTypes.LOCAL, "local", "int"),
-        (NodeTypes.LOCAL, "local2", "int"))
+      block
+        .expandAst(NodeTypes.LOCAL)
+        .check(
+          2,
+          local => (local.label, local.value2(NodeKeys.CODE), local.value2(NodeKeys.TYPE_FULL_NAME)),
+          expectations = (NodeTypes.LOCAL, "local", "int"),
+          (NodeTypes.LOCAL, "local2", "int")
+        )
 
       val assignment1 = block.expandAst(NodeTypes.CALL).filterOrder(1)
       assignment1.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
       val arguments1 = assignment1.expandAst()
-      arguments1.check(2,
+      arguments1.check(
+        2,
         arg =>
           (arg.label,
-            arg.value2(NodeKeys.CODE),
-            arg.value2(NodeKeys.TYPE_FULL_NAME),
-            arg.value2(NodeKeys.ORDER),
-            arg.value2(NodeKeys.ARGUMENT_INDEX)),
-        expectations =
-          (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
-        (NodeTypes.IDENTIFIER, "x", "int", 2, 2))
+           arg.value2(NodeKeys.CODE),
+           arg.value2(NodeKeys.TYPE_FULL_NAME),
+           arg.value2(NodeKeys.ORDER),
+           arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        expectations = (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
+        (NodeTypes.IDENTIFIER, "x", "int", 2, 2)
+      )
 
       val assignment2 = block.expandAst(NodeTypes.CALL).filterOrder(2)
       assignment2.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
       val arguments2 = assignment2.expandAst()
-      arguments2.check(2,
+      arguments2.check(
+        2,
         arg =>
           (arg.label,
-            arg.value2(NodeKeys.CODE),
-            arg.value2(NodeKeys.TYPE_FULL_NAME),
-            arg.value2(NodeKeys.ORDER),
-            arg.value2(NodeKeys.ARGUMENT_INDEX)),
-        expectations =
-          (NodeTypes.IDENTIFIER, "local2", "int", 1, 1),
-        (NodeTypes.IDENTIFIER, "y", "int", 2, 2))
+           arg.value2(NodeKeys.CODE),
+           arg.value2(NodeKeys.TYPE_FULL_NAME),
+           arg.value2(NodeKeys.ORDER),
+           arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        expectations = (NodeTypes.IDENTIFIER, "local2", "int", 1, 1),
+        (NodeTypes.IDENTIFIER, "y", "int", 2, 2)
+      )
     }
 
-    "be correct for nested expression" in new Fixture(
-      """
+    "be correct for nested expression" in new Fixture("""
         |void method() {
         |  int x;
         |  int y;
@@ -269,8 +270,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val locals = block.expandAst(NodeTypes.LOCAL)
-      locals.check(3, local => local.value2(NodeKeys.NAME),
-        expectations = "x", "y", "z")
+      locals.check(3, local => local.value2(NodeKeys.NAME), expectations = "x", "y", "z")
 
       val assignment = block.expandAst(NodeTypes.CALL)
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
@@ -279,18 +279,15 @@ class AstToCpgTests extends WordSpec with Matchers {
       rightHandSide.checkForSingle(NodeKeys.NAME, Operators.addition)
 
       val arguments = rightHandSide.expandAst()
-      arguments.check(2, arg =>
-        (arg.label,
-          arg.value2(NodeKeys.CODE),
-          arg.value2(NodeKeys.ORDER),
-          arg.value2(NodeKeys.ARGUMENT_INDEX)),
+      arguments.check(
+        2,
+        arg => (arg.label, arg.value2(NodeKeys.CODE), arg.value2(NodeKeys.ORDER), arg.value2(NodeKeys.ARGUMENT_INDEX)),
         expectations = (NodeTypes.IDENTIFIER, "y", 1, 1),
         (NodeTypes.IDENTIFIER, "z", 2, 2)
       )
     }
 
-    "be correct for nested block" in new Fixture (
-      """
+    "be correct for nested block" in new Fixture("""
         |void method() {
         |  int x;
         |  {
@@ -310,8 +307,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       nestedLocals.checkForSingle(NodeKeys.NAME, "y")
     }
 
-    "be correct for while-loop" in new Fixture(
-      """
+    "be correct for while-loop" in new Fixture("""
         |void method(int x) {
         |  while (x < 1) {
         |    x += 1;
@@ -322,9 +318,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      val whileStmt = block.expandAst(NodeTypes.UNKNOWN)
-      whileStmt.check(1, whileStmt => whileStmt.value2(NodeKeys.PARSER_TYPE_NAME),
-        expectations = "WhileStatement")
+      val whileStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
+      whileStmt.check(1, _.value2(NodeKeys.CODE), expectations = "while (x < 1)")
+      whileStmt.check(1, whileStmt => whileStmt.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "WhileStatement")
 
       val lessThan = whileStmt.expandAst(NodeTypes.CALL)
       lessThan.checkForSingle(NodeKeys.NAME, Operators.lessThan)
@@ -336,8 +332,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       assignPlus.filterOrder(1).checkForSingle(NodeKeys.NAME, Operators.assignmentPlus)
     }
 
-    "be correct for if" in new Fixture(
-      """
+    "be correct for if" in new Fixture("""
         |void method(int x) {
         |  int y;
         |  if (x > 0) {
@@ -348,9 +343,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
-      val ifStmt = block.expandAst(NodeTypes.UNKNOWN)
-      ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
-        expectations = "IfStatement")
+      val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
+      ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
       greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
@@ -362,8 +356,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
     }
 
-    "be correct for if-else" in new Fixture(
-      """
+    "be correct for if-else" in new Fixture("""
         |void method(int x) {
         |  int y;
         |  if (x > 0) {
@@ -376,9 +369,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       val method = getMethod("method")
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
-      val ifStmt = block.expandAst(NodeTypes.UNKNOWN)
-      ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
-        expectations = "IfStatement")
+      val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
+      ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
       greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
@@ -389,9 +381,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       val assignment = ifBlock.expandAst(NodeTypes.CALL)
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
 
-      val elseStmt = ifStmt.expandAst(NodeTypes.UNKNOWN)
-      elseStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
-        expectations = "ElseStatement")
+      val elseStmt = ifStmt.expandAst(NodeTypes.CONTROL_STRUCTURE)
+      elseStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ElseStatement")
+      elseStmt.check(1, _.value2(NodeKeys.CODE), "else")
 
       val elseBlock = elseStmt.expandAst(NodeTypes.BLOCK)
       elseBlock.checkForSingle()
@@ -400,8 +392,23 @@ class AstToCpgTests extends WordSpec with Matchers {
       assignmentInElse.checkForSingle(NodeKeys.NAME, Operators.assignment)
     }
 
-    "be correct for for-loop with multiple initalizations" in new Fixture(
+    "be correct for conditional expression" in new Fixture(
       """
+        | void method() {
+        |   int x = (foo == 1) ? bar : 0;
+        | }
+      """.stripMargin
+    ) {
+      val method = getMethod("method")
+      val block = method.expandAst(NodeTypes.BLOCK)
+      block.checkForSingle()
+      val call = block.expandAst(NodeTypes.CALL)
+      val condition = call.expandAst(NodeTypes.CONTROL_STRUCTURE)
+      condition.check(1, _.value2(NodeKeys.CODE), expectations = "(foo == 1) ? bar : 0")
+      condition.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ConditionalExpression")
+    }
+
+    "be correct for for-loop with multiple initializations" in new Fixture("""
         |void method(int x, int y) {
         |  for ( x = 0, y = 0; x < 1; x += 1) {
         |    int z = 0;
@@ -412,16 +419,15 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      val forLoop = block.expandAst(NodeTypes.UNKNOWN)
-      forLoop.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
-        expectations = "ForStatement")
+      val forLoop = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
+      forLoop.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ForStatement")
+      forLoop.check(1, _.value2(NodeKeys.CODE), expectations = "for ( x = 0, y = 0; x < 1; x += 1)")
 
       val initBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(1)
       initBlock.checkForSingle()
 
       val assignments = initBlock.expandAst(NodeTypes.CALL)
-      assignments.check(2, _.value2(NodeKeys.NAME),
-        expectations = Operators.assignment)
+      assignments.check(2, _.value2(NodeKeys.NAME), expectations = Operators.assignment)
 
       val condition = forLoop.expandAst(NodeTypes.CALL).filterOrder(2)
       condition.checkForSingle(NodeKeys.NAME, Operators.lessThan)
@@ -433,8 +439,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       forBlock.checkForSingle()
     }
 
-    "be correct for unary expression '+'" in new Fixture(
-      """
+    "be correct for unary expression '+'" in new Fixture("""
         |void method(int x) {
         |  +x;
         |}
@@ -450,8 +455,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       identifierX.checkForSingle(NodeKeys.NAME, "x")
     }
 
-    "be correct for unary expression '++'" in new Fixture(
-      """
+    "be correct for unary expression '++'" in new Fixture("""
         |void method(int x) {
         |  ++x;
         |}
@@ -467,8 +471,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       identifierX.checkForSingle(NodeKeys.NAME, "x")
     }
 
-    "be correct for call expression" in new Fixture(
-      """
+    "be correct for call expression" in new Fixture("""
         |void method(int x) {
         |  foo(x);
         |}
@@ -484,16 +487,13 @@ class AstToCpgTests extends WordSpec with Matchers {
       argumentX.checkForSingle(NodeKeys.NAME, "x")
     }
 
-    "be correct for pointer call expression" in new Fixture(
-      """
+    "be correct for pointer call expression" in new Fixture("""
         |void method(int x) {
         |  (*funcPointer)(x);
         |}
-      """.stripMargin) {
-    }
+      """.stripMargin) {}
 
-    "be correct for member access" in new Fixture(
-      """
+    "be correct for member access" in new Fixture("""
         |void method(struct someUndefinedStruct x) {
         |  x.a;
         |}
@@ -506,16 +506,12 @@ class AstToCpgTests extends WordSpec with Matchers {
       memberAccess.checkForSingle(NodeKeys.NAME, Operators.memberAccess)
 
       val arguments = memberAccess.expandAst(NodeTypes.IDENTIFIER)
-      arguments.check(2,
-        arg => {
-          (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
-        },
-        expectations = ("x", 1), ("a", 2)
-      )
+      arguments.check(2, arg => {
+        (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+      }, expectations = ("x", 1), ("a", 2))
     }
 
-    "be correct for indirect member access" in new Fixture(
-      """
+    "be correct for indirect member access" in new Fixture("""
         |void method(struct someUndefinedStruct *x) {
         |  x->a;
         |}
@@ -528,12 +524,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       memberAccess.checkForSingle(NodeKeys.NAME, Operators.indirectMemberAccess)
 
       val arguments = memberAccess.expandAst(NodeTypes.IDENTIFIER)
-      arguments.check(2,
-        arg => {
-          (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
-        },
-        expectations = ("x", 1), ("a", 2)
-      )
+      arguments.check(2, arg => {
+        (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+      }, expectations = ("x", 1), ("a", 2))
     }
 
     "be correct for sizeof operator on identifier with brackets" in new Fixture(
@@ -600,8 +593,7 @@ class AstToCpgTests extends WordSpec with Matchers {
   }
 
   "Structural AST layout" should {
-    "be correct for empty method" in new Fixture(
-      """
+    "be correct for empty method" in new Fixture("""
         | void method() {
         | };
       """.stripMargin) {
@@ -611,8 +603,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       astParent.expandAst(NodeTypes.METHOD) shouldBe method
     }
 
-    "be correct for empty named struct" in new Fixture(
-      """
+    "be correct for empty named struct" in new Fixture("""
         | struct foo {
         | };
       """.stripMargin) {
@@ -622,8 +613,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       astParent.expandAst(NodeTypes.TYPE_DECL) shouldBe typeDecl
     }
 
-    "be correct for named struct with single field" in new Fixture(
-      """
+    "be correct for named struct with single field" in new Fixture("""
         | struct foo {
         |   int x;
         | };
@@ -636,8 +626,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       member.checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
     }
 
-    "be correct for named struct with multiple fields" in new Fixture(
-      """
+    "be correct for named struct with multiple fields" in new Fixture("""
         | struct foo {
         |   int x;
         |   int y;
@@ -647,12 +636,10 @@ class AstToCpgTests extends WordSpec with Matchers {
       val typeDecl = getTypeDecl("foo")
       typeDecl.checkForSingle()
       val member = typeDecl.expandAst(NodeTypes.MEMBER)
-      member.check(3, member => member.value2(NodeKeys.CODE),
-        expectations = "x", "y", "z")
+      member.check(3, member => member.value2(NodeKeys.CODE), expectations = "x", "y", "z")
     }
 
-    "be correct for named struct with nested struct" in new Fixture(
-      """
+    "be correct for named struct with nested struct" in new Fixture("""
         | struct foo {
         |   int x;
         |   struct bar {
@@ -694,8 +681,7 @@ class AstToCpgTests extends WordSpec with Matchers {
   }
 
   "AST" should {
-    "have correct line number for method content" in new Fixture(
-      """
+    "have correct line number for method content" in new Fixture("""
         |
         |
         |

@@ -14,7 +14,7 @@ object NodeProperty extends Enumeration {
 object NodeKind extends Enumeration {
   type NodeKind = Value
   val METHOD, METHOD_RETURN, METHOD_PARAMETER_IN, METHOD_INST, CALL, LITERAL, IDENTIFIER, BLOCK, RETURN, LOCAL, TYPE,
-  TYPE_DECL, MEMBER, NAMESPACE_BLOCK, UNKNOWN = Value
+  TYPE_DECL, MEMBER, NAMESPACE_BLOCK, CONTROL_STRUCTURE, UNKNOWN = Value
 }
 
 object EdgeKind extends Enumeration {

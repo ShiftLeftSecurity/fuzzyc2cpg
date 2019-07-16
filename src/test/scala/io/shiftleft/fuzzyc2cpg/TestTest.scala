@@ -7,7 +7,7 @@ class TestTest extends WordSpec with Matchers {
 
   "Tests" should {
     "load graphs" in {
-      fixture.V.l.size should be  > 0
+      fixture.V.l.size should be > 0
     }
   }
 
