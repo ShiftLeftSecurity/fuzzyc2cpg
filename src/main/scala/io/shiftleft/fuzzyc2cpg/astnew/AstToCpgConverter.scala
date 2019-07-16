@@ -8,7 +8,7 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpression}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
-import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.{ElseStatement, IfStatement}
+import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.CatchList
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump._
