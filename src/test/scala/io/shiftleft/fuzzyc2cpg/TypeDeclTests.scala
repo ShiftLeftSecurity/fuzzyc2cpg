@@ -9,7 +9,8 @@ class TypeDeclTests extends WordSpec with Matchers {
 
   "Type decl test project" should {
     "contain one internal type decl node for Foo" in {
-      val typeDeclNodes = fixture.V.hasLabel(NodeType.TYPE_DECL.toString)
+      val typeDeclNodes = fixture.V
+        .hasLabel(NodeType.TYPE_DECL.toString)
         .has(NodeKeys.NAME -> "Foo")
         .l
       typeDeclNodes.size shouldBe 1
@@ -21,8 +22,11 @@ class TypeDeclTests extends WordSpec with Matchers {
     }
 
     "contain edges from Foo to three members" in {
-      val members = fixture.V.hasLabel(NodeType.TYPE_DECL.toString)
-        .out("AST").hasLabel(NodeType.MEMBER.toString).l
+      val members = fixture.V
+        .hasLabel(NodeType.TYPE_DECL.toString)
+        .out("AST")
+        .hasLabel(NodeType.MEMBER.toString)
+        .l
       members.size shouldBe 3
     }
 

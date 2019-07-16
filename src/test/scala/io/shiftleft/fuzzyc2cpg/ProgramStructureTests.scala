@@ -11,14 +11,17 @@ class ProgramStructureTests extends WordSpec with Matchers {
 
     "contain <global> namespace block node" in {
       val namespaceBlocks =
-        fixture.V.hasLabel(NodeType.NAMESPACE_BLOCK.toString)
-        .has(NodeKeys.FULL_NAME -> Defines.globalNamespaceName).l
+        fixture.V
+          .hasLabel(NodeType.NAMESPACE_BLOCK.toString)
+          .has(NodeKeys.FULL_NAME -> Defines.globalNamespaceName)
+          .l
 
       namespaceBlocks.size shouldBe 1
     }
 
     "contain one file node" in {
-      val fileName = fixture.V.hasLabel(NodeType.FILE.toString)
+      val fileName = fixture.V
+        .hasLabel(NodeType.FILE.toString)
         .value(NodeKeys.NAME)
         .headOption
       fileName.isDefined shouldBe true
@@ -26,9 +29,11 @@ class ProgramStructureTests extends WordSpec with Matchers {
     }
 
     "contain AST edge from file node to namespace block" in {
-      val nodes = fixture.V.hasLabel(NodeType.FILE.toString)
+      val nodes = fixture.V
+        .hasLabel(NodeType.FILE.toString)
         .out("AST")
-        .hasLabel(NodeType.NAMESPACE_BLOCK.toString).l
+        .hasLabel(NodeType.NAMESPACE_BLOCK.toString)
+        .l
       nodes.size shouldBe 1
     }
 
@@ -36,7 +41,6 @@ class ProgramStructureTests extends WordSpec with Matchers {
       val nodes = fixture.V.hasLabel(NodeType.TYPE_DECL.toString).l
       nodes.size should be > 0
     }
-
 
   }
 

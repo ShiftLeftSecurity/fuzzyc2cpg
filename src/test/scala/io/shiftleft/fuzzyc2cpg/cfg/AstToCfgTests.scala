@@ -56,10 +56,10 @@ class AstToCfgTests extends WordSpec with Matchers {
     codeToCpgNode += entry.code -> entry
     codeToCpgNode += exit.code -> exit
 
-
     def expected(pairs: (String, CfgEdgeType)*): Set[CfgNodeEdgePair] = {
-      pairs.map { case (code, cfgEdgeType) =>
-        CfgNodeEdgePair(codeToCpgNode(code), cfgEdgeType)
+      pairs.map {
+        case (code, cfgEdgeType) =>
+          CfgNodeEdgePair(codeToCpgNode(code), cfgEdgeType)
       }.toSet
     }
 
@@ -133,8 +133,8 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("++x") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
-     // TODO This is wrong but intention, see comment on
-     // visitor function for ConditionExpression.
+    // TODO This is wrong but intention, see comment on
+    // visitor function for ConditionExpression.
     "be correct for conditional expression" in
       new Fixture("x ? y : z;") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))

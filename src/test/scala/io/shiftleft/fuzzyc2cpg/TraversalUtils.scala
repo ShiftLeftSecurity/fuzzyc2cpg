@@ -17,5 +17,4 @@ trait TraversalUtils extends Matchers {
     result
   }
 
-
 }

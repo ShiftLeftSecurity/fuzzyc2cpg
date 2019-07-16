@@ -396,13 +396,15 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     condition.getExpression.accept(this)
   }
 
-  private def conditionChild(node : AstNode) : Option[Condition] = {
+  private def conditionChild(node: AstNode): Option[Condition] = {
     if (node.getChildCount == 0) {
       None
     }
-    node.getChildIterator.asScala.filter(_.isInstanceOf[Condition])
+    node.getChildIterator.asScala
+      .filter(_.isInstanceOf[Condition])
       .map(_.asInstanceOf[Condition])
-      .toList.headOption
+      .toList
+      .headOption
   }
 
   override def visit(astConditionalExpr: ConditionalExpression): Unit = {
@@ -739,7 +741,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
       .createNode(astNode)
   }
 
-  private def newConditionNode(astNode: AstNode, parserTypeNameArg : String = ""): NodeType = {
+  private def newConditionNode(astNode: AstNode, parserTypeNameArg: String = ""): NodeType = {
     val parserTypeName = if (parserTypeNameArg.isEmpty) { astNode.getClass.getSimpleName } else { parserTypeNameArg }
     adapter
       .createNodeBuilder(NodeKind.CONDITION)
