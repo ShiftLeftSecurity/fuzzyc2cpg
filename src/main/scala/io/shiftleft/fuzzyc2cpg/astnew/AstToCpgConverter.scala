@@ -8,7 +8,7 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions._
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpression}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
-import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
+import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.{ElseStatement, IfStatement}
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.CatchList
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump._
@@ -396,15 +396,26 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     condition.getExpression.accept(this)
   }
 
+  private def conditionChild(node : AstNode) : Option[Condition] = {
+    if (node.getChildCount == 0) {
+      None
+    }
+    node.getChildIterator.asScala.filter(_.isInstanceOf[Condition])
+      .map(_.asInstanceOf[Condition])
+      .toList.headOption
+  }
+
   override def visit(astConditionalExpr: ConditionalExpression): Unit = {
-    val cpgConditionalExpr =
-      newConditionNode(astConditionalExpr);
+    val cndChild = conditionChild(astConditionalExpr)
+    if (cndChild.isDefined) {
+      val cpgConditionalExpr = newConditionNode(cndChild.get, astConditionalExpr.getClass.getSimpleName)
+      addAstChild(cpgConditionalExpr)
+      pushContext(cpgConditionalExpr, 1)
 
-    addAstChild(cpgConditionalExpr)
-
-    pushContext(cpgConditionalExpr, 1)
+    }
     acceptChildren(astConditionalExpr)
     popContext()
+
   }
 
   override def visit(expression: Expression): Unit = {
@@ -440,11 +451,12 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   override def visit(astBlockStarter: BlockStarter): Unit = {
-    val cpgBlockStarter = newConditionNode(astBlockStarter)
+    val cndChild = conditionChild(astBlockStarter)
 
+    val cpgBlockStarter = newConditionNode(cndChild.getOrElse(astBlockStarter), astBlockStarter.getClass.getSimpleName)
     addAstChild(cpgBlockStarter)
-
     pushContext(cpgBlockStarter, 1)
+
     acceptChildren(astBlockStarter)
     popContext()
   }
@@ -474,15 +486,19 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   override def visit(astIfStmt: IfStatement): Unit = {
-    val cpgIfStmt = newConditionNode(astIfStmt)
 
+    val cndChild = conditionChild(astIfStmt)
+    val cpgIfStmt = newConditionNode(cndChild.getOrElse(astIfStmt), astIfStmt.getClass.getSimpleName)
     addAstChild(cpgIfStmt)
-
     pushContext(cpgIfStmt, 1)
+
     astIfStmt.getCondition.accept(this)
     astIfStmt.getStatement.accept(this)
     val astElseStmt = astIfStmt.getElseNode
     if (astElseStmt != null) {
+      if (astIfStmt.getCondition != null) {
+        astElseStmt.setCodeStr(s"!(${astIfStmt.getCondition.getEscapedCodeStr})")
+      }
       astElseStmt.accept(this)
     }
     popContext()
@@ -723,10 +739,11 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
       .createNode(astNode)
   }
 
-  private def newConditionNode(astNode: AstNode): NodeType = {
+  private def newConditionNode(astNode: AstNode, parserTypeNameArg : String = ""): NodeType = {
+    val parserTypeName = if (parserTypeNameArg.isEmpty) { astNode.getClass.getSimpleName } else { parserTypeNameArg }
     adapter
       .createNodeBuilder(NodeKind.CONDITION)
-      .addProperty(NodeProperty.PARSER_TYPE_NAME, astNode.getClass.getSimpleName)
+      .addProperty(NodeProperty.PARSER_TYPE_NAME, parserTypeName)
       .addCommons(astNode, context)
       .createNode(astNode)
   }

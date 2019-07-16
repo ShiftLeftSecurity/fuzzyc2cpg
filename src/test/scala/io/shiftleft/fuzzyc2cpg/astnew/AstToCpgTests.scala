@@ -323,6 +323,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val whileStmt = block.expandAst(NodeTypes.CONDITION)
+      whileStmt.check(1, _.value2(NodeKeys.CODE), expectations = "x < 1")
       whileStmt.check(1, whileStmt => whileStmt.value2(NodeKeys.PARSER_TYPE_NAME),
         expectations = "WhileStatement")
 
@@ -392,6 +393,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val elseStmt = ifStmt.expandAst(NodeTypes.CONDITION)
       elseStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
         expectations = "ElseStatement")
+      elseStmt.check(1, _.value2(NodeKeys.CODE), "!(x > 0)")
 
       val elseBlock = elseStmt.expandAst(NodeTypes.BLOCK)
       elseBlock.checkForSingle()
@@ -412,7 +414,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
       val call = block.expandAst(NodeTypes.CALL)
       val condition = call.expandAst(NodeTypes.CONDITION)
-      condition.check(1, _.value2(NodeKeys.CODE), expectations = "(foo == 1) ? bar : 0")
+      condition.check(1, _.value2(NodeKeys.CODE), expectations = "foo == 1")
+      condition.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ConditionalExpression")
     }
 
     "be correct for for-loop with multiple initializations" in new Fixture(
@@ -430,6 +433,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val forLoop = block.expandAst(NodeTypes.CONDITION)
       forLoop.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME),
         expectations = "ForStatement")
+      forLoop.check(1, _.value2(NodeKeys.CODE), expectations = "x < 1")
 
       val initBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(1)
       initBlock.checkForSingle()
