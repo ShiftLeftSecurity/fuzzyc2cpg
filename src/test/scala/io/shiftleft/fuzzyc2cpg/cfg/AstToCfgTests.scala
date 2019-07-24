@@ -140,8 +140,7 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("y", AlwaysEdge))
         succOf("y") shouldBe expected(("z", AlwaysEdge))
-        succOf("z") shouldBe expected(("x ? y : z", AlwaysEdge))
-        succOf("x ? y : z") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("z") shouldBe expected(("EXIT", AlwaysEdge))
       }
   }
 
