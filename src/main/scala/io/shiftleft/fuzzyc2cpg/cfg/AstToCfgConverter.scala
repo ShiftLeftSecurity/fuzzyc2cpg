@@ -199,7 +199,6 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     condition.accept(this)
     trueExpression.accept(this)
     falseExpression.accept(this)
-    extendCfg(conditionalExpression)
   }
 
   override def visit(continueStatement: ContinueStatement): Unit = {
