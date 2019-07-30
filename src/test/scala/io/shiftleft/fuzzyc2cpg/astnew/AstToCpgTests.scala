@@ -1,8 +1,9 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
 import gremlin.scala._
+import io.shiftleft.codepropertygraph.generated
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
-import io.shiftleft.fuzzyc2cpg.{ModuleLexer, Utils}
+import io.shiftleft.fuzzyc2cpg.ModuleLexer
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.astnew.EdgeKind.EdgeKind
 import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
@@ -98,8 +99,10 @@ class AstToCpgTests extends WordSpec with Matchers {
     driver.parseAndWalkTokenStream(tokens)
 
     private val fileName = "codeFromString"
-    val graph = TinkerGraph.open().asScala()
-    private val astParentNode = graph.addVertex("PARENT")
+    val graph = TinkerGraph.open(
+      generated.nodes.Factories.AllAsJava,
+      generated.edges.Factories.AllAsJava).asScala
+    private val astParentNode = graph.addVertex("METHOD")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
 
