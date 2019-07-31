@@ -51,6 +51,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       }
     }
 
+    def expandCondition: List[Vertex] =
+      vertexList.flatMap(_.start.out(EdgeTypes.CONDITION).l)
+
     def filterOrder(order: Int): List[Vertex] = {
       vertexList.filter(_.value2(NodeKeys.ORDER) == order)
     }
@@ -323,7 +326,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       whileStmt.check(1, _.value2(NodeKeys.CODE), expectations = "while (x < 1)")
       whileStmt.check(1, whileStmt => whileStmt.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "WhileStatement")
 
-      isLinkedToCondition(whileStmt, "x < 1")
+      val condition = whileStmt.expandCondition
+      condition.checkForSingle(NodeKeys.CODE, "x < 1")
 
       val lessThan = whileStmt.expandAst(NodeTypes.CALL)
       lessThan.checkForSingle(NodeKeys.NAME, Operators.lessThan)
@@ -334,10 +338,6 @@ class AstToCpgTests extends WordSpec with Matchers {
       val assignPlus = whileBlock.expandAst(NodeTypes.CALL)
       assignPlus.filterOrder(1).checkForSingle(NodeKeys.NAME, Operators.assignmentPlus)
     }
-
-    def isLinkedToCondition(vertices: List[gremlin.scala.Vertex], conditionStr: String): Unit =
-      vertices.headOption.map(_.out(EdgeTypes.CONDITION).value(NodeKeys.CODE).toList).headOption shouldBe Some(
-        List(conditionStr))
 
     "be correct for if" in new Fixture("""
         |void method(int x) {
@@ -353,7 +353,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
       ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
 
-      isLinkedToCondition(ifStmt, "x > 0")
+      val condition = ifStmt.expandCondition
+      condition.checkForSingle(NodeKeys.CODE, "x > 0")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
       greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
@@ -381,7 +382,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
       ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
 
-      isLinkedToCondition(ifStmt, "x > 0")
+      val condition = ifStmt.expandCondition
+      condition.checkForSingle(NodeKeys.CODE, "x > 0")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
       greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
@@ -434,7 +436,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       forLoop.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ForStatement")
       forLoop.check(1, _.value2(NodeKeys.CODE), expectations = "for ( x = 0, y = 0; x < 1; x += 1)")
 
-      isLinkedToCondition(forLoop, "x < 1")
+      val conditionNode = forLoop.expandCondition
+      conditionNode.checkForSingle(NodeKeys.CODE, "x < 1")
 
       val initBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(1)
       initBlock.checkForSingle()
