@@ -40,9 +40,10 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
 
   pushContext(cpgParent, 1)
 
-  private class Context(val cpgParent: NodeType, var childNum: Int, val parentIsClassDef: Boolean, var addConditionEdgeOnNextAstEdge : Boolean = false) {
-
-  }
+  private class Context(val cpgParent: NodeType,
+                        var childNum: Int,
+                        val parentIsClassDef: Boolean,
+                        var addConditionEdgeOnNextAstEdge: Boolean = false) {}
 
   private def pushContext(cpgParent: NodeType, startChildNum: Int, parentIsClassDef: Boolean = false): Unit = {
     contextStack = new Context(cpgParent, startChildNum, parentIsClassDef) :: contextStack
@@ -719,7 +720,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     }
   }
 
-  private def addConditionChild(child : NodeType) : Unit = {
+  private def addConditionChild(child: NodeType): Unit = {
     adapter.addEdge(EdgeKind.CONDITION, child, context.cpgParent)
   }
 
