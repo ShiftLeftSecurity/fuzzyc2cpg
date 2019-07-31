@@ -1,8 +1,9 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
 import gremlin.scala._
+import io.shiftleft.codepropertygraph.generated
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
-import io.shiftleft.fuzzyc2cpg.{ModuleLexer, Utils}
+import io.shiftleft.fuzzyc2cpg.ModuleLexer
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.astnew.EdgeKind.EdgeKind
 import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
@@ -49,6 +50,9 @@ class AstToCpgTests extends WordSpec with Matchers {
         vertexList.flatMap(_.start.out(EdgeTypes.AST).l)
       }
     }
+
+    def expandCondition: List[Vertex] =
+      vertexList.flatMap(_.start.out(EdgeTypes.CONDITION).l)
 
     def filterOrder(order: Int): List[Vertex] = {
       vertexList.filter(_.value2(NodeKeys.ORDER) == order)
@@ -98,8 +102,8 @@ class AstToCpgTests extends WordSpec with Matchers {
     driver.parseAndWalkTokenStream(tokens)
 
     private val fileName = "codeFromString"
-    val graph = TinkerGraph.open().asScala()
-    private val astParentNode = graph.addVertex("PARENT")
+    val graph = TinkerGraph.open(generated.nodes.Factories.AllAsJava, generated.edges.Factories.AllAsJava).asScala
+    private val astParentNode = graph.addVertex("NAMESPACE_BLOCK")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
 
@@ -322,6 +326,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       whileStmt.check(1, _.value2(NodeKeys.CODE), expectations = "while (x < 1)")
       whileStmt.check(1, whileStmt => whileStmt.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "WhileStatement")
 
+      val condition = whileStmt.expandCondition
+      condition.checkForSingle(NodeKeys.CODE, "x < 1")
+
       val lessThan = whileStmt.expandAst(NodeTypes.CALL)
       lessThan.checkForSingle(NodeKeys.NAME, Operators.lessThan)
 
@@ -345,6 +352,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
       val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
       ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
+
+      val condition = ifStmt.expandCondition
+      condition.checkForSingle(NodeKeys.CODE, "x > 0")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
       greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
@@ -371,6 +381,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
       val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
       ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
+
+      val condition = ifStmt.expandCondition
+      condition.checkForSingle(NodeKeys.CODE, "x > 0")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
       greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
@@ -422,6 +435,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       val forLoop = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
       forLoop.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ForStatement")
       forLoop.check(1, _.value2(NodeKeys.CODE), expectations = "for ( x = 0, y = 0; x < 1; x += 1)")
+
+      val conditionNode = forLoop.expandCondition
+      conditionNode.checkForSingle(NodeKeys.CODE, "x < 1")
 
       val initBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(1)
       initBlock.checkForSingle()

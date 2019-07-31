@@ -40,7 +40,10 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
 
   pushContext(cpgParent, 1)
 
-  private class Context(val cpgParent: NodeType, var childNum: Int, val parentIsClassDef: Boolean)
+  private class Context(val cpgParent: NodeType,
+                        var childNum: Int,
+                        val parentIsClassDef: Boolean,
+                        var addConditionEdgeOnNextAstEdge: Boolean = false) {}
 
   private def pushContext(cpgParent: NodeType, startChildNum: Int, parentIsClassDef: Boolean = false): Unit = {
     contextStack = new Context(cpgParent, startChildNum, parentIsClassDef) :: contextStack
@@ -386,13 +389,14 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     addAstChild(cpgIdentifier)
 
     variableOption match {
-      case Some((variable, variableTypeName)) =>
+      case Some((variable, _)) =>
         adapter.addEdge(EdgeKind.REF, variable, cpgIdentifier)
       case None =>
     }
   }
 
   override def visit(condition: Condition): Unit = {
+    context.addConditionEdgeOnNextAstEdge = true
     condition.getExpression.accept(this)
   }
 
@@ -443,6 +447,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     pushContext(cpgBlockStarter, 1)
 
     acceptChildren(astBlockStarter)
+
     popContext()
   }
 
@@ -709,6 +714,14 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   private def addAstChild(child: NodeType): Unit = {
     adapter.addEdge(EdgeKind.AST, child, context.cpgParent)
     context.childNum += 1
+    if (context.addConditionEdgeOnNextAstEdge) {
+      addConditionChild(child)
+      context.addConditionEdgeOnNextAstEdge = false;
+    }
+  }
+
+  private def addConditionChild(child: NodeType): Unit = {
+    adapter.addEdge(EdgeKind.CONDITION, child, context.cpgParent)
   }
 
   private def newUnknownNode(astNode: AstNode): NodeType = {
