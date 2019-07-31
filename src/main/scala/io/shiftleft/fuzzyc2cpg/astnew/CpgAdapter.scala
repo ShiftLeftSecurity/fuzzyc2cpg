@@ -19,7 +19,7 @@ object NodeKind extends Enumeration {
 
 object EdgeKind extends Enumeration {
   type EdgeKind = Value
-  val AST, REF = Value
+  val AST, REF, CONDITION = Value
 }
 
 trait CpgAdapter[NodeBuilderType, NodeType] {

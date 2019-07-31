@@ -39,10 +39,6 @@ class AstToCfgTests extends WordSpec with Matchers {
     }
   }
 
-  private def createAstFromCode(code: String): AstNode = {
-    FunctionContentTestUtil.parseAndWalk(code)
-  }
-
   private class Fixture(code: String) {
     private val astRoot = FunctionContentTestUtil.parseAndWalk(code)
     private val entry = new CfgNode("ENTRY")
