@@ -89,8 +89,9 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
 
   private def translateEdgeKind(edgeKind: EdgeKind): Edge.EdgeType = {
     edgeKind match {
-      case EdgeKind.AST => Edge.EdgeType.AST
-      case EdgeKind.REF => Edge.EdgeType.REF
+      case EdgeKind.AST       => Edge.EdgeType.AST
+      case EdgeKind.REF       => Edge.EdgeType.REF
+      case EdgeKind.CONDITION => Edge.EdgeType.CONDITION
     }
   }
 }
