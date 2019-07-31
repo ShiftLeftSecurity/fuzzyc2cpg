@@ -103,7 +103,7 @@ class AstToCpgTests extends WordSpec with Matchers {
 
     private val fileName = "codeFromString"
     val graph = TinkerGraph.open(generated.nodes.Factories.AllAsJava, generated.edges.Factories.AllAsJava).asScala
-    private val astParentNode = graph.addVertex("METHOD")
+    private val astParentNode = graph.addVertex("NAMESPACE_BLOCK")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
 
