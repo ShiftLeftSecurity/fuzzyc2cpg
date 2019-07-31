@@ -99,9 +99,7 @@ class AstToCpgTests extends WordSpec with Matchers {
     driver.parseAndWalkTokenStream(tokens)
 
     private val fileName = "codeFromString"
-    val graph = TinkerGraph.open(
-      generated.nodes.Factories.AllAsJava,
-      generated.edges.Factories.AllAsJava).asScala
+    val graph = TinkerGraph.open(generated.nodes.Factories.AllAsJava, generated.edges.Factories.AllAsJava).asScala
     private val astParentNode = graph.addVertex("METHOD")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
@@ -337,8 +335,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       assignPlus.filterOrder(1).checkForSingle(NodeKeys.NAME, Operators.assignmentPlus)
     }
 
-    def isLinkedToCondition(vertices : List[gremlin.scala.Vertex], conditionStr : String) : Unit =
-      vertices.headOption.map(_.out(EdgeTypes.CONDITION).value(NodeKeys.CODE).toList).headOption shouldBe Some(List(conditionStr))
+    def isLinkedToCondition(vertices: List[gremlin.scala.Vertex], conditionStr: String): Unit =
+      vertices.headOption.map(_.out(EdgeTypes.CONDITION).value(NodeKeys.CODE).toList).headOption shouldBe Some(
+        List(conditionStr))
 
     "be correct for if" in new Fixture("""
         |void method(int x) {
