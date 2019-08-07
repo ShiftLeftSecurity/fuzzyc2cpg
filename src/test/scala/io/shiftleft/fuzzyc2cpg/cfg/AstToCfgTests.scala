@@ -324,6 +324,13 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("ENTRY") shouldBe expected()
         succOf("return;") shouldBe expected(("EXIT", AlwaysEdge))
       }
+
+    "be correct with function call condition with empty block" in
+      new Fixture("for (; x(1);) ;") {
+        succOf("ENTRY") shouldBe expected(("1", AlwaysEdge))
+        succOf("1") shouldBe expected(("x(1)", AlwaysEdge))
+        succOf("x(1)") shouldBe expected(("1", TrueEdge), ("EXIT", FalseEdge))
+      }
   }
 
   "Cfg for goto" should {
