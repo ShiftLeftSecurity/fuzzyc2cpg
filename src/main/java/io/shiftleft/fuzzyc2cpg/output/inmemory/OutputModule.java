@@ -1,17 +1,13 @@
 package io.shiftleft.fuzzyc2cpg.output.inmemory;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-
 import io.shiftleft.codepropertygraph.Cpg;
-import io.shiftleft.codepropertygraph.cpgloading.OverflowDbConfig;
 import io.shiftleft.codepropertygraph.cpgloading.ProtoCpgLoader;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
+import io.shiftleft.overflowdb.OdbConfig;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class OutputModule implements CpgOutputModule {
 
@@ -51,7 +47,7 @@ public class OutputModule implements CpgOutputModule {
 
     List<CpgStruct> list = new LinkedList<>();
     list.add(mergedBuilder.build());
-    cpg = ProtoCpgLoader.loadFromListOfProtos(list, OverflowDbConfig.withDefaults().disabled());
+    cpg = ProtoCpgLoader.loadFromListOfProtos(list, OdbConfig.withoutOverflow());
 
   }
 
