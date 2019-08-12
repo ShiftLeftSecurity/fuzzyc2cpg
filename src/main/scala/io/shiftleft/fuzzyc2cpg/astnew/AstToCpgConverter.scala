@@ -123,7 +123,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     val cpgMethod = adapter
       .createNodeBuilder(NodeKind.METHOD)
       .addProperty(NodeProperty.NAME, astFunction.getName)
-      .addProperty(NodeProperty.FULL_NAME, s"${astFunction.getName}")
+      .addProperty(NodeProperty.IS_EXTERNAL, value = false)
+      .addProperty(NodeProperty.FULL_NAME, value = s"${astFunction.getName}")
       .addProperty(NodeProperty.LINE_NUMBER, astFunction.getLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, astFunction.getLocation.startPos)
       .addProperty(NodeProperty.SIGNATURE, signature)
@@ -373,7 +374,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
 
     val variableOption = scope.lookupVariable(identifierName)
     val identifierTypeName = variableOption match {
-      case Some((variable, variableTypeName)) =>
+      case Some((_, variableTypeName)) =>
         variableTypeName
       case None =>
         Defines.anyTypeName
@@ -548,7 +549,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
         .createNodeBuilder(NodeKind.TYPE_DECL)
         .addProperty(NodeProperty.NAME, identifierDecl.getName.getEscapedCodeStr)
         .addProperty(NodeProperty.FULL_NAME, identifierDecl.getName.getEscapedCodeStr)
-        .addProperty(NodeProperty.IS_EXTERNAL, false)
+        .addProperty(NodeProperty.IS_EXTERNAL, value = false)
         .addProperty(NodeProperty.ALIAS_TYPE_FULL_NAME, registerType(declTypeName))
         .createNode(identifierDecl)
 
@@ -690,7 +691,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
       .createNodeBuilder(NodeKind.TYPE_DECL)
       .addProperty(NodeProperty.NAME, name)
       .addProperty(NodeProperty.FULL_NAME, name)
-      .addProperty(NodeProperty.IS_EXTERNAL, false)
+      .addProperty(NodeProperty.IS_EXTERNAL, value = false)
       .createNode(astClassDef)
 
     addAstChild(cpgTypeDecl)
@@ -716,7 +717,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     context.childNum += 1
     if (context.addConditionEdgeOnNextAstEdge) {
       addConditionChild(child)
-      context.addConditionEdgeOnNextAstEdge = false;
+      context.addConditionEdgeOnNextAstEdge = false
     }
   }
 
