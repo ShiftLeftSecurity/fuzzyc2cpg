@@ -141,11 +141,26 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     extendCfg(arrayIndexing)
   }
 
-  // TODO This also handles || and && for which we do not correctly model the laziness.
   override def visit(binaryExpression: BinaryExpression): Unit = {
     binaryExpression.getLeft.accept(this)
     binaryExpression.getRight.accept(this)
     extendCfg(binaryExpression)
+  }
+
+  override def visit(astAND: AndExpression):Unit = {
+    astAND.getLeft.accept(this)
+    val entry = fringe
+    fringe = fringe.setCfgEdgeType(TrueEdge)
+    astAND.getRight.accept(this)
+    fringe = fringe.add(entry.setCfgEdgeType(FalseEdge))
+  }
+
+  override def visit(astOR: OrExpression):Unit = {
+    astOR.getLeft.accept(this)
+    val entry = fringe
+    fringe = fringe.setCfgEdgeType(FalseEdge)
+    astOR.getRight.accept(this)
+    fringe = fringe.add(entry.setCfgEdgeType(TrueEdge))
   }
 
   override def visit(breakStatement: BreakStatement): Unit = {
@@ -187,19 +202,25 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     condition.getExpression.accept(this)
   }
 
-  // TODO We for now intentionally represent the control flow wrong
-  // in order to be able to get the data flow right, but with the
-  // drawback of always assuming that both branches are executed.
-  // Fix once we can represent this correctly.
+
+  // TODO we would prefer to unify conditional expressions and control structures.
+  // The data flow tracker cannot deal with this correctly, so we use a
+  // CALL with nonstandard control flow (argument evaluation order) instgead.
   override def visit(conditionalExpression: ConditionalExpression): Unit = {
     val condition = conditionalExpression.getChild(0)
     val trueExpression = conditionalExpression.getChild(1)
     val falseExpression = conditionalExpression.getChild(2)
 
     condition.accept(this)
+    val fromCond = fringe
+    fringe = fringe.setCfgEdgeType(TrueEdge)
     trueExpression.accept(this)
+    val fromTrue = fringe
+    fringe = fromCond.setCfgEdgeType(FalseEdge)
     falseExpression.accept(this)
+    fringe = fringe.add(fromTrue)
   }
+
 
   override def visit(continueStatement: ContinueStatement): Unit = {
     val mappedContinue = adapter.mapNode(continueStatement)

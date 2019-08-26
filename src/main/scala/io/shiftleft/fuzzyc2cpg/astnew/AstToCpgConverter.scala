@@ -397,7 +397,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   override def visit(condition: Condition): Unit = {
-    //not called for ConditionalExpression
+    //not called for ConditionalExpression, cf joern#91
     context.addConditionEdgeOnNextAstEdge = true
     condition.getExpression.accept(this)
   }
@@ -406,11 +406,14 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     //this ought to be a ControlStructureNode, but we currently cannot handle that in the dataflow tracker
     val cpgConditionalExpr = createCallNode(astConditionalExpr, "<operator>.conditionalExpression")
     addAstChild(cpgConditionalExpr)
+    val condition = astConditionalExpr.getChild(0).asInstanceOf[Condition]
+    val trueExpression = astConditionalExpr.getChild(1)
+    val falseExpression = astConditionalExpr.getChild(2)
+    // avoid setting context.addConditionEdgeOnNextAstEdge in this.visit(condition), cf joern#91
     pushContext(cpgConditionalExpr, 1)
-    //avoid setting context.addConditionEdgeOnNextAstEdge.
-      astConditionalExpr.getChild(0).asInstanceOf[Condition].getExpression.accept(this)
-      astConditionalExpr.getChild(1).accept(this)
-      astConditionalExpr.getChild(2).accept(this)
+      condition.getExpression.accept(this)
+      trueExpression.accept(this)
+      falseExpression.accept(this)
     popContext()
   }
 
