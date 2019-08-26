@@ -153,6 +153,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     fringe = fringe.setCfgEdgeType(TrueEdge)
     astAND.getRight.accept(this)
     fringe = fringe.add(entry.setCfgEdgeType(FalseEdge))
+    extendCfg(astAND)
   }
 
   override def visit(astOR: OrExpression):Unit = {
@@ -161,6 +162,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     fringe = fringe.setCfgEdgeType(FalseEdge)
     astOR.getRight.accept(this)
     fringe = fringe.add(entry.setCfgEdgeType(TrueEdge))
+    extendCfg(astOR)
   }
 
   override def visit(breakStatement: BreakStatement): Unit = {
@@ -219,6 +221,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     fringe = fromCond.setCfgEdgeType(FalseEdge)
     falseExpression.accept(this)
     fringe = fringe.add(fromTrue)
+    extendCfg(conditionalExpression)
   }
 
 
