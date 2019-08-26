@@ -129,14 +129,29 @@ class AstToCfgTests extends WordSpec with Matchers {
         succOf("++x") shouldBe expected(("EXIT", AlwaysEdge))
       }
 
-    // TODO This is wrong but intention, see comment on
-    // visitor function for ConditionExpression.
     "be correct for conditional expression" in
       new Fixture("x ? y : z;") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("y", AlwaysEdge))
-        succOf("y") shouldBe expected(("z", AlwaysEdge))
-        succOf("z") shouldBe expected(("EXIT", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", TrueEdge), ("z", FalseEdge))
+        succOf("y") shouldBe expected(("x ? y : z", AlwaysEdge))
+        succOf("z") shouldBe expected(("x ? y : z", AlwaysEdge))
+        succOf("x ? y : z") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct for short-circuit AND expression" in
+      new Fixture("x && y;") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", TrueEdge), ("x && y", FalseEdge))
+        succOf("y") shouldBe expected(("x && y", AlwaysEdge))
+        succOf("x && y") shouldBe expected(("EXIT", AlwaysEdge))
+      }
+
+    "be correct for short-circuit OR expression" in
+      new Fixture("x || y;") {
+        succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", FalseEdge), ("x || y", TrueEdge))
+        succOf("y") shouldBe expected(("x || y", AlwaysEdge))
+        succOf("x || y") shouldBe expected(("EXIT", AlwaysEdge))
       }
   }
 

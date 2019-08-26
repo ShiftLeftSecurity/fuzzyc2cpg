@@ -419,9 +419,12 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val call = block.expandAst(NodeTypes.CALL)
-      val condition = call.expandAst(NodeTypes.CONTROL_STRUCTURE)
-      condition.check(1, _.value2(NodeKeys.CODE), expectations = "(foo == 1) ? bar : 0")
-      condition.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ConditionalExpression")
+      val conditionalExpr = call.expandAst(NodeTypes.CALL)//formerly control structure
+      conditionalExpr.check(1, _.value2(NodeKeys.CODE), expectations = "(foo == 1) ? bar : 0")
+      conditionalExpr.check(1, _.value2(NodeKeys.NAME), expectations = "<operator>.conditionalExpression")
+      val params = conditionalExpr.expandAst()
+      params.check(3, arg =>( arg.value2(NodeKeys.ARGUMENT_INDEX), arg.value2(NodeKeys.CODE)),
+        expectations = (1, "foo == 1"),(2, "bar"),(3, "0"))
     }
 
     "be correct for for-loop with multiple initializations" in new Fixture("""
