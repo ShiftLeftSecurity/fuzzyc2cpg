@@ -423,7 +423,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       conditionalExpr.check(1, _.value2(NodeKeys.CODE), expectations = "(foo == 1) ? bar : 0")
       conditionalExpr.check(1, _.value2(NodeKeys.NAME), expectations = "<operator>.conditionalExpression")
       val params = conditionalExpr.expandAst()
-      List(params(0)).check(1, _.value2(NodeKeys.CODE), expectations = "foo == 1")
+      params.check(3, arg =>( arg.value2(NodeKeys.ARGUMENT_INDEX), arg.value2(NodeKeys.CODE)),
+        expectations = (1, "foo == 1"),(2, "bar"),(3, "0"))
     }
 
     "be correct for for-loop with multiple initializations" in new Fixture("""
@@ -458,7 +459,6 @@ class AstToCpgTests extends WordSpec with Matchers {
 
       val forBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(4)
       forBlock.checkForSingle()
-      Operators.and
     }
 
     "be correct for unary expression '+'" in new Fixture("""
