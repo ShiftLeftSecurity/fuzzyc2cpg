@@ -18,8 +18,7 @@ import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.proto.cpg.Cpg.DispatchTypes
 import org.slf4j.LoggerFactory
-
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object AstToCpgConverter {
   private val logger = LoggerFactory.getLogger(getClass)

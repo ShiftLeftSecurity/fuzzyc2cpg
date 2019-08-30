@@ -12,8 +12,7 @@ import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters._
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump._
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import org.slf4j.LoggerFactory
-
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object AstToCfgConverter {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -31,10 +30,6 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
         case FringeElement(node, _) =>
           FringeElement(node, cfgEdgeType)
       }
-    }
-
-    def empty(): List[FringeElement] = {
-      List()
     }
 
     def add(node: NodeType, cfgEdgeType: CfgEdgeType): List[FringeElement] = {
@@ -60,11 +55,11 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
       case FringeElement(srcNode, cfgEdgeType) =>
         adapter.newCfgEdge(dstNode, srcNode, cfgEdgeType)
     }
-    fringe = fringe.empty().add(dstNode, AlwaysEdge)
+    fringe = Nil.add(dstNode, AlwaysEdge)
 
     if (markerStack.nonEmpty) {
       // Up until the first none None stack element we replace the Nones with Some(dstNode)
-      val leadingNoneLength = markerStack.prefixLength(_.isEmpty)
+      val leadingNoneLength = markerStack.segmentLength(_.isEmpty, 0)
       markerStack = List.fill(leadingNoneLength)(Some(dstNode)) ++ markerStack
         .drop(leadingNoneLength)
     }
@@ -172,7 +167,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     // But if the parser missed a loop or switch statement, breakStack
     // might by empty.
     if (breakStack.numberOfLayers > 0) {
-      fringe = fringe.empty()
+      fringe = Nil
       breakStack.store(mappedBreak)
     }
   }
@@ -232,7 +227,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     // But if the parser missed a loop statement, continueStack
     // might by empty.
     if (continueStack.numberOfLayers > 0) {
-      fringe = fringe.empty()
+      fringe = Nil
       continueStack.store(mappedContinue)
     }
   }
@@ -313,8 +308,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
           val storedFringe = fringe
           fringe = fringe.setCfgEdgeType(TrueEdge)
           storedFringe
-        case None =>
-          fringe.empty()
+        case None => Nil
       }
 
     forStatement.getStatement.accept(this)
@@ -341,7 +335,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
   override def visit(gotoStatement: GotoStatement): Unit = {
     val mappedGoto = adapter.mapNode(gotoStatement)
     extendCfg(mappedGoto)
-    fringe = fringe.empty()
+    fringe = Nil
     gotos = (mappedGoto, gotoStatement.getTargetName) :: gotos
   }
 
@@ -414,7 +408,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     Option(returnStatement.getReturnExpression).foreach(_.accept(this))
     val mappedReturnStatement = adapter.mapNode(returnStatement)
     extendCfg(mappedReturnStatement)
-    fringe = fringe.empty()
+    fringe = Nil
     returns = mappedReturnStatement :: returns
   }
 
@@ -442,7 +436,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
   override def visit(switchStatement: SwitchStatement): Unit = {
     switchStatement.getCondition.accept(this)
     val conditionFringe = fringe.setCfgEdgeType(CaseEdge)
-    fringe = fringe.empty()
+    fringe = Nil
 
     // We can only push the break and case stacks after we processed the condition
     // in order to allow for nested switches with no nodes CFG nodes in between
