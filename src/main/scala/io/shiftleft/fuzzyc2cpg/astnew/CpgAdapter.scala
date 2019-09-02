@@ -27,11 +27,11 @@ trait CpgAdapter[NodeBuilderType, NodeType] {
 
   def createNode(nodeBuilder: NodeBuilderType): NodeType
 
-  def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: String)
+  def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: String): Unit
 
-  def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: Int)
+  def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: Int): Unit
 
-  def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: Boolean)
+  def addProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: Boolean): Unit
 
-  def addEdge(edgeKind: EdgeKind, dstNode: NodeType, srcNode: NodeType)
+  def addEdge(edgeKind: EdgeKind, dstNode: NodeType, srcNode: NodeType): Unit
 }
