@@ -1,21 +1,20 @@
 name := "fuzzyc2cpg"
 organization := "io.shiftleft"
-scalaVersion := "2.13.0"
+scalaVersion := "2.12.7"
 
-val cpgVersion = "0.9.331a"
+val cpgVersion = "0.9.331"
 
 libraryDependencies ++= Seq(
-  "io.shiftleft" %% "codepropertygraph" % cpgVersion,
-  "io.shiftleft" %% "codepropertygraph-protos" % cpgVersion,
-  "com.github.scopt" %% "scopt" % "3.7.1",
+  "com.github.scopt"   %% "scopt"          % "3.7.0",
   "org.antlr" % "antlr4-runtime" % "4.7.2",
+  "io.shiftleft" % "codepropertygraph" % cpgVersion,
+  "io.shiftleft" % "codepropertygraph-protos" % cpgVersion,
   "org.slf4j" % "slf4j-simple" % "1.7.25" % Runtime,
   "commons-cli" % "commons-cli" % "1.4",
-  "com.github.pathikrit" %% "better-files"  % "3.8.0",
-  "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0",
+  "com.github.pathikrit" %% "better-files"  % "3.1.0",
   "com.novocode" % "junit-interface" % "0.11" % Test,
   "junit" % "junit" % "4.12" % Test,
-  "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.3" % Test,
 )
 
 // uncomment if you want to use a cpg version that has *just* been released

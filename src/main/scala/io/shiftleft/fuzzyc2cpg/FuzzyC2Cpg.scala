@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory
 import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
-import scala.collection.parallel.CollectionConverters._
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 

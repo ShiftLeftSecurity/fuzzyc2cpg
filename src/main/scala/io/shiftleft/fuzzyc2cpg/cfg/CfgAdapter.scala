@@ -10,5 +10,5 @@ object CaseEdge extends CfgEdgeType
 
 trait CfgAdapter[NodeType] {
   def mapNode(astNode: AstNode): NodeType
-  def newCfgEdge(dstNode: NodeType, srcNode: NodeType, cfgEdgeType: CfgEdgeType): Unit
+  def newCfgEdge(dstNode: NodeType, srcNode: NodeType, cfgEdgeType: CfgEdgeType)
 }
