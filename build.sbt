@@ -2,7 +2,7 @@ name := "fuzzyc2cpg"
 organization := "io.shiftleft"
 scalaVersion := "2.12.7"
 
-val cpgVersion = "0.10.3"
+val cpgVersion = "0.10.17+13-8662161f"
 
 libraryDependencies ++= Seq(
   "com.github.scopt"   %% "scopt"          % "3.7.0",
