@@ -25,9 +25,9 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
     * */
   override def visit(functionDef: FunctionDef): Unit = {
     val outputModule = outputModuleFactory.create()
-    outputModule.setOutputIdentifier(
-      s"${fileNameOption.get}${functionDef.getName}" +
-        s"${functionDef.getLocation.startLine}${functionDef.getLocation.endLine}")
+    val outputIdentifier = s"${fileNameOption.get}${functionDef.getName}" +
+      s"${functionDef.getLocation.startLine}${functionDef.getLocation.endLine}"
+    outputModule.setOutputIdentifier(outputIdentifier)
 
     val bodyCpg = CpgStruct.newBuilder()
     val cpgAdapter = new ProtoCpgAdapter(bodyCpg)
@@ -42,7 +42,17 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
                                                   graphAdapter)
     astToCfgConverter.convert(functionDef)
 
-    outputModule.persistCpg(bodyCpg)
+    // If this is an empty method, do not persist it yet, just store it
+    if (functionDef.getContent.getStatements.size() == 0) {
+      FuzzyC2CpgCache.emptyFunctions.put(functionDef.getFunctionSignature, (outputIdentifier, bodyCpg))
+    } else {
+      // We've just encountered a non-empty function, so, if a function
+      // with the same signature exists in `emptyFunctions`, remove it
+      if (FuzzyC2CpgCache.emptyFunctions.contains(functionDef.getFunctionSignature)) {
+        FuzzyC2CpgCache.emptyFunctions.remove(functionDef.getFunctionSignature)
+      }
+      outputModule.persistCpg(bodyCpg)
+    }
   }
 
   /**

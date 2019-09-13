@@ -14,6 +14,8 @@ import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 
+import scala.collection.mutable
+
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   def this(outputPath: String) = {
@@ -31,7 +33,17 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
     filenameToNodes.par.foreach(createCpgForCompilationUnit)
+    addEmptyFunctions
     outputModuleFactory.persist()
+  }
+
+  def addEmptyFunctions = {
+    FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted.foreach{ signature =>
+      val (outputIdentifier, bodyCpg) = FuzzyC2CpgCache.emptyFunctions(signature)
+      val outputModule = outputModuleFactory.create()
+      outputModule.setOutputIdentifier(outputIdentifier)
+      outputModule.persistCpg(bodyCpg)
+    }
   }
 
   private def createStructuralCpg(filenames: List[String],
@@ -111,6 +123,10 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     outputModule.persistCpg(cpg)
   }
 
+}
+
+object FuzzyC2CpgCache {
+  val emptyFunctions = new mutable.HashMap[String, (String, CpgStruct.Builder)]()
 }
 
 object FuzzyC2Cpg extends App {
