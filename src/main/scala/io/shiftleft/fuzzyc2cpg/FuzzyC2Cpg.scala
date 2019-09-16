@@ -133,10 +133,11 @@ object FuzzyC2CpgCache {
   def registerEmptyFunctionOrRemove(functionDef: FunctionDef, outputIdentifier: String, bodyCpg: CpgStruct.Builder) : Boolean = {
     emptyFunctions.synchronized {
       val signature = functionDef.getFunctionSignature
-
       // If this is an empty method, do not persist it yet, just store it
-      if (functionDef.getContent.getStatements.size() == 0 && !emptyFunctions.contains(signature)) {
-        emptyFunctions.put(signature, Some(outputIdentifier, bodyCpg))
+      if (functionDef.getContent.getStatements.size() == 0) {
+        if (!emptyFunctions.contains(signature)) {
+          emptyFunctions.put(signature, Some(outputIdentifier, bodyCpg))
+        }
         false
       } else {
         // We've just encountered a non-empty function, so, put a 'None'
