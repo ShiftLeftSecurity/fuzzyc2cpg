@@ -12,7 +12,7 @@ object SourceFiles {
 
     def hasSourceFileExtension(file: File): Boolean = {
       val ext = file.extension
-      ext.contains(".c") || ext.contains(".cpp") || ext.contains(".h") || ext.contains(".hpp")
+      ext.contains(".c") || ext.contains(".cpp") || ext.contains(".h") || ext.contains(".hpp") || ext.contains(".m")
     }
 
     val (dirs, files) = inputPaths.partition(File(_).isDirectory)
