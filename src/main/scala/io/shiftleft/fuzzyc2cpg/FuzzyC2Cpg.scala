@@ -40,10 +40,11 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   def addEmptyFunctions = {
     FuzzyC2CpgCache.sortedKeySet.foreach{ signature =>
-      val (outputIdentifier, bodyCpg) = FuzzyC2CpgCache.get(signature)
-      val outputModule = outputModuleFactory.create()
-      outputModule.setOutputIdentifier(outputIdentifier)
-      outputModule.persistCpg(bodyCpg)
+      FuzzyC2CpgCache.get(signature).foreach { case (outputIdentifier, bodyCpg) =>
+        val outputModule = outputModuleFactory.create()
+        outputModule.setOutputIdentifier(outputIdentifier)
+        outputModule.persistCpg(bodyCpg)
+      }
     }
   }
 
@@ -127,20 +128,20 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 }
 
 object FuzzyC2CpgCache {
-  private val emptyFunctions = new mutable.HashMap[String, (String, CpgStruct.Builder)]()
+  private val emptyFunctions = new mutable.HashMap[String, Option[(String, CpgStruct.Builder)]]()
 
   def registerEmptyFunctionOrRemove(functionDef: FunctionDef, outputIdentifier: String, bodyCpg: CpgStruct.Builder) : Boolean = {
     emptyFunctions.synchronized {
+      val signature = functionDef.getFunctionSignature
+
       // If this is an empty method, do not persist it yet, just store it
-      if (functionDef.getContent.getStatements.size() == 0) {
-        emptyFunctions.put(functionDef.getFunctionSignature, (outputIdentifier, bodyCpg))
+      if (functionDef.getContent.getStatements.size() == 0 && !emptyFunctions.contains(signature)) {
+        emptyFunctions.put(signature, Some(outputIdentifier, bodyCpg))
         false
       } else {
-        // We've just encountered a non-empty function, so, if a function
-        // with the same signature exists in `emptyFunctions`, remove it
-        if (emptyFunctions.contains(functionDef.getFunctionSignature)) {
-          emptyFunctions.remove(functionDef.getFunctionSignature)
-        }
+        // We've just encountered a non-empty function, so, put a 'None'
+        // into emptyFunctions for that signature
+        emptyFunctions.put(signature, None)
         true
       }
     }
@@ -150,7 +151,7 @@ object FuzzyC2CpgCache {
     FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted
   }
 
-  def get(signature : String) : (String, CpgStruct.Builder) = {
+  def get(signature : String) : Option[(String, CpgStruct.Builder)] = {
     FuzzyC2CpgCache.emptyFunctions(signature)
   }
 
