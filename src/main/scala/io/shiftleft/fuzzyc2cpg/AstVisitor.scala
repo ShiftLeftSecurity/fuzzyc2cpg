@@ -42,22 +42,8 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
                                                   graphAdapter)
     astToCfgConverter.convert(functionDef)
 
-    val emptyFunctions = FuzzyC2CpgCache.emptyFunctions
-    var persistCpg: Boolean = false;
-    emptyFunctions.synchronized {
-      // If this is an empty method, do not persist it yet, just store it
-      if (functionDef.getContent.getStatements.size() == 0) {
-        emptyFunctions.put(functionDef.getFunctionSignature, (outputIdentifier, bodyCpg))
-      } else {
-        // We've just encountered a non-empty function, so, if a function
-        // with the same signature exists in `emptyFunctions`, remove it
-        if (emptyFunctions.contains(functionDef.getFunctionSignature)) {
-          emptyFunctions.remove(functionDef.getFunctionSignature)
-        }
-        persistCpg = true;
-      }
-    }
-    if (persistCpg) {
+    val persist = FuzzyC2CpgCache.registerEmptyFunctionOrRemove(functionDef, outputIdentifier, bodyCpg)
+    if (persist) {
       outputModule.persistCpg(bodyCpg)
     }
   }

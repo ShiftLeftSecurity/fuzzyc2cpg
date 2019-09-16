@@ -11,6 +11,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.slf4j.LoggerFactory
 import io.shiftleft.fuzzyc2cpg.Utils._
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 
@@ -38,9 +39,8 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   }
 
   def addEmptyFunctions = {
-    // No locking is required here as we are past concurrent processing
-    FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted.foreach{ signature =>
-      val (outputIdentifier, bodyCpg) = FuzzyC2CpgCache.emptyFunctions(signature)
+    FuzzyC2CpgCache.sortedKeySet.foreach{ signature =>
+      val (outputIdentifier, bodyCpg) = FuzzyC2CpgCache.get(signature)
       val outputModule = outputModuleFactory.create()
       outputModule.setOutputIdentifier(outputIdentifier)
       outputModule.persistCpg(bodyCpg)
@@ -127,7 +127,33 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 }
 
 object FuzzyC2CpgCache {
-  val emptyFunctions = new mutable.HashMap[String, (String, CpgStruct.Builder)]()
+  private val emptyFunctions = new mutable.HashMap[String, (String, CpgStruct.Builder)]()
+
+  def registerEmptyFunctionOrRemove(functionDef: FunctionDef, outputIdentifier: String, bodyCpg: CpgStruct.Builder) : Boolean = {
+    emptyFunctions.synchronized {
+      // If this is an empty method, do not persist it yet, just store it
+      if (functionDef.getContent.getStatements.size() == 0) {
+        emptyFunctions.put(functionDef.getFunctionSignature, (outputIdentifier, bodyCpg))
+        false
+      } else {
+        // We've just encountered a non-empty function, so, if a function
+        // with the same signature exists in `emptyFunctions`, remove it
+        if (emptyFunctions.contains(functionDef.getFunctionSignature)) {
+          emptyFunctions.remove(functionDef.getFunctionSignature)
+        }
+        true
+      }
+    }
+  }
+
+  def sortedKeySet : List[String] = {
+    FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted
+  }
+
+  def get(signature : String) : (String, CpgStruct.Builder) = {
+    FuzzyC2CpgCache.emptyFunctions(signature)
+  }
+
 }
 
 object FuzzyC2Cpg extends App {
