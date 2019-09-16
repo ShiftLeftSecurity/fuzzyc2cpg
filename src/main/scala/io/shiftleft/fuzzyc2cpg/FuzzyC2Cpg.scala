@@ -38,6 +38,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   }
 
   def addEmptyFunctions = {
+    // No locking is required here as we are past concurrent processing
     FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted.foreach{ signature =>
       val (outputIdentifier, bodyCpg) = FuzzyC2CpgCache.emptyFunctions(signature)
       val outputModule = outputModuleFactory.create()
