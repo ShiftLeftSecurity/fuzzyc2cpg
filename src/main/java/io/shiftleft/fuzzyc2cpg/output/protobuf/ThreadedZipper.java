@@ -57,8 +57,8 @@ class ThreadedZipper extends Thread {
       Path path = Paths.get(this.outputFile);
       URI zipUri;
       try {
-        zipUri = URI.create("jar:" + path.toAbsolutePath().toString());
-      } catch (Exception exception) {
+        zipUri = new URI("jar:file", null, path.toAbsolutePath().toString(), null);
+      } catch (URISyntaxException exception) {
         pool.shutdownNow();
         logger.error(
             "Failed to create URI using path " + path.toAbsolutePath().toString(), exception);
