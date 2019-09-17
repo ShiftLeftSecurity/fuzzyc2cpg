@@ -149,11 +149,15 @@ object FuzzyC2CpgCache {
   }
 
   def sortedKeySet : List[String] = {
-    FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted
+    emptyFunctions.synchronized {
+      FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted
+    }
   }
 
   def get(signature : String) : Option[(String, CpgStruct.Builder)] = {
-    FuzzyC2CpgCache.emptyFunctions(signature)
+    emptyFunctions.synchronized {
+      FuzzyC2CpgCache.emptyFunctions(signature)
+    }
   }
 
 }
