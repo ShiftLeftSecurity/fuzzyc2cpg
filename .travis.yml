@@ -17,7 +17,7 @@ stages:
 jobs:
   include:
   - stage: test
-    script: sbt +test
+    script: sbt scalafmtCheck +test
   - stage: release
     script: sbt ci-release-sonatype
 before_cache:
