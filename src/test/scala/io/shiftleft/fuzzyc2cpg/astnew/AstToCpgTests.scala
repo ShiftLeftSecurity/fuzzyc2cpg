@@ -102,10 +102,9 @@ class AstToCpgTests extends WordSpec with Matchers {
     driver.parseAndWalkTokenStream(tokens)
 
     private val fileName = "codeFromString"
-    val graph: ScalaGraph = OdbGraph.open(
-      OdbConfig.withoutOverflow(),
-      generated.nodes.Factories.AllAsJava,
-      generated.edges.Factories.AllAsJava)
+    val graph: ScalaGraph = OdbGraph.open(OdbConfig.withoutOverflow(),
+                                          generated.nodes.Factories.AllAsJava,
+                                          generated.edges.Factories.AllAsJava)
     private val astParentNode = graph.addVertex("NAMESPACE_BLOCK")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
@@ -419,12 +418,15 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val call = block.expandAst(NodeTypes.CALL)
-      val conditionalExpr = call.expandAst(NodeTypes.CALL)//formerly control structure
+      val conditionalExpr = call.expandAst(NodeTypes.CALL) //formerly control structure
       conditionalExpr.check(1, _.value2(NodeKeys.CODE), expectations = "(foo == 1) ? bar : 0")
       conditionalExpr.check(1, _.value2(NodeKeys.NAME), expectations = "<operator>.conditionalExpression")
       val params = conditionalExpr.expandAst()
-      params.check(3, arg =>( arg.value2(NodeKeys.ARGUMENT_INDEX), arg.value2(NodeKeys.CODE)),
-        expectations = (1, "foo == 1"),(2, "bar"),(3, "0"))
+      params.check(3,
+                   arg => (arg.value2(NodeKeys.ARGUMENT_INDEX), arg.value2(NodeKeys.CODE)),
+                   expectations = (1, "foo == 1"),
+                   (2, "bar"),
+                   (3, "0"))
     }
 
     "be correct for for-loop with multiple initializations" in new Fixture("""

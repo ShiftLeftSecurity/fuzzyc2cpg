@@ -39,11 +39,12 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   }
 
   def addEmptyFunctions = {
-    FuzzyC2CpgCache.sortedKeySet.foreach{ signature =>
-      FuzzyC2CpgCache.get(signature).foreach { case (outputIdentifier, bodyCpg) =>
-        val outputModule = outputModuleFactory.create()
-        outputModule.setOutputIdentifier(outputIdentifier)
-        outputModule.persistCpg(bodyCpg)
+    FuzzyC2CpgCache.sortedKeySet.foreach { signature =>
+      FuzzyC2CpgCache.get(signature).foreach {
+        case (outputIdentifier, bodyCpg) =>
+          val outputModule = outputModuleFactory.create()
+          outputModule.setOutputIdentifier(outputIdentifier)
+          outputModule.persistCpg(bodyCpg)
       }
     }
   }
@@ -130,7 +131,9 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 object FuzzyC2CpgCache {
   private val emptyFunctions = new mutable.HashMap[String, Option[(String, CpgStruct.Builder)]]()
 
-  def registerEmptyFunctionOrRemove(functionDef: FunctionDef, outputIdentifier: String, bodyCpg: CpgStruct.Builder) : Boolean = {
+  def registerEmptyFunctionOrRemove(functionDef: FunctionDef,
+                                    outputIdentifier: String,
+                                    bodyCpg: CpgStruct.Builder): Boolean = {
     emptyFunctions.synchronized {
       val signature = functionDef.getFunctionSignature
       // If this is an empty method, do not persist it yet, just store it
@@ -148,13 +151,13 @@ object FuzzyC2CpgCache {
     }
   }
 
-  def sortedKeySet : List[String] = {
+  def sortedKeySet: List[String] = {
     emptyFunctions.synchronized {
       FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted
     }
   }
 
-  def get(signature : String) : Option[(String, CpgStruct.Builder)] = {
+  def get(signature: String): Option[(String, CpgStruct.Builder)] = {
     emptyFunctions.synchronized {
       FuzzyC2CpgCache.emptyFunctions(signature)
     }

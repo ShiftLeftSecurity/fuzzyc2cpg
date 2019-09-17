@@ -147,7 +147,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     extendCfg(binaryExpression)
   }
 
-  override def visit(astAND: AndExpression):Unit = {
+  override def visit(astAND: AndExpression): Unit = {
     astAND.getLeft.accept(this)
     val entry = fringe
     fringe = fringe.setCfgEdgeType(TrueEdge)
@@ -156,7 +156,7 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     extendCfg(astAND)
   }
 
-  override def visit(astOR: OrExpression):Unit = {
+  override def visit(astOR: OrExpression): Unit = {
     astOR.getLeft.accept(this)
     val entry = fringe
     fringe = fringe.setCfgEdgeType(FalseEdge)
@@ -204,7 +204,6 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     condition.getExpression.accept(this)
   }
 
-
   // TODO we would prefer to unify conditional expressions and control structures.
   // The data flow tracker cannot deal with this correctly, so we use a
   // CALL with nonstandard control flow (argument evaluation order) instgead.
@@ -223,7 +222,6 @@ class AstToCfgConverter[NodeType](entryNode: NodeType, exitNode: NodeType, adapt
     fringe = fringe.add(fromTrue)
     extendCfg(conditionalExpression)
   }
-
 
   override def visit(continueStatement: ContinueStatement): Unit = {
     val mappedContinue = adapter.mapNode(continueStatement)

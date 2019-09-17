@@ -410,9 +410,9 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     val falseExpression = astConditionalExpr.getChild(2)
     // avoid setting context.addConditionEdgeOnNextAstEdge in this.visit(condition), cf joern#91
     pushContext(cpgConditionalExpr, 1)
-      condition.getExpression.accept(this)
-      trueExpression.accept(this)
-      falseExpression.accept(this)
+    condition.getExpression.accept(this)
+    trueExpression.accept(this)
+    falseExpression.accept(this)
     popContext()
   }
 
