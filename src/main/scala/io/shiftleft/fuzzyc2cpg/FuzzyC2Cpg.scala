@@ -11,8 +11,11 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.slf4j.LoggerFactory
 import io.shiftleft.fuzzyc2cpg.Utils._
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
+
+import scala.collection.mutable
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
@@ -31,7 +34,19 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
     filenameToNodes.par.foreach(createCpgForCompilationUnit)
+    addEmptyFunctions
     outputModuleFactory.persist()
+  }
+
+  def addEmptyFunctions = {
+    FuzzyC2CpgCache.sortedKeySet.foreach { signature =>
+      FuzzyC2CpgCache.get(signature).foreach {
+        case (outputIdentifier, bodyCpg) =>
+          val outputModule = outputModuleFactory.create()
+          outputModule.setOutputIdentifier(outputIdentifier)
+          outputModule.persistCpg(bodyCpg)
+      }
+    }
   }
 
   private def createStructuralCpg(filenames: List[String],
@@ -109,6 +124,43 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       s"$filename types"
     )
     outputModule.persistCpg(cpg)
+  }
+
+}
+
+object FuzzyC2CpgCache {
+  private val emptyFunctions = new mutable.HashMap[String, Option[(String, CpgStruct.Builder)]]()
+
+  def registerEmptyFunctionOrRemove(functionDef: FunctionDef,
+                                    outputIdentifier: String,
+                                    bodyCpg: CpgStruct.Builder): Boolean = {
+    emptyFunctions.synchronized {
+      val signature = functionDef.getFunctionSignature
+      // If this is an empty method, do not persist it yet, just store it
+      if (functionDef.getContent.getStatements.size() == 0) {
+        if (!emptyFunctions.contains(signature)) {
+          emptyFunctions.put(signature, Some(outputIdentifier, bodyCpg))
+        }
+        false
+      } else {
+        // We've just encountered a non-empty function, so, put a 'None'
+        // into emptyFunctions for that signature
+        emptyFunctions.put(signature, None)
+        true
+      }
+    }
+  }
+
+  def sortedKeySet: List[String] = {
+    emptyFunctions.synchronized {
+      FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted
+    }
+  }
+
+  def get(signature: String): Option[(String, CpgStruct.Builder)] = {
+    emptyFunctions.synchronized {
+      FuzzyC2CpgCache.emptyFunctions(signature)
+    }
   }
 
 }
