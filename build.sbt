@@ -71,4 +71,4 @@ developers := List(
   )
 )
 publishTo := sonatypePublishToBundle.value
-Global/useGpgPinentry := true
+Global / useGpg := false
