@@ -43,6 +43,10 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
     astToCfgConverter.convert(functionDef)
 
     if (functionDef.isOnlyDeclaration) {
+      // Do not persist the declaration. It may be that we encounter a
+      // corresponding definition, in which case the declaration will be
+      // removed again and is never persisted. Persisting of declarations
+      // happens after concurrent processing of compilation units.
       FuzzyC2CpgCache.add(functionDef.getFunctionSignature, outputIdentifier, bodyCpg)
     } else {
       FuzzyC2CpgCache.remove(functionDef.getFunctionSignature)
