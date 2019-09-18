@@ -37,7 +37,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     outputModuleFactory.persist()
   }
 
-  private def addFunctionDeclarations : Unit = {
+  private def addFunctionDeclarations: Unit = {
     FuzzyC2CpgCache.sortedSignatures.foreach { signature =>
       FuzzyC2CpgCache.getDeclarations(signature).foreach {
         case (outputIdentifier, bodyCpg) =>
@@ -134,12 +134,12 @@ object FuzzyC2CpgCache {
     * Unless `remove` has been called for `signature`, add (outputIdentifier, cpg)
     * pair to the list declarations stored for `signature`.
     * */
-  def add(signature : String, outputIdentifier : String, cpg : CpgStruct.Builder): Unit = {
+  def add(signature: String, outputIdentifier: String, cpg: CpgStruct.Builder): Unit = {
     functionDeclarations.synchronized {
       if (functionDeclarations.contains(signature)) {
         val declList = functionDeclarations(signature)
         if (declList.nonEmpty) {
-         functionDeclarations(signature).append((outputIdentifier, cpg))
+          functionDeclarations(signature).append((outputIdentifier, cpg))
         }
       } else {
         functionDeclarations.put(signature, mutable.ListBuffer((outputIdentifier, cpg)))
@@ -153,8 +153,8 @@ object FuzzyC2CpgCache {
     * therefore, no declaration should be written for functions
     * with this signature.
     * */
-  def remove(signature : String) : Unit = {
-    functionDeclarations.synchronized{
+  def remove(signature: String): Unit = {
+    functionDeclarations.synchronized {
       functionDeclarations.put(signature, mutable.ListBuffer())
     }
   }

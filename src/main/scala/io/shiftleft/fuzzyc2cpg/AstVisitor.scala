@@ -42,7 +42,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
                                                   graphAdapter)
     astToCfgConverter.convert(functionDef)
 
-    if(functionDef.isOnlyDeclaration) {
+    if (functionDef.isOnlyDeclaration) {
       FuzzyC2CpgCache.add(functionDef.getFunctionSignature, outputIdentifier, bodyCpg)
     } else {
       FuzzyC2CpgCache.remove(functionDef.getFunctionSignature)
