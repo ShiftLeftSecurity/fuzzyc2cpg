@@ -159,6 +159,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
     methodReturnNode = Some(cpgMethodReturn)
 
     addAstChild(cpgMethodReturn)
+
     astFunction.getContent.accept(this)
 
     scope.popScope()

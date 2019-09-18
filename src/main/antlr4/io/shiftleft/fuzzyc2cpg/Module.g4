@@ -18,13 +18,12 @@ import ModuleLex, Common;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-code : (function_decl | function_def | simple_decl | using_directive | water)*;
+code : (function_def | simple_decl | using_directive | water)*;
 
 using_directive: USING NAMESPACE identifier ';';
 
-function_decl : 'extern'? template_decl_start? return_type? function_name function_param_list ctor_list? ';';
-
-function_def : template_decl_start? return_type? function_name function_param_list ctor_list? compound_statement;
+function_def : template_decl_start? return_type? function_name
+            function_param_list ctor_list? compound_statement;
 
 return_type : (function_decl_specifiers* type_name) ptr_operator*;
 
