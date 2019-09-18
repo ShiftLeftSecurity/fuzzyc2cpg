@@ -10,6 +10,7 @@ import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 public class FunctionDef extends FunctionDefBase {
 
   private Identifier identifier = null;
+  private boolean isOnlyDeclaration = false;
 
   public Identifier getIdentifier() {
     return this.identifier;
@@ -53,4 +54,13 @@ public class FunctionDef extends FunctionDefBase {
   public void accept(ASTNodeVisitor visitor) {
     visitor.visit(this);
   }
+
+  public void setIsOnlyDeclaration(boolean isOnlyDeclaration) {
+    this.isOnlyDeclaration = isOnlyDeclaration;
+  }
+
+  public boolean isOnlyDeclaration() {
+    return this.isOnlyDeclaration;
+  }
+
 }

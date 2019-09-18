@@ -39,6 +39,21 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
     p.notifyObserversOfUnitEnd(ctx);
   }
 
+  @Override
+  public void enterFunction_decl(ModuleParser.Function_declContext ctx) {
+    FunctionDefBuilder builder = new FunctionDefBuilder();
+    builder.createNew(ctx);
+    builder.setIsOnlyDeclaration(true);
+    builder.setContent(new CompoundStatement());
+    p.builderStack.push(builder);
+  }
+
+  @Override
+  public void exitFunction_decl(ModuleParser.Function_declContext ctx) {
+    FunctionDefBuilder builder = (FunctionDefBuilder) p.builderStack.pop();
+    p.notifyObserversOfItem(builder.getItem());
+  }
+
   // /////////////////////////////////////////////////////////////
   // This is where the ModuleParser invokes the FunctionParser
   // /////////////////////////////////////////////////////////////

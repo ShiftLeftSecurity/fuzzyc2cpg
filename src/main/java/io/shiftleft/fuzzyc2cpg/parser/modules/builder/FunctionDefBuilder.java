@@ -59,4 +59,8 @@ public class FunctionDefBuilder extends AstNodeBuilder {
     thisItem.addChild(functionContent);
   }
 
+  public void setIsOnlyDeclaration(boolean isOnlyDeclaration) {
+    thisItem.setIsOnlyDeclaration(isOnlyDeclaration);
+  }
+
 }

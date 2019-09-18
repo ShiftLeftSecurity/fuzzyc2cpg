@@ -25,9 +25,9 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
     * */
   override def visit(functionDef: FunctionDef): Unit = {
     val outputModule = outputModuleFactory.create()
-    outputModule.setOutputIdentifier(
-      s"${fileNameOption.get}${functionDef.getName}" +
-        s"${functionDef.getLocation.startLine}${functionDef.getLocation.endLine}")
+    val outputIdentifier = s"${fileNameOption.get}${functionDef.getName}" +
+      s"${functionDef.getLocation.startLine}${functionDef.getLocation.endLine}"
+    outputModule.setOutputIdentifier(outputIdentifier)
 
     val bodyCpg = CpgStruct.newBuilder()
     val cpgAdapter = new ProtoCpgAdapter(bodyCpg)
@@ -42,7 +42,16 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
                                                   graphAdapter)
     astToCfgConverter.convert(functionDef)
 
-    outputModule.persistCpg(bodyCpg)
+    if (functionDef.isOnlyDeclaration) {
+      // Do not persist the declaration. It may be that we encounter a
+      // corresponding definition, in which case the declaration will be
+      // removed again and is never persisted. Persisting of declarations
+      // happens after concurrent processing of compilation units.
+      FuzzyC2CpgCache.add(functionDef.getFunctionSignature, outputIdentifier, bodyCpg)
+    } else {
+      FuzzyC2CpgCache.remove(functionDef.getFunctionSignature)
+      outputModule.persistCpg(bodyCpg)
+    }
   }
 
   /**

@@ -14,6 +14,8 @@ import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 
+import scala.collection.mutable
+
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   def this(outputPath: String) = {
@@ -31,7 +33,19 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
     filenameToNodes.par.foreach(createCpgForCompilationUnit)
+    addFunctionDeclarations
     outputModuleFactory.persist()
+  }
+
+  private def addFunctionDeclarations: Unit = {
+    FuzzyC2CpgCache.sortedSignatures.foreach { signature =>
+      FuzzyC2CpgCache.getDeclarations(signature).foreach {
+        case (outputIdentifier, bodyCpg) =>
+          val outputModule = outputModuleFactory.create()
+          outputModule.setOutputIdentifier(outputIdentifier)
+          outputModule.persistCpg(bodyCpg)
+      }
+    }
   }
 
   private def createStructuralCpg(filenames: List[String],
@@ -109,6 +123,52 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       s"$filename types"
     )
     outputModule.persistCpg(cpg)
+  }
+
+}
+
+object FuzzyC2CpgCache {
+  private val functionDeclarations = new mutable.HashMap[String, mutable.ListBuffer[(String, CpgStruct.Builder)]]()
+
+  /**
+    * Unless `remove` has been called for `signature`, add (outputIdentifier, cpg)
+    * pair to the list declarations stored for `signature`.
+    * */
+  def add(signature: String, outputIdentifier: String, cpg: CpgStruct.Builder): Unit = {
+    functionDeclarations.synchronized {
+      if (functionDeclarations.contains(signature)) {
+        val declList = functionDeclarations(signature)
+        if (declList.nonEmpty) {
+          declList.append((outputIdentifier, cpg))
+        }
+      } else {
+        functionDeclarations.put(signature, mutable.ListBuffer((outputIdentifier, cpg)))
+      }
+    }
+  }
+
+  /**
+    * Register placeholder for `signature` to indicate that
+    * a function definition exists for this declaration, and
+    * therefore, no declaration should be written for functions
+    * with this signature.
+    * */
+  def remove(signature: String): Unit = {
+    functionDeclarations.synchronized {
+      functionDeclarations.put(signature, mutable.ListBuffer())
+    }
+  }
+
+  def sortedSignatures: List[String] = {
+    functionDeclarations.synchronized {
+      functionDeclarations.keySet.toList.sorted
+    }
+  }
+
+  def getDeclarations(signature: String): List[(String, CpgStruct.Builder)] = {
+    functionDeclarations.synchronized {
+      functionDeclarations(signature).toList
+    }
   }
 
 }
