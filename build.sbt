@@ -1,6 +1,6 @@
 name := "fuzzyc2cpg"
 organization := "io.shiftleft"
-scalaVersion := "2.12.7"
+scalaVersion := "2.12.10"
 
 val cpgVersion = "0.10.3"
 
@@ -70,4 +70,5 @@ developers := List(
     url("https://github.com/julianthome")
   )
 )
-publishTo := sonatypePublishTo.value
+publishTo := sonatypePublishToBundle.value
+Global/useGpgPinentry := true
