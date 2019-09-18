@@ -139,7 +139,7 @@ object FuzzyC2CpgCache {
       if (functionDeclarations.contains(signature)) {
         val declList = functionDeclarations(signature)
         if (declList.nonEmpty) {
-          functionDeclarations(signature).append((outputIdentifier, cpg))
+          declList.append((outputIdentifier, cpg))
         }
       } else {
         functionDeclarations.put(signature, mutable.ListBuffer((outputIdentifier, cpg)))
