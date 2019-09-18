@@ -11,7 +11,6 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.slf4j.LoggerFactory
 import io.shiftleft.fuzzyc2cpg.Utils._
-import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 
@@ -34,13 +33,13 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
     filenameToNodes.par.foreach(createCpgForCompilationUnit)
-    addEmptyFunctions
+    addFunctionDeclarations
     outputModuleFactory.persist()
   }
 
-  def addEmptyFunctions = {
-    FuzzyC2CpgCache.sortedKeySet.foreach { signature =>
-      FuzzyC2CpgCache.get(signature).foreach {
+  private def addFunctionDeclarations : Unit = {
+    FuzzyC2CpgCache.sortedSignatures.foreach { signature =>
+      FuzzyC2CpgCache.getDeclarations(signature).foreach {
         case (outputIdentifier, bodyCpg) =>
           val outputModule = outputModuleFactory.create()
           outputModule.setOutputIdentifier(outputIdentifier)
@@ -129,37 +128,46 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 }
 
 object FuzzyC2CpgCache {
-  private val emptyFunctions = new mutable.HashMap[String, Option[(String, CpgStruct.Builder)]]()
+  private val functionDeclarations = new mutable.HashMap[String, mutable.ListBuffer[(String, CpgStruct.Builder)]]()
 
-  def registerEmptyFunctionOrRemove(functionDef: FunctionDef,
-                                    outputIdentifier: String,
-                                    bodyCpg: CpgStruct.Builder): Boolean = {
-    emptyFunctions.synchronized {
-      val signature = functionDef.getFunctionSignature
-      // If this is an empty method, do not persist it yet, just store it
-      if (functionDef.getContent.getStatements.size() == 0) {
-        if (!emptyFunctions.contains(signature)) {
-          emptyFunctions.put(signature, Some(outputIdentifier, bodyCpg))
+  /**
+    * Unless `remove` has been called for `signature`, add (outputIdentifier, cpg)
+    * pair to the list declarations stored for `signature`.
+    * */
+  def add(signature : String, outputIdentifier : String, cpg : CpgStruct.Builder): Unit = {
+    functionDeclarations.synchronized {
+      if (functionDeclarations.contains(signature)) {
+        val declList = functionDeclarations(signature)
+        if (declList.nonEmpty) {
+         functionDeclarations(signature).append((outputIdentifier, cpg))
         }
-        false
       } else {
-        // We've just encountered a non-empty function, so, put a 'None'
-        // into emptyFunctions for that signature
-        emptyFunctions.put(signature, None)
-        true
+        functionDeclarations.put(signature, mutable.ListBuffer((outputIdentifier, cpg)))
       }
     }
   }
 
-  def sortedKeySet: List[String] = {
-    emptyFunctions.synchronized {
-      FuzzyC2CpgCache.emptyFunctions.keySet.toList.sorted
+  /**
+    * Register placeholder for `signature` to indicate that
+    * a function definition exists for this declaration, and
+    * therefore, no declaration should be written for functions
+    * with this signature.
+    * */
+  def remove(signature : String) : Unit = {
+    functionDeclarations.synchronized{
+      functionDeclarations.put(signature, mutable.ListBuffer())
     }
   }
 
-  def get(signature: String): Option[(String, CpgStruct.Builder)] = {
-    emptyFunctions.synchronized {
-      FuzzyC2CpgCache.emptyFunctions(signature)
+  def sortedSignatures: List[String] = {
+    functionDeclarations.synchronized {
+      functionDeclarations.keySet.toList.sorted
+    }
+  }
+
+  def getDeclarations(signature: String): List[(String, CpgStruct.Builder)] = {
+    functionDeclarations.synchronized {
+      functionDeclarations(signature).toList
     }
   }
 

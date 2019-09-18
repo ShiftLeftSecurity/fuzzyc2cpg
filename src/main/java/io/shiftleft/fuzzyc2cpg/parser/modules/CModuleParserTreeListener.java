@@ -43,10 +43,9 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
   public void enterFunction_decl(ModuleParser.Function_declContext ctx) {
     FunctionDefBuilder builder = new FunctionDefBuilder();
     builder.createNew(ctx);
+    builder.setIsOnlyDeclaration(true);
+    builder.setContent(new CompoundStatement());
     p.builderStack.push(builder);
-
-    CompoundStatement functionContent = new CompoundStatement();
-    builder.setContent(functionContent);
   }
 
   @Override

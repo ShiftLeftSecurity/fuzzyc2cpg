@@ -42,8 +42,10 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
                                                   graphAdapter)
     astToCfgConverter.convert(functionDef)
 
-    val persist = FuzzyC2CpgCache.registerEmptyFunctionOrRemove(functionDef, outputIdentifier, bodyCpg)
-    if (persist) {
+    if(functionDef.isOnlyDeclaration) {
+      FuzzyC2CpgCache.add(functionDef.getFunctionSignature, outputIdentifier, bodyCpg)
+    } else {
+      FuzzyC2CpgCache.remove(functionDef.getFunctionSignature)
       outputModule.persistCpg(bodyCpg)
     }
   }
