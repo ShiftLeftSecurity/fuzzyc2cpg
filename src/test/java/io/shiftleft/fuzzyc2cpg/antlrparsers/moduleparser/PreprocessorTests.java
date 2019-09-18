@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import org.junit.Test;
 
-public class PreprocessorTests extends FunctionDefinitionTests
+public class PreprocessorTests extends ModuleParserTest
 {
 
 	@Test

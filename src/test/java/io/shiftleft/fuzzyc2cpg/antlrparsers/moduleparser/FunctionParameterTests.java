@@ -6,7 +6,7 @@ import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import org.junit.Test;
 
 
-public class FunctionParameterTests extends FunctionDefinitionTests
+public class FunctionParameterTests extends ModuleParserTest
 {
 
 	@Test

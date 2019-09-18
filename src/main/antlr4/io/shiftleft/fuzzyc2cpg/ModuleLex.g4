@@ -104,16 +104,13 @@ UnicodeEscape
 fragment
 HexDigit : ('0'..'9'|'a'..'f'|'A'..'F') ;
 
-COMMENT
-    :   '/*' .*? '*/'    -> channel(HIDDEN)
-    ;
+
+COMMENT : '/*' (COMMENT|.)*? '*/'	-> channel(HIDDEN) ;
+LINE_COMMENT : '//' .*? ('\n'|EOF)	-> channel(HIDDEN) ;
+
 WHITESPACE  :   [ \r\t\u000C\n]+ -> skip
     ;
 
-CPPCOMMENT
-    : '//' ~[\r\n]* '\r'? '\n' -> channel(HIDDEN)
-    ;
-    
 ELLIPSIS : '...';
 
 
