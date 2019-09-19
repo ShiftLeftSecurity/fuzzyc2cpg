@@ -161,7 +161,7 @@ abstract public class AntlrParserDriver {
     try {
       return CharStreams.fromFileName(filename);
     } catch (IOException exception) {
-      throw new ParserException("");
+      throw new RuntimeException(String.format("Unable to find source file [%s]", filename));
     }
 
   }

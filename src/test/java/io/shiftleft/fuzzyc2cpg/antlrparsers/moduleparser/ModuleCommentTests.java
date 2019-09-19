@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
 
-public class CommentTests extends ModuleParserTest {
+public class ModuleCommentTests extends ModuleParserTest {
 
   private void assertTokenEqualsString(Token tok, String expected) {
     assertEquals(expected, tok.getText());

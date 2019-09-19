@@ -1,5 +1,10 @@
 package io.shiftleft.fuzzyc2cpg.parser.modules;
 
+import java.util.Iterator;
+import java.util.List;
+
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import io.shiftleft.fuzzyc2cpg.ModuleBaseListener;
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import io.shiftleft.fuzzyc2cpg.ModuleParser.Class_defContext;
@@ -15,9 +20,6 @@ import io.shiftleft.fuzzyc2cpg.parser.ModuleFunctionParserInterface;
 import io.shiftleft.fuzzyc2cpg.parser.modules.builder.FunctionDefBuilder;
 import io.shiftleft.fuzzyc2cpg.parser.shared.builders.ClassDefBuilder;
 import io.shiftleft.fuzzyc2cpg.parser.shared.builders.IdentifierDeclBuilder;
-import java.util.Iterator;
-import java.util.List;
-import org.antlr.v4.runtime.ParserRuleContext;
 
 // Converts Parse Trees to ASTs for Modules
 
