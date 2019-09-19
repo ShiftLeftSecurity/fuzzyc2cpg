@@ -70,4 +70,5 @@ developers := List(
     url("https://github.com/julianthome")
   )
 )
-publishTo := sonatypePublishTo.value
+publishTo := sonatypePublishToBundle.value
+Global / useGpg := false
