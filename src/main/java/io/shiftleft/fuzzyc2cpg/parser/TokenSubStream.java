@@ -2,10 +2,11 @@ package io.shiftleft.fuzzyc2cpg.parser;
 
 import java.util.Stack;
 import org.antlr.v4.runtime.BufferedTokenStream;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenSource;
 
-public class TokenSubStream extends BufferedTokenStream {
+public class TokenSubStream extends CommonTokenStream {
 
   protected int stopIndex = -1;
   protected int startIndex = 0;
