@@ -39,4 +39,12 @@ public class FunctionParserTest extends FunctionParserTestBase
 		assertTrue(output.contains("selection_or_iteration while"));
 	}
 
+	@Test
+	public void testAutoWithinIf() {
+		String input = "if (auto x = 1) { return 1; } else { return 2; }";
+		AntlrParserDriver functionParser = createFunctionDriver();
+		ParseTree tree = functionParser.parseString(input);
+		String output = tree.toStringTree(functionParser.getAntlrParser());
+		assertTrue(output.contains("(base_type auto)) (declarator (identifier x))"));
+	}
 }
