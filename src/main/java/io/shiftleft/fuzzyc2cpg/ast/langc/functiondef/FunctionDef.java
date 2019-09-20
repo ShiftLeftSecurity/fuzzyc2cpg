@@ -4,6 +4,8 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterList;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.Template;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.TemplateParameterList;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
@@ -43,6 +45,8 @@ public class FunctionDef extends FunctionDefBase {
       setContent((CompoundStatement) node);
     } else if (node instanceof ParameterList) {
       setParameterList((ParameterList) node);
+    } else if (node instanceof TemplateParameterList) {
+      setTemplateParameterList((TemplateParameterList) node);
     } else if (node instanceof Identifier) {
       setIdentifier((Identifier) node);
     } else {

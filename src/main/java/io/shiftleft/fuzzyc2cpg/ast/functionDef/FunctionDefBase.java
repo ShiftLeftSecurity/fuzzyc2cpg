@@ -6,9 +6,10 @@ import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public abstract class FunctionDefBase extends AstNode {
 
-  protected ParameterList parameterList = null;
-  protected ReturnType returnType = null;
-  protected CompoundStatement content = null;
+  protected ParameterList parameterList;
+  protected TemplateParameterList templateParameterList;
+  protected ReturnType returnType;
+  protected CompoundStatement content;
 
   public abstract String getName();
 
@@ -29,6 +30,15 @@ public abstract class FunctionDefBase extends AstNode {
   public void setParameterList(ParameterList parameterList) {
     this.parameterList = parameterList;
     super.addChild(parameterList);
+  }
+
+  public TemplateParameterList getTemplateParameterList() {
+    return templateParameterList;
+  }
+
+  public void setTemplateParameterList(TemplateParameterList templateParameterList) {
+    this.templateParameterList = templateParameterList;
+    super.addChild(templateParameterList);
   }
 
   public CompoundStatement getContent() {

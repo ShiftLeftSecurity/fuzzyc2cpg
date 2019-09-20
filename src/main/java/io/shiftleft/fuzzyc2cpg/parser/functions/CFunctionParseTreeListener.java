@@ -11,7 +11,7 @@ import io.shiftleft.fuzzyc2cpg.parser.functions.builder.FunctionContentBuilder;
 
 public class CFunctionParseTreeListener extends FunctionBaseListener {
 
-  AntlrParserDriver p;
+  private final AntlrParserDriver p;
 
   public CFunctionParseTreeListener(AntlrParserDriver aP) {
     p = aP;

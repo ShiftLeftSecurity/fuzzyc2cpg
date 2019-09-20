@@ -1,24 +1,23 @@
 package io.shiftleft.fuzzyc2cpg.parser.modules.builder;
 
-import io.shiftleft.fuzzyc2cpg.ModuleParser.Function_nameContext;
-import io.shiftleft.fuzzyc2cpg.ModuleParser.Function_param_listContext;
-import io.shiftleft.fuzzyc2cpg.ModuleParser.Parameter_declContext;
-import io.shiftleft.fuzzyc2cpg.ModuleParser.Return_typeContext;
-import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
-import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.ReturnType;
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
-import io.shiftleft.fuzzyc2cpg.parser.AstNodeFactory;
-import io.shiftleft.fuzzyc2cpg.parser.functions.builder.ParameterListBuilder;
-import io.shiftleft.fuzzyc2cpg.parser.ParseTreeUtils;
 import java.util.Stack;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public class FunctionDefBuilder extends AstNodeBuilder {
+import io.shiftleft.fuzzyc2cpg.ModuleParser.*;
+import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.ReturnType;
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef;
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
+import io.shiftleft.fuzzyc2cpg.parser.AstNodeFactory;
+import io.shiftleft.fuzzyc2cpg.parser.ParseTreeUtils;
+import io.shiftleft.fuzzyc2cpg.parser.functions.builder.ParameterListBuilder;
+import io.shiftleft.fuzzyc2cpg.parser.shared.builders.TemplateAstBuilder;
 
-  FunctionDef thisItem;
-  ParameterListBuilder paramListBuilder = new ParameterListBuilder();
+public class FunctionDefBuilder extends TemplateAstBuilder<FunctionDef> {
+
+  private final ParameterListBuilder paramListBuilder = new ParameterListBuilder();
 
   @Override
   public void createNew(ParserRuleContext ctx) {
