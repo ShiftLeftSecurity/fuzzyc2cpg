@@ -82,7 +82,21 @@ initializer: assign_expr
            |'{' initializer_list '}'
 ;
 
-initializer_list: initializer (',' initializer)*;
+initializer_list: initializer (',' designation? initializer)*;
+
+designation
+    :   designatorList '='
+    ;
+
+designatorList
+    :   designator
+    |   designatorList designator
+    ;
+
+designator
+    :   '[' constant ']'
+    |   '.' identifier
+    ;
 
 // Parameters
 

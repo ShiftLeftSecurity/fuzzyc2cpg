@@ -676,13 +676,15 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
 
   override def visit(astInitializerList: InitializerList): Unit = {
     // TODO figure out how to represent.
+    logger.debug("Oh noes, an initializer list!")
   }
 
   override def visit(statement: Statement): Unit = {
     if (statement.getChildCount != 0) {
       throw new RuntimeException("Unhandled statement type: " + statement.getClass)
     } else {
-      logger.debug("Parse error. Code: {}", statement.getEscapedCodeStr)
+      logger.debug(
+        String.format("Parse error at [%s]. Code: %s", statement.getLocationString, statement.getEscapedCodeStr))
     }
   }
 
