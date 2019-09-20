@@ -151,7 +151,7 @@ type_name : (CV_QUALIFIER* (CLASS_KEY | UNSIGNED | SIGNED)?
           | SIGNED
           ;
 
-base_type: (ALPHA_NUMERIC | VOID | LONG | LONG)+;
+base_type: (ALPHA_NUMERIC | AUTO | VOID | LONG | LONG)+;
 
 gcc_attribute: GCC_ATTRIBUTE '(' '(' identifier ')' ')';
 
