@@ -2,13 +2,13 @@ name := "fuzzyc2cpg"
 organization := "io.shiftleft"
 scalaVersion := "2.12.10"
 
-val cpgVersion = "0.10.3"
+val cpgVersion = "0.10.26"
 
 libraryDependencies ++= Seq(
   "com.github.scopt"   %% "scopt"          % "3.7.0",
   "org.antlr" % "antlr4-runtime" % "4.7.2",
-  "io.shiftleft" % "codepropertygraph" % cpgVersion,
-  "io.shiftleft" % "codepropertygraph-protos" % cpgVersion,
+  "io.shiftleft" %% "codepropertygraph" % cpgVersion,
+  "io.shiftleft" %% "codepropertygraph-protos" % cpgVersion,
   "org.slf4j" % "slf4j-simple" % "1.7.25" % Runtime,
   "commons-cli" % "commons-cli" % "1.4",
   "com.github.pathikrit" %% "better-files"  % "3.1.0",
