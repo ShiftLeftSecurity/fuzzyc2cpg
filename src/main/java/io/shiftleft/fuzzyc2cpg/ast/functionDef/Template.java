@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.ast.functionDef;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 public class Template extends TemplateBase {
   private TemplateTypeName typeName;
@@ -21,5 +22,10 @@ public class Template extends TemplateBase {
     } else {
       super.addChild(node);
     }
+  }
+
+  @Override
+  public void accept(ASTNodeVisitor visitor) {
+    visitor.visit(this);
   }
 }
