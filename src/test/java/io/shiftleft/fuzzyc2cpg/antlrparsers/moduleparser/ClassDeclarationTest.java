@@ -30,7 +30,7 @@ public class ClassDeclarationTest
 		ModuleParser parser = createParser(input);
 		String output = parser.simple_decl().toStringTree(parser);
 		assertTrue(output.startsWith(
-				"(simple_decl (var_decl (class_def struct (class_name (identifier foo))"));
+				"(simple_decl (var_decl (class_def (class_key struct) (class_name (identifier foo))"));
 	}
 
 	@Test
@@ -41,7 +41,7 @@ public class ClassDeclarationTest
 		ModuleParser parser = createParser(input);
 		String output = parser.simple_decl().toStringTree(parser);
 		assertTrue(output
-				.startsWith("(simple_decl (var_decl (class_def struct {"));
+				.startsWith("(simple_decl (var_decl (class_def (class_key struct) {"));
 	}
 
 	@Test
@@ -64,7 +64,7 @@ public class ClassDeclarationTest
 		ModuleParser parser = createParser(input);
 		String output = parser.simple_decl().toStringTree(parser);
 		assertTrue(output.startsWith(
-				"(simple_decl (var_decl (class_def struct (class_name (identifier foo)) { int x ; }) (init_declarator_list (init_declarator (declarator (identifier y))) ;)))"));
+				"(simple_decl (var_decl (class_def (class_key struct) (class_name (identifier foo)) { int x ; }) (init_declarator_list (init_declarator (declarator (identifier y))) ;)))"));
 	}
 
 	@Test

@@ -1,23 +1,23 @@
 package io.shiftleft.fuzzyc2cpg.parser;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import io.shiftleft.fuzzyc2cpg.FunctionParser.InitDeclWithAssignContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.StatementContext;
 import io.shiftleft.fuzzyc2cpg.ModuleParser.Parameter_declContext;
 import io.shiftleft.fuzzyc2cpg.ModuleParser.Parameter_idContext;
 import io.shiftleft.fuzzyc2cpg.ModuleParser.Parameter_nameContext;
+import io.shiftleft.fuzzyc2cpg.ModuleParser.Template_nameContext;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.BinaryExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.Template;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.TemplateTypeName;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.ParameterType;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Statement;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.Interval;
 
 public class AstNodeFactory {
 
@@ -112,4 +112,17 @@ public class AstNodeFactory {
     return parameterId.parameter_name();
   }
 
+  public static Template create(Template_nameContext ctx) {
+
+    Template template = new Template();
+
+    String typeName = ParseTreeUtils.childTokenString(ctx);
+    TemplateTypeName templateType = new TemplateTypeName(typeName);
+
+    initializeFromContext(templateType, ctx);
+    initializeFromContext(template, ctx);
+
+    template.addChild(templateType);
+    return template;
+  }
 }

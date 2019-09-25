@@ -1,11 +1,13 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
+import scala.collection.JavaConverters._
+
 import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, Operators}
 import io.shiftleft.fuzzyc2cpg.Defines
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.{FunctionDefBase, Template}
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpression}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
@@ -18,8 +20,6 @@ import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.proto.cpg.Cpg.DispatchTypes
 import org.slf4j.LoggerFactory
-
-import scala.collection.JavaConverters._
 
 object AstToCpgConverter {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -141,6 +141,13 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
       parameter.accept(this)
     }
 
+    val templateParamList = astFunction.getTemplateParameterList
+    if (templateParamList != null) {
+      templateParamList.asScala.foreach { template =>
+        template.accept(this)
+      }
+    }
+
     val methodReturnLocation =
       if (astFunction.getReturnType != null) {
         astFunction.getReturnType.getLocation
@@ -185,6 +192,11 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
 
     scope.addToScope(astParameter.getName, (cpgParameter, parameterType))
     addAstChild(cpgParameter)
+  }
+
+  override def visit(template: Template): Unit = {
+    // TODO (#60): Populate templated types in CPG.
+    logger.debug("NYI: Template parsing.")
   }
 
   override def visit(argument: Argument): Unit = {
@@ -701,6 +713,13 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
       .createNode(astClassDef)
 
     addAstChild(cpgTypeDecl)
+
+    val templateParamList = astClassDef.getTemplateParameterList
+    if (templateParamList != null) {
+      templateParamList.asScala.foreach { template =>
+        template.accept(this)
+      }
+    }
 
     pushContext(cpgTypeDecl, 1, parentIsClassDef = true)
     astClassDef.content.accept(this)

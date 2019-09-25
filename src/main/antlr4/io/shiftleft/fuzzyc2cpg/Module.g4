@@ -22,9 +22,9 @@ code : (function_decl | function_def | simple_decl | using_directive | water)*;
 
 using_directive: USING NAMESPACE identifier ';';
 
-function_decl : 'extern'? template_decl_start? return_type? function_name function_param_list ctor_list? ';';
+function_decl: ('extern' | template_decl)? return_type? function_name function_param_list ctor_list? ';';
 
-function_def : template_decl_start? return_type? function_name function_param_list ctor_list? compound_statement;
+function_def: template_decl? return_type? function_name function_param_list ctor_list? compound_statement;
 
 return_type : (function_decl_specifiers* type_name) ptr_operator*;
 
@@ -68,12 +68,12 @@ assign_expr_w__l2: assign_water_l2* (('{' assign_expr_w__l2 '}' | '(' assign_exp
 
 constant_expr_w_: no_squares* ('[' constant_expr_w_ ']' no_squares*)*;
 
-simple_decl : (storage_class_specifier* template_decl_start?) var_decl;
+simple_decl : storage_class_specifier* var_decl;
 
 storage_class_specifier: (EXTERN | TYPEDEF);
 
 var_decl : class_def init_declarator_list? #declByClass
-         | type_name init_declarator_list #declByType
+         | template_decl? type_name init_declarator_list #declByType
          ;
 
 init_declarator_list: init_declarator (',' init_declarator)* ';';

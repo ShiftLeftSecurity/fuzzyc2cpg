@@ -3,21 +3,25 @@ package io.shiftleft.fuzzyc2cpg.parsetreetoast;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.junit.Test;
+
 import io.shiftleft.fuzzyc2cpg.ModuleLexer;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterBase;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.Template;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.TemplateParameterList;
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.ParameterType;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
 import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver;
-import java.util.List;
-
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.junit.Test;
 
 public class ModuleBuildersTest
 {
@@ -227,6 +231,123 @@ public class ModuleBuildersTest
 		List<AstNode> codeItems = parseInput(input);
 		FunctionDefBase codeItem = (FunctionDefBase) codeItems.get(0);
 		assertTrue(codeItem.getParameterList().size() == 0);
+	}
+
+	@Test
+	public void testTemplateAssociationWithClass() {
+		String input = "template <typename T> class Foo { T t; };";
+		List<AstNode> codeItems = parseInput(input);
+		ClassDefStatement classDef = (ClassDefStatement) codeItems.get(0);
+		TemplateParameterList templates = (TemplateParameterList) classDef.getChild(0);
+
+		assertEquals("Foo", classDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(1, templates.getChildCount());
+		assertEquals(1, templates.size());
+
+		Template template = (Template) templates.getChild(0);
+
+		assertEquals(1, template.getChildCount());
+		assertEquals("T", template.getName());
+	}
+
+	@Test
+	public void testTemplateTemplateAssociationWithClass() {
+		String input = "template <template<typename> typename T, typename Z> class Foo { T<Z> t; };";
+		List<AstNode> codeItems = parseInput(input);
+		ClassDefStatement classDef = (ClassDefStatement) codeItems.get(0);
+		TemplateParameterList templates = (TemplateParameterList) classDef.getChild(0);
+
+		assertEquals("Foo", classDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(2, templates.size());
+		assertEquals(2, templates.getChildCount());
+
+		Template firstTemplate = (Template) templates.getChild(0);
+		Template secondTemplate = (Template) templates.getChild(1);
+
+		assertEquals(1, firstTemplate.getChildCount());
+		assertEquals(1, secondTemplate.getChildCount());
+		assertEquals("T", firstTemplate.getName());
+		assertEquals("Z", secondTemplate.getName());
+	}
+
+	@Test
+	public void testTemplateAssociationWithFunction() {
+		String input = "template <typename T, typename Z> T foo(T x) { }";
+		List<AstNode> codeItems = parseInput(input);
+		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
+		TemplateParameterList templates = (TemplateParameterList) functionDef.getChild(1);
+
+		assertEquals("foo", functionDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(2, templates.size());
+		assertEquals(2, templates.getChildCount());
+
+		Template firstTemplate = (Template) templates.getChild(0);
+		Template secondTemplate = (Template) templates.getChild(1);
+
+		assertEquals(1, firstTemplate.getChildCount());
+		assertEquals(1, secondTemplate.getChildCount());
+		assertEquals("T", firstTemplate.getName());
+		assertEquals("Z", secondTemplate.getName());
+	}
+
+	@Test
+	public void testTemplateTemplateAssociationWithFunction() {
+		String input = "template <template<typename> typename T, typename Z> T<Z> foo(T<Z> x) { }";
+		List<AstNode> codeItems = parseInput(input);
+		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
+		TemplateParameterList templates = (TemplateParameterList) functionDef.getChild(1);
+
+		assertEquals("foo", functionDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(2, templates.size());
+		assertEquals(2, templates.getChildCount());
+
+		Template firstTemplate = (Template) templates.getChild(0);
+		Template secondTemplate = (Template) templates.getChild(1);
+
+		assertEquals(1, firstTemplate.getChildCount());
+		assertEquals(1, secondTemplate.getChildCount());
+		assertEquals("T", firstTemplate.getName());
+		assertEquals("Z", secondTemplate.getName());
+	}
+
+	@Test
+	public void testTemplateAssociationWithFunctionDecl() {
+		String input = "template <typename T, typename Z> T foo(T x);";
+		List<AstNode> codeItems = parseInput(input);
+		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
+		TemplateParameterList templates = (TemplateParameterList) functionDef.getChild(1);
+
+		assertEquals("foo", functionDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(2, templates.size());
+		assertEquals(2, templates.getChildCount());
+
+		Template firstTemplate = (Template) templates.getChild(0);
+		Template secondTemplate = (Template) templates.getChild(1);
+
+		assertEquals(1, firstTemplate.getChildCount());
+		assertEquals(1, secondTemplate.getChildCount());
+		assertEquals("T", firstTemplate.getName());
+		assertEquals("Z", secondTemplate.getName());
+	}
+
+	@Test
+	public void testTemplateTemplateAssociationWithFunctionDecl() {
+		String input = "template <template<typename> typename T, typename Z> T<Z> foo(T<Z> x);";
+		List<AstNode> codeItems = parseInput(input);
+		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
+		TemplateParameterList templates = (TemplateParameterList) functionDef.getChild(1);
+
+		assertEquals("foo", functionDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(2, templates.size());
+		assertEquals(2, templates.getChildCount());
+
+		Template firstTemplate = (Template) templates.getChild(0);
+		Template secondTemplate = (Template) templates.getChild(1);
+
+		assertEquals(1, firstTemplate.getChildCount());
+		assertEquals(1, secondTemplate.getChildCount());
+		assertEquals("T", firstTemplate.getName());
+		assertEquals("Z", secondTemplate.getName());
 	}
 
 	private List<AstNode> parseInput(String input)

@@ -20,6 +20,7 @@ import io.shiftleft.fuzzyc2cpg.parser.ModuleFunctionParserInterface;
 import io.shiftleft.fuzzyc2cpg.parser.modules.builder.FunctionDefBuilder;
 import io.shiftleft.fuzzyc2cpg.parser.shared.builders.ClassDefBuilder;
 import io.shiftleft.fuzzyc2cpg.parser.shared.builders.IdentifierDeclBuilder;
+import io.shiftleft.fuzzyc2cpg.parser.shared.builders.TemplateAstBuilder;
 
 // Converts Parse Trees to ASTs for Modules
 
@@ -67,7 +68,6 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
 
   @Override
   public void enterFunction_def(ModuleParser.Function_defContext ctx) {
-
     FunctionDefBuilder builder = new FunctionDefBuilder();
     builder.createNew(ctx);
     p.builderStack.push(builder);
@@ -106,6 +106,19 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
   public void enterParameter_decl(ModuleParser.Parameter_declContext ctx) {
     FunctionDefBuilder builder = (FunctionDefBuilder) p.builderStack.peek();
     builder.addParameter(ctx, p.builderStack);
+  }
+
+  @Override
+  public void enterTemplate_decl(ModuleParser.Template_declContext ctx) {
+    TemplateAstBuilder<?> builder = (TemplateAstBuilder<?>) p.builderStack.peek();
+    builder.setTemplateList(ctx);
+  }
+
+
+  @Override
+  public void enterTemplate_name(ModuleParser.Template_nameContext ctx) {
+    TemplateAstBuilder<?> builder = (TemplateAstBuilder) p.builderStack.peek();
+    builder.addTemplateParameter(ctx);
   }
 
   // DeclByType

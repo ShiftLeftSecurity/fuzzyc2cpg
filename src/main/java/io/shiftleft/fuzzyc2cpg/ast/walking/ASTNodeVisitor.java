@@ -52,10 +52,7 @@ import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryOperationExpression;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryOperator;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Variable;
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterBase;
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterList;
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.ReturnType;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.*;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.SizeofExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef;
@@ -335,6 +332,22 @@ public interface ASTNodeVisitor {
 
   default void visit(ParameterType parameterType) {
     visit((AstNode)parameterType);
+  }
+
+  default void visit(TemplateBase templateBase) {
+    visit((AstNode) templateBase);
+  }
+
+  default void visit(Template template) {
+    visit((TemplateBase) template);
+  }
+
+  default void visit(TemplateTypeName templateTypeName) {
+    visit((AstNode) templateTypeName);
+  }
+
+  default void visit(TemplateParameterList templateParameterList) {
+    visit((AstNode) templateParameterList);
   }
 
   default void visit(ElseStatement statement) {

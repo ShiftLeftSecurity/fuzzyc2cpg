@@ -103,14 +103,17 @@ operator: (('new' | 'delete' ) ('[' ']')?)
 assignment_operator: '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '&=' | '^=' | '|='; 
 equality_operator: ('=='| '!=');
 
-template_decl_start : TEMPLATE '<' template_param_list '>';
+// TODO: Does not support default types (e.g. template<typename N = int>). To achieve extend template_decl_param.
+template_decl: TEMPLATE '<' template_decl_param_list? '>';
+template_decl_param_list: template_template template_decl_keyword template_name |
+                          template_decl_param |
+                          template_decl_param_list ',' template_decl_param;
+template_template: TEMPLATE '<' (template_decl_keyword ','?)+ '>';
+template_decl_param: template_decl_keyword template_name?;
+template_decl_keyword: 'typename' | 'class';
+template_name: ALPHA_NUMERIC+ ELLIPSIS? ;
 
-
-// template water
-template_param_list : (('<' template_param_list '>') |
-                       ('(' template_param_list ')') | 
-                       no_angle_brackets_or_brackets)+
-;
+template_args: ('<' template_args '>' | '(' template_args ')' | base_type ELLIPSIS? | ',')+;
 
 // water
 
@@ -137,16 +140,16 @@ number: HEX_LITERAL | DECIMAL_LITERAL | OCTAL_LITERAL;
 ptrs: (CV_QUALIFIER? ptr_operator 'restrict'?)+;
 func_ptrs: ptrs;
 
+class_key: 'struct' | 'class' | 'union' | 'enum';
 
-
-class_def: CLASS_KEY gcc_attribute? class_name? base_classes? OPENING_CURLY {skipToEndOfObject(); } ;
+class_def: template_decl? class_key gcc_attribute? class_name? template_args? base_classes? OPENING_CURLY {skipToEndOfObject(); } ;
 class_name: identifier;
 base_classes: ':' base_class (',' base_class)*;
 base_class: VIRTUAL? access_specifier? identifier;
 
 
-type_name : (CV_QUALIFIER* (CLASS_KEY | UNSIGNED | SIGNED)?
-            base_type ('<' template_param_list '>')? ('::' base_type ('<' template_param_list '>')? )*) CV_QUALIFIER?
+type_name : (CV_QUALIFIER* (class_key | UNSIGNED | SIGNED)?
+            base_type ('<' template_args '>')? ('::' base_type ('<' template_args '>')? )*) CV_QUALIFIER?
           | UNSIGNED
           | SIGNED
           ;
