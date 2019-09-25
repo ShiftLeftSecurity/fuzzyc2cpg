@@ -252,7 +252,7 @@ public class ModuleBuildersTest
 
 	@Test
 	public void testTemplateTemplateAssociationWithClass() {
-		String input = "template <template<typename> T, typename Z> class Foo { T<Z> t; };";
+		String input = "template <template<typename> typename T, typename Z> class Foo { T<Z> t; };";
 		List<AstNode> codeItems = parseInput(input);
 		ClassDefStatement classDef = (ClassDefStatement) codeItems.get(0);
 		TemplateParameterList templates = (TemplateParameterList) classDef.getChild(0);
@@ -292,7 +292,7 @@ public class ModuleBuildersTest
 
 	@Test
 	public void testTemplateTemplateAssociationWithFunction() {
-		String input = "template <template<typename> T, typename Z> T<Z> foo(T<Z> x) { }";
+		String input = "template <template<typename> typename T, typename Z> T<Z> foo(T<Z> x) { }";
 		List<AstNode> codeItems = parseInput(input);
 		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
 		TemplateParameterList templates = (TemplateParameterList) functionDef.getChild(1);
@@ -332,7 +332,7 @@ public class ModuleBuildersTest
 
 	@Test
 	public void testTemplateTemplateAssociationWithFunctionDecl() {
-		String input = "template <template<typename> T, typename Z> T<Z> foo(T<Z> x);";
+		String input = "template <template<typename> typename T, typename Z> T<Z> foo(T<Z> x);";
 		List<AstNode> codeItems = parseInput(input);
 		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
 		TemplateParameterList templates = (TemplateParameterList) functionDef.getChild(1);

@@ -105,7 +105,7 @@ equality_operator: ('=='| '!=');
 
 // TODO: Does not support default types (e.g. template<typename N = int>). To achieve extend template_decl_param.
 template_decl: TEMPLATE '<' template_decl_param_list? '>';
-template_decl_param_list: template_template template_name |
+template_decl_param_list: template_template template_decl_keyword template_name |
                           template_decl_param |
                           template_decl_param_list ',' template_decl_param;
 template_template: TEMPLATE '<' (template_decl_keyword ','?)+ '>';

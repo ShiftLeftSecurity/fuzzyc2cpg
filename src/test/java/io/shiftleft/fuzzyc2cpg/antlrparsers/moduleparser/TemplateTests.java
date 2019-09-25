@@ -26,10 +26,10 @@ public class TemplateTests extends ModuleParserTest {
 
   @Test
   public void testClassTemplateTemplate() {
-    String input = "template <template<typename, typename> M, typename K, typename V> class Foo {};";
+    String input = "template <template<typename, typename> typename M, typename K, typename V> class Foo {};";
     ModuleParser parser = createParser(input);
     String output = parser.class_def().toStringTree(parser);
-    assertTrue(output.contains("(class_def (template_decl template < (template_decl_param_list (template_decl_param_list (template_decl_param_list (template_template template < (template_decl_keyword typename) , (template_decl_keyword typename) >) (template_name M)) , (template_decl_param (template_decl_keyword typename) (template_name K))) , (template_decl_param (template_decl_keyword typename) (template_name V))) >) (class_key class) (class_name (identifier Foo)) { })"));
+    assertTrue(output.contains("(class_def (template_decl template < (template_decl_param_list (template_decl_param_list (template_decl_param_list (template_template template < (template_decl_keyword typename) , (template_decl_keyword typename) >) (template_decl_keyword typename) (template_name M)) , (template_decl_param (template_decl_keyword typename) (template_name K))) , (template_decl_param (template_decl_keyword typename) (template_name V))) >) (class_key class) (class_name (identifier Foo)) { })"));
   }
 
   @Test
@@ -66,10 +66,10 @@ public class TemplateTests extends ModuleParserTest {
 
   @Test
   public void testFunctionTemplateTemplate() {
-    String input = "template <template <typename, typename> M, typename K, typename V> M<K, V> foo(M<K, V> k) {}";
+    String input = "template <template <typename, typename> typename M, typename K, typename V> M<K, V> foo(M<K, V> k) {}";
     ModuleParser parser = createParser(input);
     String output = parser.function_def().toStringTree(parser);
-    assertTrue(output.contains("(function_def (template_decl template < (template_decl_param_list (template_decl_param_list (template_decl_param_list (template_template template < (template_decl_keyword typename) , (template_decl_keyword typename) >) (template_name M)) , (template_decl_param (template_decl_keyword typename) (template_name K))) , (template_decl_param (template_decl_keyword typename) (template_name V))) >) (return_type (type_name (base_type M) < (template_args (base_type K) , (base_type V)) >)) (function_name (identifier foo)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type M) < (template_args (base_type K) , (base_type V)) >)) (parameter_id (parameter_name (identifier k))))) )) (compound_statement { }))"));
+    assertTrue(output.contains("(function_def (template_decl template < (template_decl_param_list (template_decl_param_list (template_decl_param_list (template_template template < (template_decl_keyword typename) , (template_decl_keyword typename) >) (template_decl_keyword typename) (template_name M)) , (template_decl_param (template_decl_keyword typename) (template_name K))) , (template_decl_param (template_decl_keyword typename) (template_name V))) >) (return_type (type_name (base_type M) < (template_args (base_type K) , (base_type V)) >)) (function_name (identifier foo)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type M) < (template_args (base_type K) , (base_type V)) >)) (parameter_id (parameter_name (identifier k))))) )) (compound_statement { }))"));
   }
 
   @Test
@@ -106,10 +106,10 @@ public class TemplateTests extends ModuleParserTest {
 
   @Test
   public void testFunctionDeclTemplateTemplate() {
-    String input = "template <template <typename, typename> M, typename K, typename V> M<K, V> foo(M<K, V> k);";
+    String input = "template <template <typename, typename> typename M, typename K, typename V> M<K, V> foo(M<K, V> k);";
     ModuleParser parser = createParser(input);
     String output = parser.function_decl().toStringTree(parser);
-    assertTrue(output.contains("(function_decl (template_decl template < (template_decl_param_list (template_decl_param_list (template_decl_param_list (template_template template < (template_decl_keyword typename) , (template_decl_keyword typename) >) (template_name M)) , (template_decl_param (template_decl_keyword typename) (template_name K))) , (template_decl_param (template_decl_keyword typename) (template_name V))) >) (return_type (type_name (base_type M) < (template_args (base_type K) , (base_type V)) >)) (function_name (identifier foo)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type M) < (template_args (base_type K) , (base_type V)) >)) (parameter_id (parameter_name (identifier k))))) )) ;)"));
+    assertTrue(output.contains("(function_decl (template_decl template < (template_decl_param_list (template_decl_param_list (template_decl_param_list (template_template template < (template_decl_keyword typename) , (template_decl_keyword typename) >) (template_decl_keyword typename) (template_name M)) , (template_decl_param (template_decl_keyword typename) (template_name K))) , (template_decl_param (template_decl_keyword typename) (template_name V))) >) (return_type (type_name (base_type M) < (template_args (base_type K) , (base_type V)) >)) (function_name (identifier foo)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type M) < (template_args (base_type K) , (base_type V)) >)) (parameter_id (parameter_name (identifier k))))) )) ;)"));
   }
 
   @Test
