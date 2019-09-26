@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.antlrparsers.moduleparser;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
@@ -38,5 +39,28 @@ public class OtherTests extends ModuleParserTest
 		String output = parser.function_def().toStringTree(parser);
 
 		assertTrue(output.startsWith("(function_def "));
+	}
+
+	@Test
+	public void testMultilineString() {
+		String input = "char* c = \"This is \"\n" +
+			"\"a multiline \"\n" +
+			"\"string.\";";
+
+		ModuleParser parser = createParser(input);
+		String output = parser.var_decl().toStringTree(parser);
+		assertEquals(
+			"(var_decl (type_name (base_type char)) (init_declarator_list (init_declarator (declarator (ptrs (ptr_operator *)) (identifier c)) = (assign_expr_w_ (assign_water \"This is \"\\n\"a multiline \"\\n\"string.\"))) ;))",
+			output);
+	}
+
+	@Test
+	public void testStringConcatWithIdentifier() {
+		String input = "char* c = \"start\"SOME_VAR\"end\";";
+		ModuleParser parser = createParser(input);
+		String output = parser.var_decl().toStringTree(parser);
+		assertEquals(
+			"(var_decl (type_name (base_type char)) (init_declarator_list (init_declarator (declarator (ptrs (ptr_operator *)) (identifier c)) = (assign_expr_w_ (assign_water \"start\"SOME_VAR\"end\"))) ;))",
+			output);
 	}
 }
