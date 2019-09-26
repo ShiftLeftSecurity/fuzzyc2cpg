@@ -80,6 +80,7 @@ constant
     |   DECIMAL_LITERAL
     |   BINARY_LITERAL
 	|	STRING
+	|   MULTILINE_STRING
     |   CHAR
     |   FLOATING_POINT_LITERAL
     ;

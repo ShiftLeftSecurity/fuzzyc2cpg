@@ -66,6 +66,7 @@ STRING
     :  '"' ( EscapeSequence | ~('\\'|'"') )* '"'
     ;
 
+MULTILINE_STRING: STRING ((WHITESPACE | ALPHA_NUMERIC)* MULTILINE_STRING)?;
 
 fragment
 IntegerTypeSuffix
