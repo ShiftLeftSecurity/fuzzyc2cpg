@@ -1,9 +1,10 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
 import scala.collection.JavaConverters._
-
 import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, Operators}
 import io.shiftleft.fuzzyc2cpg.Defines
+import io.shiftleft.fuzzyc2cpg.adapter.{CpgAdapter, EdgeKind, NodeKind, NodeProperty}
+import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
@@ -16,7 +17,6 @@ import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.CatchList
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump._
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
-import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.proto.cpg.Cpg.DispatchTypes
 import org.slf4j.LoggerFactory
@@ -25,10 +25,10 @@ object AstToCpgConverter {
   private val logger = LoggerFactory.getLogger(getClass)
 }
 
-class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
-                                                   cpgParent: NodeType,
-                                                   adapter: CpgAdapter[NodeBuilderType, NodeType])
-    extends ASTNodeVisitor {
+class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]
+(containingFileName: String,
+ cpgParent: NodeType,
+ adapter: CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]) extends ASTNodeVisitor {
   import AstToCpgConverter._
 
   private var contextStack = List[Context]()
@@ -62,15 +62,15 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   // gets confused witht he implicit resolution.
   private implicit class NodeBuilderWrapper2(nodeBuilder: NodeBuilderType) {
     def addProperty(property: NodeProperty, value: String): NodeBuilderType = {
-      adapter.addProperty(nodeBuilder, property, value)
+      adapter.addNodeProperty(nodeBuilder, property, value)
       nodeBuilder
     }
     def addProperty(property: NodeProperty, value: Int): NodeBuilderType = {
-      adapter.addProperty(nodeBuilder, property, value)
+      adapter.addNodeProperty(nodeBuilder, property, value)
       nodeBuilder
     }
     def addProperty(property: NodeProperty, value: Boolean): NodeBuilderType = {
-      adapter.addProperty(nodeBuilder, property, value)
+      adapter.addNodeProperty(nodeBuilder, property, value)
       nodeBuilder
     }
     def createNode(astNode: AstNode): NodeType = {
@@ -90,6 +90,12 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
         .addProperty(NodeProperty.ARGUMENT_INDEX, context.childNum)
         .addProperty(NodeProperty.LINE_NUMBER, astNode.getLocation.startLine)
         .addProperty(NodeProperty.COLUMN_NUMBER, astNode.getLocation.startPos)
+    }
+  }
+
+  private implicit class EdgeBuilderWrapper2(edgeBuilder: EdgeBuilderType) {
+    def createEdge(): EdgeType = {
+      adapter.createEdge(edgeBuilder)
     }
   }
 
@@ -402,7 +408,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
 
     variableOption match {
       case Some((variable, _)) =>
-        adapter.addEdge(EdgeKind.REF, variable, cpgIdentifier)
+        adapter.createEdgeBuilder(variable, cpgIdentifier, EdgeKind.REF)
+          .createEdge()
       case None =>
     }
   }
@@ -597,7 +604,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
         // Here we on purpose do not use addAstChild because the LOCAL nodes
         // are not really in the AST (they also have no ORDER property).
         // So do not be confused that the format still demands an AST edge.
-        adapter.addEdge(EdgeKind.AST, cpgLocal, scopeParentNode)
+        adapter.createEdgeBuilder(cpgLocal, scopeParentNode, EdgeKind.AST)
+          .createEdge()
 
         val assignmentExpression = identifierDecl.getAssignment
         if (assignmentExpression != null) {
@@ -738,7 +746,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   private def addAstChild(child: NodeType): Unit = {
-    adapter.addEdge(EdgeKind.AST, child, context.cpgParent)
+    adapter.createEdgeBuilder(child, context.cpgParent, EdgeKind.AST)
+        .createEdge()
     context.childNum += 1
     if (context.addConditionEdgeOnNextAstEdge) {
       addConditionChild(child)
@@ -747,7 +756,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType](containingFileName: String,
   }
 
   private def addConditionChild(child: NodeType): Unit = {
-    adapter.addEdge(EdgeKind.CONDITION, child, context.cpgParent)
+    adapter.createEdgeBuilder(child, context.cpgParent, EdgeKind.CONDITION)
+      .createEdge()
   }
 
   private def newUnknownNode(astNode: AstNode): NodeType = {

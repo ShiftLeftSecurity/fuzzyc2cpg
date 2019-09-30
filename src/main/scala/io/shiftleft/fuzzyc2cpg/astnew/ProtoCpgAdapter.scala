@@ -4,11 +4,14 @@ import io.shiftleft.fuzzyc2cpg.IdPool
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
 import io.shiftleft.fuzzyc2cpg.Utils._
-import io.shiftleft.fuzzyc2cpg.astnew.EdgeKind.EdgeKind
-import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
-import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
+import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
+import io.shiftleft.fuzzyc2cpg.adapter.EdgeProperty.EdgeProperty
+import io.shiftleft.fuzzyc2cpg.adapter.NodeKind.NodeKind
+import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
+import io.shiftleft.fuzzyc2cpg.adapter.{CpgAdapter, EdgeKind, NodeKind, NodeProperty}
 
-class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Builder, Node] {
+class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
+  extends CpgAdapter[Node.Builder, Node, Edge.Builder, Edge] {
 
   override def createNodeBuilder(kind: NodeKind): Node.Builder = {
     Node.newBuilder().setType(translateNodeKind(kind)).setKey(IdPool.getNextId)
@@ -22,21 +25,38 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
     node
   }
 
-  override def addProperty(nodeBuilder: Node.Builder, property: NodeProperty, value: String): Unit = {
+  override def addNodeProperty(nodeBuilder: Node.Builder, property: NodeProperty, value: String): Unit = {
     nodeBuilder.addStringProperty(translateNodeProperty(property), value)
   }
 
-  override def addProperty(nodeBuilder: Node.Builder, property: NodeProperty, value: Int): Unit = {
+  override def addNodeProperty(nodeBuilder: Node.Builder, property: NodeProperty, value: Int): Unit = {
     nodeBuilder.addIntProperty(translateNodeProperty(property), value)
   }
 
-  override def addProperty(nodeBuilder: Node.Builder, property: NodeProperty, value: Boolean): Unit = {
+  override def addNodeProperty(nodeBuilder: Node.Builder, property: NodeProperty, value: Boolean): Unit = {
     nodeBuilder.addBooleanProperty(translateNodeProperty(property), value)
   }
 
-  override def addEdge(edgeKind: EdgeKind, dstNode: Node, srcNode: Node): Unit = {
-    targetCpg.addEdge(newEdge(translateEdgeKind(edgeKind), dstNode, srcNode))
+  override def createEdgeBuilder(dst: Node, src: Node, edgeKind: EdgeKind): Edge.Builder = {
+    Edge.newBuilder()
+      .setType(translateEdgeKind(edgeKind))
+      .setDst(dst.getKey)
+      .setSrc(src.getKey)
   }
+
+  override def createEdge(edgeBuilder: Edge.Builder): Edge = {
+    val edge = edgeBuilder.build
+
+    targetCpg.addEdge(edge)
+
+    edge
+  }
+
+  // Not yet implemented because not yet used.
+  override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: String): Unit = ???
+  override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: Int): Unit = ???
+  override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: Boolean): Unit = ???
+
 
   private def translateNodeProperty(nodeProperty: NodeProperty): NodePropertyName = {
     nodeProperty match {
