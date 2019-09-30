@@ -1,17 +1,18 @@
-package io.shiftleft.fuzzyc2cpg.astnew
+package io.shiftleft.fuzzyc2cpg.adapter
 
 import io.shiftleft.fuzzyc2cpg.IdPool
-import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
-import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
 import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeProperty.EdgeProperty
 import io.shiftleft.fuzzyc2cpg.adapter.NodeKind.NodeKind
 import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
-import io.shiftleft.fuzzyc2cpg.adapter.{CpgAdapter, EdgeKind, NodeKind, NodeProperty}
+import io.shiftleft.fuzzyc2cpg.ast.AstNode
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
+import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 
 class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
   extends CpgAdapter[Node.Builder, Node, Edge.Builder, Edge] {
+  private var astToProtoMapping = Map.empty[AstNode, Node]
 
   override def createNodeBuilder(kind: NodeKind): Node.Builder = {
     Node.newBuilder().setType(translateNodeKind(kind)).setKey(IdPool.getNextId)
@@ -21,6 +22,14 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
     val node = nodeBuilder.build
 
     targetCpg.addNode(nodeBuilder)
+
+    node
+  }
+
+  override def createNode(nodeBuilder: Node.Builder, origAstNode: AstNode): Node = {
+    val node = createNode(nodeBuilder)
+
+    astToProtoMapping += origAstNode -> node
 
     node
   }
@@ -52,11 +61,18 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
     edge
   }
 
+  override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: String): Unit = {
+    if (property != EdgeProperty.CFG_EDGE_TYPE) {
+      throw new RuntimeException("Not yet implemented.")
+    }
+  }
   // Not yet implemented because not yet used.
-  override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: String): Unit = ???
   override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: Int): Unit = ???
   override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: Boolean): Unit = ???
 
+  override def mapNode(astNode: AstNode): Node = {
+    astToProtoMapping(astNode)
+  }
 
   private def translateNodeProperty(nodeProperty: NodeProperty): NodePropertyName = {
     nodeProperty match {
@@ -110,8 +126,10 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
   private def translateEdgeKind(edgeKind: EdgeKind): Edge.EdgeType = {
     edgeKind match {
       case EdgeKind.AST       => Edge.EdgeType.AST
+      case EdgeKind.CFG       => Edge.EdgeType.CFG
       case EdgeKind.REF       => Edge.EdgeType.REF
       case EdgeKind.CONDITION => Edge.EdgeType.CONDITION
     }
   }
+
 }

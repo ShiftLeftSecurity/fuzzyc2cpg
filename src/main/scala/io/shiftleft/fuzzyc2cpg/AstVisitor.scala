@@ -2,13 +2,14 @@ package io.shiftleft.fuzzyc2cpg
 
 import java.util
 
+import io.shiftleft.fuzzyc2cpg.adapter.ProtoCpgAdapter
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
-import io.shiftleft.fuzzyc2cpg.astnew.{AstToCpgConverter, ProtoCpgAdapter}
-import io.shiftleft.fuzzyc2cpg.cfg.{AstToCfgConverter, ProtoCfgAdapter}
+import io.shiftleft.fuzzyc2cpg.astnew.AstToCpgConverter
+import io.shiftleft.fuzzyc2cpg.cfg.AstToCfgConverter
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
@@ -35,11 +36,9 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
       new AstToCpgConverter(fileNameOption.get, astParentNode, cpgAdapter)
     astToCpgConverter.convert(functionDef)
 
-    val graphAdapter =
-      new ProtoCfgAdapter(bodyCpg, astToCpgConverter.getAstToProtoMapping)
     val astToCfgConverter = new AstToCfgConverter(astToCpgConverter.getMethodNode.get,
                                                   astToCpgConverter.getMethodReturnNode.get,
-                                                  graphAdapter)
+      cpgAdapter)
     astToCfgConverter.convert(functionDef)
 
     if (functionDef.isOnlyDeclaration) {

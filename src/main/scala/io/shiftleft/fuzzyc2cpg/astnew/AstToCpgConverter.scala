@@ -33,7 +33,6 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]
 
   private var contextStack = List[Context]()
   private val scope = new Scope[String, (NodeType, String), NodeType]()
-  private var astToProtoMapping = Map[AstNode, NodeType]()
   private var methodNode = Option.empty[NodeType]
   private var methodReturnNode = Option.empty[NodeType]
   private var typeNames = Set.empty[String]
@@ -74,11 +73,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]
       nodeBuilder
     }
     def createNode(astNode: AstNode): NodeType = {
-      val node = adapter.createNode(nodeBuilder)
-
-      astToProtoMapping += astNode -> node
-
-      node
+      adapter.createNode(nodeBuilder, astNode)
     }
     def createNode(): NodeType = {
       adapter.createNode(nodeBuilder)
@@ -97,10 +92,6 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]
     def createEdge(): EdgeType = {
       adapter.createEdge(edgeBuilder)
     }
-  }
-
-  def getAstToProtoMapping: Map[AstNode, NodeType] = {
-    astToProtoMapping
   }
 
   def getMethodNode: Option[NodeType] = {

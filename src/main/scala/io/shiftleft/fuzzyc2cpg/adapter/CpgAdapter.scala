@@ -4,6 +4,7 @@ import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeProperty.EdgeProperty
 import io.shiftleft.fuzzyc2cpg.adapter.NodeKind.NodeKind
 import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
+import io.shiftleft.fuzzyc2cpg.ast.AstNode
 
 object NodeProperty extends Enumeration {
   type NodeProperty = Value
@@ -25,13 +26,29 @@ object EdgeProperty extends Enumeration {
 
 object EdgeKind extends Enumeration {
   type EdgeKind = Value
-  val AST, REF, CONDITION = Value
+  val AST, CFG, REF, CONDITION = Value
+}
+
+trait CfgEdgeType
+object TrueEdge extends CfgEdgeType {
+  override def toString: String = "TrueEdge"
+}
+object FalseEdge extends CfgEdgeType {
+  override def toString: String = "FalseEdge"
+}
+object AlwaysEdge extends CfgEdgeType {
+  override def toString: String = "AlwaysEdge"
+}
+object CaseEdge extends CfgEdgeType {
+  override def toString: String = "CaseEdge"
 }
 
 trait CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType] {
   def createNodeBuilder(kind: NodeKind): NodeBuilderType
 
   def createNode(nodeBuilder: NodeBuilderType): NodeType
+
+  def createNode(nodeBuilder: NodeBuilderType, origAstNode: AstNode): NodeType
 
   def addNodeProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: String)
 
@@ -48,4 +65,6 @@ trait CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType] {
   def addEdgeProperty(edgeBuilder: EdgeBuilderType, property: EdgeProperty, value: Int)
 
   def addEdgeProperty(edgeBuilder: EdgeBuilderType, property: EdgeProperty, value: Boolean)
+
+  def mapNode(astNode: AstNode): NodeType
 }

@@ -22,6 +22,10 @@ class AstToCpgTests extends WordSpec with Matchers {
       graph.addVertex(kind.toString)
     }
 
+    override def createNode(vertex: Vertex, origAstNode: AstNode): Vertex = {
+      vertex
+    }
+
     override def createNode(vertex: Vertex): Vertex = {
       vertex
     }
@@ -50,6 +54,7 @@ class AstToCpgTests extends WordSpec with Matchers {
     override def addEdgeProperty(edgeBuilder: Edge, property: EdgeProperty, value: String): Unit = ???
     override def addEdgeProperty(edgeBuilder: Edge, property: EdgeProperty, value: Int): Unit = ???
     override def addEdgeProperty(edgeBuilder: Edge, property: EdgeProperty, value: Boolean): Unit = ???
+    override def mapNode(astNode: AstNode): Vertex = ???
   }
 
   private implicit class VertexListWrapper(vertexList: List[Vertex]) {
