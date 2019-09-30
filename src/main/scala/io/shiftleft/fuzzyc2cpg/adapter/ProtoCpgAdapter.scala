@@ -10,8 +10,7 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 
-class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
-  extends CpgAdapter[Node.Builder, Node, Edge.Builder, Edge] {
+class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Builder, Node, Edge.Builder, Edge] {
   private var astToProtoMapping = Map.empty[AstNode, Node]
 
   override def createNodeBuilder(kind: NodeKind): Node.Builder = {
@@ -47,7 +46,8 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder)
   }
 
   override def createEdgeBuilder(dst: Node, src: Node, edgeKind: EdgeKind): Edge.Builder = {
-    Edge.newBuilder()
+    Edge
+      .newBuilder()
       .setType(translateEdgeKind(edgeKind))
       .setDst(dst.getKey)
       .setSrc(src.getKey)

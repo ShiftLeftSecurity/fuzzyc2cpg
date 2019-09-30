@@ -25,10 +25,11 @@ object AstToCpgConverter {
   private val logger = LoggerFactory.getLogger(getClass)
 }
 
-class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]
-(containingFileName: String,
- cpgParent: NodeType,
- adapter: CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]) extends ASTNodeVisitor {
+class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
+    containingFileName: String,
+    cpgParent: NodeType,
+    adapter: CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType])
+    extends ASTNodeVisitor {
   import AstToCpgConverter._
 
   private var contextStack = List[Context]()
@@ -399,7 +400,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]
 
     variableOption match {
       case Some((variable, _)) =>
-        adapter.createEdgeBuilder(variable, cpgIdentifier, EdgeKind.REF)
+        adapter
+          .createEdgeBuilder(variable, cpgIdentifier, EdgeKind.REF)
           .createEdge()
       case None =>
     }
@@ -595,7 +597,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]
         // Here we on purpose do not use addAstChild because the LOCAL nodes
         // are not really in the AST (they also have no ORDER property).
         // So do not be confused that the format still demands an AST edge.
-        adapter.createEdgeBuilder(cpgLocal, scopeParentNode, EdgeKind.AST)
+        adapter
+          .createEdgeBuilder(cpgLocal, scopeParentNode, EdgeKind.AST)
           .createEdge()
 
         val assignmentExpression = identifierDecl.getAssignment
@@ -737,8 +740,9 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]
   }
 
   private def addAstChild(child: NodeType): Unit = {
-    adapter.createEdgeBuilder(child, context.cpgParent, EdgeKind.AST)
-        .createEdge()
+    adapter
+      .createEdgeBuilder(child, context.cpgParent, EdgeKind.AST)
+      .createEdge()
     context.childNum += 1
     if (context.addConditionEdgeOnNextAstEdge) {
       addConditionChild(child)
@@ -747,7 +751,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType]
   }
 
   private def addConditionChild(child: NodeType): Unit = {
-    adapter.createEdgeBuilder(child, context.cpgParent, EdgeKind.CONDITION)
+    adapter
+      .createEdgeBuilder(child, context.cpgParent, EdgeKind.CONDITION)
       .createEdge()
   }
 

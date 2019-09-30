@@ -65,7 +65,8 @@ class AstToCfgTests extends WordSpec with Matchers {
 
     // Not implemented because not used.
     override def addEdgeProperty(edgeBuilder: CfgNodeEdgePairBuilder, property: EdgeProperty, value: Int): Unit = ???
-    override def addEdgeProperty(edgeBuilder: CfgNodeEdgePairBuilder, property: EdgeProperty, value: Boolean): Unit = ???
+    override def addEdgeProperty(edgeBuilder: CfgNodeEdgePairBuilder, property: EdgeProperty, value: Boolean): Unit =
+      ???
   }
 
   private class Fixture(code: String) {

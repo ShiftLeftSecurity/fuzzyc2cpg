@@ -36,9 +36,8 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
       new AstToCpgConverter(fileNameOption.get, astParentNode, cpgAdapter)
     astToCpgConverter.convert(functionDef)
 
-    val astToCfgConverter = new AstToCfgConverter(astToCpgConverter.getMethodNode.get,
-                                                  astToCpgConverter.getMethodReturnNode.get,
-      cpgAdapter)
+    val astToCfgConverter =
+      new AstToCfgConverter(astToCpgConverter.getMethodNode.get, astToCpgConverter.getMethodReturnNode.get, cpgAdapter)
     astToCfgConverter.convert(functionDef)
 
     if (functionDef.isOnlyDeclaration) {

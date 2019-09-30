@@ -1,7 +1,16 @@
 package io.shiftleft.fuzzyc2cpg.cfg
 
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeProperty.EdgeProperty
-import io.shiftleft.fuzzyc2cpg.adapter.{AlwaysEdge, CaseEdge, CfgEdgeType, CpgAdapter, EdgeKind, EdgeProperty, FalseEdge, TrueEdge}
+import io.shiftleft.fuzzyc2cpg.adapter.{
+  AlwaysEdge,
+  CaseEdge,
+  CfgEdgeType,
+  CpgAdapter,
+  EdgeKind,
+  EdgeProperty,
+  FalseEdge,
+  TrueEdge
+}
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.expressions._
@@ -21,8 +30,10 @@ object AstToCfgConverter {
   private val logger = LoggerFactory.getLogger(getClass)
 }
 
-class AstToCfgConverter[NodeType, EdgeBuilderType, EdgeType]
-(entryNode: NodeType, exitNode: NodeType, adapter: CpgAdapter[_, NodeType, EdgeBuilderType, EdgeType] = null)
+class AstToCfgConverter[NodeType, EdgeBuilderType, EdgeType](
+    entryNode: NodeType,
+    exitNode: NodeType,
+    adapter: CpgAdapter[_, NodeType, EdgeBuilderType, EdgeType] = null)
     extends ASTNodeVisitor {
   import AstToCfgConverter._
 
@@ -71,7 +82,8 @@ class AstToCfgConverter[NodeType, EdgeBuilderType, EdgeType]
   private def extendCfg(dstNode: NodeType): Unit = {
     fringe.foreach {
       case FringeElement(srcNode, cfgEdgeType) =>
-        adapter.createEdgeBuilder(dstNode, srcNode, EdgeKind.CFG)
+        adapter
+          .createEdgeBuilder(dstNode, srcNode, EdgeKind.CFG)
           .addProperty(EdgeProperty.CFG_EDGE_TYPE, cfgEdgeType.toString)
           .createEdge()
     }
@@ -122,9 +134,10 @@ class AstToCfgConverter[NodeType, EdgeBuilderType, EdgeType]
       case (goto, label) =>
         labeledNodes.get(label) match {
           case Some(labeledNode) =>
-            adapter.createEdgeBuilder(labeledNode, goto, EdgeKind.CFG)
-                .addProperty(EdgeProperty.CFG_EDGE_TYPE, AlwaysEdge.toString)
-                .createEdge()
+            adapter
+              .createEdgeBuilder(labeledNode, goto, EdgeKind.CFG)
+              .addProperty(EdgeProperty.CFG_EDGE_TYPE, AlwaysEdge.toString)
+              .createEdge()
           case None =>
             logger.info("Unable to wire goto statement. Missing label {}.", label)
         }
@@ -133,7 +146,8 @@ class AstToCfgConverter[NodeType, EdgeBuilderType, EdgeType]
 
   private def connectReturnsToExit(): Unit = {
     returns.foreach { ret =>
-      adapter.createEdgeBuilder(exitNode, ret, EdgeKind.CFG)
+      adapter
+        .createEdgeBuilder(exitNode, ret, EdgeKind.CFG)
         .addProperty(EdgeProperty.CFG_EDGE_TYPE, AlwaysEdge.toString)
         .createEdge()
     }
