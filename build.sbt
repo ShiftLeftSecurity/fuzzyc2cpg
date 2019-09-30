@@ -15,6 +15,7 @@ libraryDependencies ++= Seq(
   "com.novocode" % "junit-interface" % "0.11" % Test,
   "junit" % "junit" % "4.12" % Test,
   "org.scalatest" %% "scalatest" % "3.0.3" % Test,
+  "org.apache.tinkerpop" % "tinkergraph-gremlin" % "3.4.3" % Test,
 )
 
 // uncomment if you want to use a cpg version that has *just* been released

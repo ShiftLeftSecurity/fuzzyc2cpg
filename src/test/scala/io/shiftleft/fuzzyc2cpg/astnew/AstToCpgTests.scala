@@ -1,7 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
 import gremlin.scala._
-import io.shiftleft.codepropertygraph.generated
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
 import io.shiftleft.fuzzyc2cpg.ModuleLexer
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
@@ -10,8 +9,8 @@ import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
 import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.fuzzyc2cpg.parser.{AntlrParserDriverObserver, TokenSubStream}
-import io.shiftleft.overflowdb.{OdbConfig, OdbGraph}
 import org.antlr.v4.runtime.{CharStreams, ParserRuleContext}
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
 import org.scalatest.{Matchers, WordSpec}
 
 class AstToCpgTests extends WordSpec with Matchers {
@@ -102,9 +101,7 @@ class AstToCpgTests extends WordSpec with Matchers {
     driver.parseAndWalkTokenStream(tokens)
 
     private val fileName = "codeFromString"
-    val graph: ScalaGraph = OdbGraph.open(OdbConfig.withoutOverflow(),
-                                          generated.nodes.Factories.AllAsJava,
-                                          generated.edges.Factories.AllAsJava)
+    val graph: ScalaGraph = TinkerGraph.open()
     private val astParentNode = graph.addVertex("NAMESPACE_BLOCK")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
