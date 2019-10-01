@@ -15,22 +15,19 @@ public class OutputModuleFactory implements CpgOutputModuleFactory {
 
   private final List<OutputModule> outputModules = new ArrayList<>();
   private final boolean writeToDisk;
-  private final boolean keepInternalGraph;
   private final Path protoTempDir;
   private final String outputFilename;
 
   public OutputModuleFactory(String outputFilename,
-                             boolean writeToDisk,
-                             boolean keepInternalGraph) throws IOException {
+                             boolean writeToDisk) throws IOException {
     this.writeToDisk = writeToDisk;
-    this.keepInternalGraph = keepInternalGraph;
     this.protoTempDir = Files.createTempDirectory("proto");
     this.outputFilename = outputFilename;
   }
 
   @Override
   public CpgOutputModule create() {
-    OutputModule outputModule = new OutputModule(keepInternalGraph, writeToDisk, protoTempDir);
+    OutputModule outputModule = new OutputModule(writeToDisk, protoTempDir);
     synchronized (this) {
       outputModules.add(outputModule);
     }

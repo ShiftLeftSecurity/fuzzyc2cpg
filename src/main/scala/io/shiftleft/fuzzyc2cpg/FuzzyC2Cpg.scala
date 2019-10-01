@@ -20,7 +20,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   def this(outputPath: String) = {
     this(
-      new OutputModuleFactory(outputPath, true, false)
+      new OutputModuleFactory(outputPath, true)
         .asInstanceOf[CpgOutputModuleFactory])
   }
 

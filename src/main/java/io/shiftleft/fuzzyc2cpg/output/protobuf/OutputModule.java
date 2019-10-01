@@ -20,26 +20,17 @@ public class OutputModule implements CpgOutputModule {
   private Logger logger = LoggerFactory.getLogger(getClass());
   private static String ProtoSuffix = ".bin";
 
-  private CpgStruct protoCpg;
   private final Path protoTempDir;
 
   private boolean writeToDisk;
-  private boolean keepInternalGraph;
 
   private String outputIdentifier;
 
-  public OutputModule(boolean keepInternalGraph,
-                      boolean writeToDisk,
+  public OutputModule(boolean writeToDisk,
                       Path protoTempDir) {
-    this.keepInternalGraph = keepInternalGraph;
     this.writeToDisk = writeToDisk;
     this.protoTempDir = protoTempDir;
   }
-
-  CpgStruct getProtoCpg() {
-    return protoCpg;
-  }
-
 
   @Override
   public void setOutputIdentifier(String identifier) {
@@ -60,9 +51,6 @@ public class OutputModule implements CpgOutputModule {
       try (FileOutputStream outStream = new FileOutputStream(outputFilename)) {
         buildCpg.writeTo(outStream);
       }
-    }
-    if (keepInternalGraph) {
-      this.protoCpg = buildCpg;
     }
   }
 
