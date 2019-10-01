@@ -3,10 +3,12 @@ package io.shiftleft.fuzzyc2cpg.astnew
 import gremlin.scala._
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
 import io.shiftleft.fuzzyc2cpg.ModuleLexer
+import io.shiftleft.fuzzyc2cpg.adapter.CpgAdapter
+import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
+import io.shiftleft.fuzzyc2cpg.adapter.EdgeProperty.EdgeProperty
+import io.shiftleft.fuzzyc2cpg.adapter.NodeKind.NodeKind
+import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
-import io.shiftleft.fuzzyc2cpg.astnew.EdgeKind.EdgeKind
-import io.shiftleft.fuzzyc2cpg.astnew.NodeKind.NodeKind
-import io.shiftleft.fuzzyc2cpg.astnew.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.fuzzyc2cpg.parser.{AntlrParserDriverObserver, TokenSubStream}
 import org.antlr.v4.runtime.{CharStreams, ParserRuleContext}
@@ -15,30 +17,42 @@ import org.scalatest.{Matchers, WordSpec}
 
 class AstToCpgTests extends WordSpec with Matchers {
 
-  private class GraphAdapter(graph: ScalaGraph) extends CpgAdapter[Vertex, Vertex] {
+  private class GraphAdapter(graph: ScalaGraph) extends CpgAdapter[Vertex, Vertex, Edge, Edge] {
     override def createNodeBuilder(kind: NodeKind): Vertex = {
       graph.addVertex(kind.toString)
+    }
+
+    override def createNode(vertex: Vertex, origAstNode: AstNode): Vertex = {
+      vertex
     }
 
     override def createNode(vertex: Vertex): Vertex = {
       vertex
     }
 
-    override def addProperty(vertex: Vertex, property: NodeProperty, value: String): Unit = {
+    override def addNodeProperty(vertex: Vertex, property: NodeProperty, value: String): Unit = {
       vertex.property(property.toString, value)
     }
 
-    override def addProperty(vertex: Vertex, property: NodeProperty, value: Int): Unit = {
+    override def addNodeProperty(vertex: Vertex, property: NodeProperty, value: Int): Unit = {
       vertex.property(property.toString, value)
     }
 
-    override def addProperty(vertex: Vertex, property: NodeProperty, value: Boolean): Unit = {
+    override def addNodeProperty(vertex: Vertex, property: NodeProperty, value: Boolean): Unit = {
       vertex.property(property.toString, value)
     }
 
-    override def addEdge(edgeKind: EdgeKind, dstNode: Vertex, srcNode: Vertex): Unit = {
-      srcNode.addEdge(edgeKind.toString, dstNode)
+    override def createEdgeBuilder(dst: Vertex, src: Vertex, edgeKind: EdgeKind): Edge = {
+      src.addEdge(edgeKind.toString, dst)
     }
+
+    override def createEdge(edge: Edge): Edge = {
+      edge
+    }
+
+    // Not used in test with this adapter.
+    override def addEdgeProperty(edgeBuilder: Edge, property: EdgeProperty, value: String): Unit = ???
+    override def mapNode(astNode: AstNode): Vertex = ???
   }
 
   private implicit class VertexListWrapper(vertexList: List[Vertex]) {

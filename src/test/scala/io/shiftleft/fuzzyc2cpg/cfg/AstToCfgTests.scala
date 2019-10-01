@@ -1,13 +1,20 @@
 package io.shiftleft.fuzzyc2cpg.cfg
 
+import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
+import io.shiftleft.fuzzyc2cpg.adapter.EdgeProperty.EdgeProperty
+import io.shiftleft.fuzzyc2cpg.adapter.NodeKind.NodeKind
+import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
+import io.shiftleft.fuzzyc2cpg.adapter.{AlwaysEdge, CaseEdge, CfgEdgeType, CpgAdapter, FalseEdge, TrueEdge}
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.fuzzyc2cpg.parsetreetoast.FunctionContentTestUtil
 import org.scalatest.{Matchers, WordSpec}
 
 class AstToCfgTests extends WordSpec with Matchers {
-  private case class CfgNodeEdgePair(cfgNode: CfgNode, cfgEdgeType: CfgEdgeType) {
+  private case class CfgNodeEdgePairBuilder(dstCfgNode: CfgNode, srcCfgNode: CfgNode, var cfgEdgeType: String)
+
+  private case class CfgNodeEdgePair(cfgNode: CfgNode, cfgEdgeType: String) {
     override def toString: String = {
-      s"${cfgEdgeType.getClass.getSimpleName} ==> ${cfgNode.code}"
+      s"$cfgEdgeType ==> ${cfgNode.code}"
     }
   }
   private class CfgNode(val code: String, var successors: Set[CfgNodeEdgePair] = Set()) {
@@ -16,7 +23,7 @@ class AstToCfgTests extends WordSpec with Matchers {
     }
   }
 
-  private class GraphAdapter extends CfgAdapter[CfgNode] {
+  private class GraphAdapter extends CpgAdapter[CfgNode, CfgNode, CfgNodeEdgePairBuilder, CfgNodeEdgePair] {
     private var mapping = Map[AstNode, CfgNode]()
     var codeToCfgNode = Map[String, CfgNode]()
 
@@ -31,11 +38,29 @@ class AstToCfgTests extends WordSpec with Matchers {
       }
     }
 
-    override def newCfgEdge(dstNode: CfgNode, srcNode: CfgNode, cfgEdgeType: CfgEdgeType): Unit = {
-      if (srcNode.successors.exists(_.cfgNode == dstNode)) {
+    // Not used in test with this adapter.
+    override def createNodeBuilder(kind: NodeKind): CfgNode = ???
+    override def createNode(nodeBuilder: CfgNode): CfgNode = ???
+    override def createNode(nodeBuilder: CfgNode, origAstNode: AstNode): CfgNode = ???
+    override def addNodeProperty(nodeBuilder: CfgNode, property: NodeProperty, value: String): Unit = ???
+    override def addNodeProperty(nodeBuilder: CfgNode, property: NodeProperty, value: Int): Unit = ???
+    override def addNodeProperty(nodeBuilder: CfgNode, property: NodeProperty, value: Boolean): Unit = ???
+
+    override def createEdgeBuilder(dst: CfgNode, src: CfgNode, edgeKind: EdgeKind): CfgNodeEdgePairBuilder = {
+      if (src.successors.exists(_.cfgNode == dst)) {
         throw new RuntimeException("Found duplicate edge.")
       }
-      srcNode.successors = srcNode.successors + CfgNodeEdgePair(dstNode, cfgEdgeType)
+      CfgNodeEdgePairBuilder(dst, src, null)
+    }
+
+    override def createEdge(edgeBuilder: CfgNodeEdgePairBuilder): CfgNodeEdgePair = {
+      val newEdge = CfgNodeEdgePair(edgeBuilder.dstCfgNode, edgeBuilder.cfgEdgeType)
+      edgeBuilder.srcCfgNode.successors = edgeBuilder.srcCfgNode.successors + newEdge
+      newEdge
+    }
+
+    override def addEdgeProperty(edgeBuilder: CfgNodeEdgePairBuilder, property: EdgeProperty, value: String): Unit = {
+      edgeBuilder.cfgEdgeType = value
     }
   }
 
@@ -55,7 +80,7 @@ class AstToCfgTests extends WordSpec with Matchers {
     def expected(pairs: (String, CfgEdgeType)*): Set[CfgNodeEdgePair] = {
       pairs.map {
         case (code, cfgEdgeType) =>
-          CfgNodeEdgePair(codeToCpgNode(code), cfgEdgeType)
+          CfgNodeEdgePair(codeToCpgNode(code), cfgEdgeType.toString)
       }.toSet
     }
 
