@@ -50,10 +50,8 @@ class AstToCpgTests extends WordSpec with Matchers {
       edge
     }
 
-    // Not yet implemented because not yet used.
+    // Not used in test with this adapter.
     override def addEdgeProperty(edgeBuilder: Edge, property: EdgeProperty, value: String): Unit = ???
-    override def addEdgeProperty(edgeBuilder: Edge, property: EdgeProperty, value: Int): Unit = ???
-    override def addEdgeProperty(edgeBuilder: Edge, property: EdgeProperty, value: Boolean): Unit = ???
     override def mapNode(astNode: AstNode): Vertex = ???
   }
 

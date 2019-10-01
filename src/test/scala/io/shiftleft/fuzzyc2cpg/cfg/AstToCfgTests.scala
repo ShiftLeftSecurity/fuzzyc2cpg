@@ -38,7 +38,7 @@ class AstToCfgTests extends WordSpec with Matchers {
       }
     }
 
-    // Not implemented because not used.
+    // Not used in test with this adapter.
     override def createNodeBuilder(kind: NodeKind): CfgNode = ???
     override def createNode(nodeBuilder: CfgNode): CfgNode = ???
     override def createNode(nodeBuilder: CfgNode, origAstNode: AstNode): CfgNode = ???
@@ -62,11 +62,6 @@ class AstToCfgTests extends WordSpec with Matchers {
     override def addEdgeProperty(edgeBuilder: CfgNodeEdgePairBuilder, property: EdgeProperty, value: String): Unit = {
       edgeBuilder.cfgEdgeType = value
     }
-
-    // Not implemented because not used.
-    override def addEdgeProperty(edgeBuilder: CfgNodeEdgePairBuilder, property: EdgeProperty, value: Int): Unit = ???
-    override def addEdgeProperty(edgeBuilder: CfgNodeEdgePairBuilder, property: EdgeProperty, value: Boolean): Unit =
-      ???
   }
 
   private class Fixture(code: String) {

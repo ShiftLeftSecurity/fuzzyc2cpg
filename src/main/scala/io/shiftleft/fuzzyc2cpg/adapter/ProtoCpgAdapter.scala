@@ -66,9 +66,6 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
       throw new RuntimeException("Not yet implemented.")
     }
   }
-  // Not yet implemented because not yet used.
-  override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: Int): Unit = ???
-  override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: Boolean): Unit = ???
 
   override def mapNode(astNode: AstNode): Node = {
     astToProtoMapping(astNode)

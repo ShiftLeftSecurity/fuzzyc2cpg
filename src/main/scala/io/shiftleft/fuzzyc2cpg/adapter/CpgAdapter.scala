@@ -62,9 +62,5 @@ trait CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType] {
 
   def addEdgeProperty(edgeBuilder: EdgeBuilderType, property: EdgeProperty, value: String)
 
-  def addEdgeProperty(edgeBuilder: EdgeBuilderType, property: EdgeProperty, value: Int)
-
-  def addEdgeProperty(edgeBuilder: EdgeBuilderType, property: EdgeProperty, value: Boolean)
-
   def mapNode(astNode: AstNode): NodeType
 }
