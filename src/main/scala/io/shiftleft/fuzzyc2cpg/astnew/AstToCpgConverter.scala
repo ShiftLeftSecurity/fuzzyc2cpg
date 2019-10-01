@@ -57,10 +57,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     contextStack.head
   }
 
-  // There is already another NodeBuilderWrapper in Utils.scala.
-  // We need to choose a different name here because Scala otherwise
-  // gets confused witht he implicit resolution.
-  private implicit class NodeBuilderWrapper2(nodeBuilder: NodeBuilderType) {
+  private implicit class NodeBuilderWrapper(nodeBuilder: NodeBuilderType) {
     def addProperty(property: NodeProperty, value: String): NodeBuilderType = {
       adapter.addNodeProperty(nodeBuilder, property, value)
       nodeBuilder
@@ -89,7 +86,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     }
   }
 
-  private implicit class EdgeBuilderWrapper2(edgeBuilder: EdgeBuilderType) {
+  private implicit class EdgeBuilderWrapper(edgeBuilder: EdgeBuilderType) {
     def createEdge(): EdgeType = {
       adapter.createEdge(edgeBuilder)
     }
