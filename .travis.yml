@@ -37,7 +37,7 @@ jobs:
     script: 
       - sbt scalafmtCheck +test
       - cmake ./fuzzypp
-      - cmake --build .
+      - cmake --build . -- -j4
       - ./fuzzypp/bin/fuzzyppcli-tests
   - stage: release
     script: sbt ci-release-sonatype
