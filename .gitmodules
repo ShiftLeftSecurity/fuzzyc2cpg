@@ -1,6 +1,6 @@
 [submodule "fuzzypp/external/cxxopts"]
 	path = fuzzypp/external/cxxopts
-	url = git@github.com:jarro2783/cxxopts.git
+	url = https://github.com/jarro2783/cxxopts.git
 [submodule "fuzzypp/external/catch2"]
 	path = fuzzypp/external/catch2
-	url = git@github.com:catchorg/Catch2.git
+	url = https://github.com/catchorg/Catch2.git
