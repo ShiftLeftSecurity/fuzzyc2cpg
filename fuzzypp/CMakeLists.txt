@@ -25,9 +25,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
                         -pedantic)
 endif()
 
-# Building with Clang is not currently supported.
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Weverything
+    add_compile_options(-Wall
                         -Werror)
 endif()
 

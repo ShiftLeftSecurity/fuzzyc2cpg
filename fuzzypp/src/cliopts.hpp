@@ -27,7 +27,7 @@ namespace fuzzypp::cliopts {
                        const std::string _output_directory) :
                        files(_files), include_files(_include_files), 
                        include_paths(_include_paths), defines(_defines), 
-                       undefines(_undefines), output_directory(_output_directory) {};
+                       undefines(_undefines), output_directory(_output_directory) {}
 
             CliOptions() = delete;
             CliOptions(CliOptions&) = delete;

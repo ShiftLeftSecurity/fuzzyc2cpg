@@ -47,7 +47,7 @@ namespace fuzzypp::cliopts {
                 }
             };
         } catch (const cxxopts::OptionException& e) {
-            std::cerr << "Error occured whilst parsing command line arguments..." << std::endl;
+            std::cerr << "Error occured whilst parsing command line arguments: " << e.what() << std::endl;
             return std::optional<CliOptions> {};
         }
     }
