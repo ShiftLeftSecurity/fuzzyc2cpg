@@ -50,6 +50,17 @@ Usage:
       --help                 Print help.
 ```
 
+Example:
+
+```
+./bin/fuzzyppcli -f /home/project/source.cpp,/home/project/other_source.cpp \
+                 -o /home/preprocessed_project \
+                 -I /usr/includes \
+                 --include /home/lib/header.hpp
+                 -D DEF_NAME,VAL_NAME=1
+                 -U UNDEF_NAME           
+```
+
 Dependencies
 ---
 - [cxxopts](https://github.com/jarro2783/cxxopts)
