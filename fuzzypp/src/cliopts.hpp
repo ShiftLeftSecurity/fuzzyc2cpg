@@ -2,9 +2,9 @@
 #define FUZZYPP_CLIOPTS_HPP
 
 #include <filesystem>
+#include <list>
 #include <optional>
 #include <string>
-#include <vector>
 
 #include <cxxopts.hpp>
 
@@ -29,7 +29,6 @@ namespace fuzzypp::cliopts {
                        include_paths(_include_paths), defines(_defines), 
                        undefines(_undefines), output_directory(_output_directory) {}
 
-            CliOptions() = delete;
             CliOptions(CliOptions&) = delete;
             CliOptions(CliOptions&&) = default;
 

@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(*opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(*opts);
 
     return 0;
 }

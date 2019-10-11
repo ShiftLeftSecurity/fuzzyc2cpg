@@ -8,17 +8,17 @@
 
 namespace fuzzypp::preprocessor {
     void 
-    FuzzyPreprocessor::preprocess(const fuzzypp::cliopts::CliOptions& options) {
+    Preprocessor::preprocess(const fuzzypp::cliopts::CliOptions& options) {
         auto opts = generate_simplecpp_opts(options);
         const auto output_path = std::filesystem::path { options.output_directory };
 
-        auto write_to_file = [&](const auto& filename) {
-            auto file_path = std::filesystem::path { filename }.relative_path();
+        auto write_to_file = [&](const auto& file_name) {
+            auto file_path = std::filesystem::path { file_name }.relative_path();
             auto output_file = (std::filesystem::weakly_canonical(output_path) /= file_path).lexically_normal();
             if (output_file.has_parent_path()) std::filesystem::create_directories(output_file.parent_path());
             
             std::ofstream output { output_file, std::ofstream::trunc };
-            output << stringify(filename, opts);
+            output << stringify(file_name, opts);
         };
 
         std::for_each(options.files.cbegin(),
@@ -27,7 +27,7 @@ namespace fuzzypp::preprocessor {
     }
 
     const simplecpp::DUI
-    FuzzyPreprocessor::generate_simplecpp_opts(const fuzzypp::cliopts::CliOptions& options) {
+    Preprocessor::generate_simplecpp_opts(const fuzzypp::cliopts::CliOptions& options) {
         simplecpp::DUI simple_opts;
 
         simple_opts.includes = std::list<std::string> { options.include_files.cbegin(), options.include_files.cend() };
@@ -39,7 +39,7 @@ namespace fuzzypp::preprocessor {
     }
 
     const std::string
-    FuzzyPreprocessor::stringify(const std::string& filename, const simplecpp::DUI& options) {
+    Preprocessor::stringify(const std::string& filename, const simplecpp::DUI& options) {
         simplecpp::OutputList output_list;
         std::vector<std::string> files;
         

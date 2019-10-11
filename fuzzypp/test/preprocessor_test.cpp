@@ -19,7 +19,7 @@ TEST_CASE("1: Preprocess an input file, preserving comments", "preprocess") {
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     auto result_path = std::filesystem::path { output_dir } /= source_file.relative_path();
     auto result = fuzzypp::tests::read_file_content(result_path);
@@ -45,7 +45,7 @@ TEST_CASE("2: Preprocess an input file with an included file", "preprocess") {
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "\n"
                           "#line 1 \"/tmp/preprocess/2/source.hpp\"\n"
@@ -76,7 +76,7 @@ TEST_CASE("3: Preprocess an input file with an included path", "preprocess") {
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "\n"
                           "#line 1 \"/tmp/preprocess/3/other/header.hpp\"\n"
@@ -109,7 +109,7 @@ TEST_CASE("4: Preprocess an input file with a define", "preprocess") {
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "int main ( ) {\n"
                           "\n"
@@ -138,7 +138,7 @@ TEST_CASE("5: Preprocess an input file with a define value", "preprocess") {
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "int main ( ) { return 0 ; } // A sight to behold!";
     auto result_path = std::filesystem::path { output_dir } /= source_file.relative_path();
@@ -168,7 +168,7 @@ TEST_CASE("6: Preprocess an input file with an undefine", "preprocess") {
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "\n"
                           "int main ( ) {\n"
@@ -199,7 +199,7 @@ TEST_CASE("7: Elide any include directives for which an explict header file can 
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "\n"
                           "int main ( ) { } // A sight to behold!";
@@ -227,7 +227,7 @@ TEST_CASE("8: Elide any include directives for which a header can not be found i
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "\n"
                           "int main ( ) { return x ; } // A sight to behold!";
@@ -257,7 +257,7 @@ TEST_CASE("9: Elide any defines which are also specified in the list of undefine
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "int main ( ) {\n"
                           "\n"
@@ -290,7 +290,7 @@ TEST_CASE("10: Correctly handle paths containing .", "preprocess") {
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "\n"
                           "#line 1 \"/tmp/preprocess/10/other/header.hpp\"\n"
@@ -321,7 +321,7 @@ TEST_CASE("11: Defines from headers are correctly imported", "preprocess") {
         output_dir
     };
 
-    fuzzypp::preprocessor::FuzzyPreprocessor::preprocess(opts);
+    fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
     const auto expected = "\n"
                           "int main ( ) { return 5 ; } // A sight to behold!";

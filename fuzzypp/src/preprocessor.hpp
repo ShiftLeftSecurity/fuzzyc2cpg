@@ -8,7 +8,7 @@
 #include "cliopts.hpp"
 
 namespace fuzzypp::preprocessor {
-    class FuzzyPreprocessor {
+    class Preprocessor {
         public:
             static void preprocess(const fuzzypp::cliopts::CliOptions& options);
 
