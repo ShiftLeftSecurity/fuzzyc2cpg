@@ -4,3 +4,6 @@
 [submodule "fuzzypp/external/catch2"]
 	path = fuzzypp/external/catch2
 	url = https://github.com/catchorg/Catch2.git
+[submodule "fuzzypp/external/simplecpp"]
+	path = fuzzypp/external/simplecpp
+	url = https://github.com/ShiftLeftSecurity/simplecpp.git
