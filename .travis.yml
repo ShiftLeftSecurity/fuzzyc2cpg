@@ -7,29 +7,45 @@ branches:
   only:
   - master
 
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:ubuntu-toolchain-r/test'
+    packages:
+      - cmake
+      - g++-8
+
+env:
+  - CXX=/usr/bin/g++-8
+
 before_install:
-- git fetch --tags
-- if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_EVENT_TYPE" == "push" ]]; then
-    openssl aes-256-cbc -K $encrypted_b3f7bd94ef38_key -iv $encrypted_b3f7bd94ef38_iv -in private-key.pem.enc -out private-key.pem -d;
-    gpg --import --batch private-key.pem;
-  fi
+  - git fetch --tags
+  - if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_EVENT_TYPE" == "push" ]]; then
+      openssl aes-256-cbc -K $encrypted_b3f7bd94ef38_key -iv $encrypted_b3f7bd94ef38_iv -in private-key.pem.enc -out private-key.pem -d;
+      gpg --import --batch private-key.pem;
+    fi
 
 stages:
-- name: test
-- name: release
-  if: branch = master AND type = push
+  - name: test
+  - name: test-fuzzpp
+  - name: release
+    if: branch = master AND type = push
 
 jobs:
   include:
   - stage: test
-    script: sbt scalafmtCheck +test
+    script: 
+      - sbt scalafmtCheck +test
+      - cmake ./fuzzypp
+      - cmake --build . -- -j4
+      - ./fuzzypp/bin/fuzzyppcli-tests
   - stage: release
     script: sbt ci-release-sonatype
 
 before_cache:
-- find $HOME/.sbt -name "*.lock" -type f -delete
-- find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
-- rm -rf $HOME/.ivy2/local
+  - find $HOME/.sbt -name "*.lock" -type f -delete
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+  - rm -rf $HOME/.ivy2/local
 
 cache:
   directories:
