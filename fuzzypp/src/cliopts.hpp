@@ -39,11 +39,16 @@ namespace fuzzypp::cliopts {
             validate_options() const;
 
         private:
-            static const std::vector<std::string> 
-            extract_vector(const cxxopts::ParseResult& parsed, const std::string& name);
+            inline static const std::vector<std::string> 
+            extract_vector(const cxxopts::ParseResult& parsed, const std::string& name) {
+                return parsed.count(name) ? 
+                    parsed[name].as<std::vector<std::string>>() : std::vector<std::string>();
+            }
 
-            static bool
-            is_path_valid(const std::filesystem::path& path);
+            inline static bool
+            is_path_valid(const std::filesystem::path& path) {
+                return path.string().find("..") == std::string::npos;
+            }
     };
 }
 

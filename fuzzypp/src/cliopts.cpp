@@ -52,12 +52,6 @@ namespace fuzzypp::cliopts {
         }
     }
 
-    inline const std::vector<std::string> 
-    CliOptions::extract_vector(const cxxopts::ParseResult& parsed, const std::string& name) {
-        return parsed.count(name) ? 
-            parsed[name].as<std::vector<std::string>>() : std::vector<std::string>();
-    }
-
     const std::optional<std::string>
     CliOptions::validate_options() const {
         if (files.empty()) {
@@ -105,8 +99,4 @@ namespace fuzzypp::cliopts {
         return std::optional<std::string> {};
     }
 
-    inline bool
-    CliOptions::is_path_valid(const std::filesystem::path& path) {
-        return path.string().find("..") == std::string::npos;
-    }
 }
