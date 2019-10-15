@@ -2,51 +2,53 @@ language: scala
 dist: xenial
 jdk: openjdk8
 if: tag IS blank
-
 branches:
   only:
   - master
-
 addons:
   apt:
     sources:
-      - sourceline: 'ppa:ubuntu-toolchain-r/test'
+    - sourceline: ppa:ubuntu-toolchain-r/test
     packages:
-      - cmake
-      - g++-8
-
+    - cmake
+    - g++-8
 env:
+  matrix:
   - CXX=/usr/bin/g++-8
-
+  global:
+  - secure: QRQImE4dgKHqT3dKsUUd8NbrSQLfem0CuY92UkDy6qTuFrLg+1ancbmMglzvUQhCYnVqdRZ9BnbHKNHc+t7sJIY4vqpq610sYaxHilMTYUyKkyt1CCgZoX4OP+g/Xx/veSY+TfKsz1EfsXnTFRbVhGDWUJ5iBnz0uN3ZdqOmivyCLshJ37rygciDW5R7AC7ona/qjkTDme/FgREeH6GZswaQSDWDB/hXJ52Fl68vzsDJtiTkAtczGkmbsP5T9BRNX1PLBPkn1ZIk4sRzul+O4Jy4hbApzV47A9urjo4Ch0hP0N/6HGgQ4sePezd4GlYfhh+6B4Pw4K2gIcyizmZPjBBEwEDwK+mcblvxtWzb90b2ZrLprRE3Vb45JOd8yaDMuSzpL3rUuSZm7obJ2DxtuI2TAjwTezzLTKYyR4rQ3fg9QBX+GnEsm9Dol18A+Dv+4PdxqdPx5iOZo7YUl5JIW2HnRG+DOqngudLBGuL9clBR5a4Y5uuq9+FJKqdkh5rMrcSVsGXr+ORCWbUlkedNDNQDZPhGDKP8LVw4sUuSUfladLjz9zXpIGv/RqbGCwLt2FyoOJCrqR7hzfYZeiXd0XQkntsb2xT1mlkLzWh6Xy+hylzVM/X7fRazZzdwi40nOOAslzQ29ltA3bAOrP32cFeu0KslggEvPWaGZn7Elho=
+  - secure: fjPmhJeIZaydeabQyirtKVshrqdLuFUa8wpJ4r9IDigsvRWqH3TfDBoDATYW6XlT+go7V6TbgqQquJgCa3r16Di67I+ybU/YQajcEOaC27VL0xHLGIc/4U0+qGciKXUxKaKkS8Jt1FGuFSXBsfVRj05f6Y5rL4+Pb2BPOm8qCgsofjjLUZjbult66xBCzhrlakTMkaC/Lno3vO9zzl99RiDobnjE7p0bku2z26WH+C8jEleiouixxzpC0BUwmwSeNru2hTc5J4Np58dS2eihCIWhAQCCtyKQjNqg4ZaCNMbWfZsbLCihSwpQ/raPPOd4E6kSax52siffhukFx6zieh0VO/TKu2EhueCRt8TjLXMfJR6c1gQobDfh+bzVR1Pwh6VB2I11ZmLCGYryqK7x0aMkE2lO/iyYwROavVVIRpRpMuDyc7mHjTMHIvrdeuZy9VElFPn/GQNlTRJXxIZuMgCocNKtFu0Ve68pLylWfLQQ+V9vzqAxpV9tpPgI9CDLByeC7vscOF+OLEqYKRdV1sqU6cbij5YtH5t7+4N4tAcb1toBLxkjvDUsL5kEi9fxlNDDe2r8rKef/deM/OZpKpYQObjEb8hzC21Op1CkkQ2IYZSopgqMywRto5Sw7Nkgw4teI4m3LOjMocOR+kSCSYdfdgiTCGFDeM8lRfHQt9A=
 before_install:
-  - git fetch --tags
-  - if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_EVENT_TYPE" == "push" ]]; then
-      openssl aes-256-cbc -K $encrypted_b3f7bd94ef38_key -iv $encrypted_b3f7bd94ef38_iv -in private-key.pem.enc -out private-key.pem -d;
-      gpg --import --batch private-key.pem;
-    fi
-
+- git fetch --tags
+- if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_EVENT_TYPE" == "push" ]]; then openssl
+  aes-256-cbc -K $encrypted_b3f7bd94ef38_key -iv $encrypted_b3f7bd94ef38_iv -in private-key.pem.enc
+  -out private-key.pem -d; gpg --import --batch private-key.pem; fi
 stages:
-  - name: test
-  - name: test-fuzzpp
-  - name: release
-    if: branch = master AND type = push
-
+- name: test
+- name: test-fuzzpp
+- name: release-jfrog
+  if: branch = master AND type = push
+- name: release-sonatype
+  if: branch = master AND type = push
 jobs:
   include:
   - stage: test
-    script: 
-      - sbt scalafmtCheck +test
-      - cmake ./fuzzypp
-      - cmake --build . -- -j4
-      - ./fuzzypp/bin/fuzzyppcli-tests
-  - stage: release
-    script: sbt ci-release-sonatype
-
+    script:
+    - sbt scalafmtCheck +test
+    - cmake ./fuzzypp
+    - cmake --build . -- -j4
+    - "./fuzzypp/bin/fuzzyppcli-tests"
+  - stage: release-jfrog
+    script: sbt ciReleaseTagNextVersion 'set publishTo := Some("releases"
+      at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")' "set credentials
+      += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\", \"$JFROG_USER\",
+      \"$JFROG_PASS\")" ciRelease
+  - stage: release-sonatype
+    script: sbt ciReleaseSonatype
 before_cache:
-  - find $HOME/.sbt -name "*.lock" -type f -delete
-  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
-  - rm -rf $HOME/.ivy2/local
-
+- find $HOME/.sbt -name "*.lock" -type f -delete
+- find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+- rm -rf $HOME/.ivy2/local
 cache:
   directories:
   - "$HOME/.sbt/1.0/dependency"
