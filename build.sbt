@@ -1,6 +1,7 @@
 name := "fuzzyc2cpg"
 organization := "io.shiftleft"
 scalaVersion := "2.12.10"
+enablePlugins(GitVersioning)
 
 val cpgVersion = "0.10.26"
 
