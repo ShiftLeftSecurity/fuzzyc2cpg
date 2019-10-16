@@ -19,7 +19,8 @@ TEST_CASE("1: Parse command line arguments", "cli-parse") {
         "-D", "SHORT_DEF",
         "--define", "LONG_DEF",
         "-U", "SHORT_UDEF",
-        "--undefine", "LONG_UDEF"
+        "--undefine", "LONG_UDEF",
+        "--verbose"
     };
 
     auto result = fuzzypp::cliopts::CliOptions::parse_command_line(argc, const_cast<char**>(argv));
@@ -42,6 +43,8 @@ TEST_CASE("1: Parse command line arguments", "cli-parse") {
 
     std::vector<std::string> expected_udefs { "SHORT_UDEF", "LONG_UDEF" };
     REQUIRE(std::equal(result->undefines.cbegin(), result->undefines.cend(), expected_udefs.cbegin()));
+
+    REQUIRE(result->verbose);
 }
 
 TEST_CASE("2: Fail to parse invalid arguments", "cli-parse") {
@@ -85,7 +88,8 @@ TEST_CASE("1: Pass validation", "cli-validate") {
         std::vector<std::string> { other_header.parent_path() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path
+        output_path,
+        false
     };
 
     auto result = opts.validate_options();
@@ -103,7 +107,8 @@ TEST_CASE("2: Fail if an input file contains '..'", "cli-validate") {
         std::vector<std::string> { other_header.parent_path() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path
+        output_path,
+        false
     };
 
     auto result = opts.validate_options();
@@ -118,7 +123,8 @@ TEST_CASE("3: Fail if no input files are specified", "cli-validate") {
         std::vector<std::string> { },
         std::vector<std::string> { },
         std::vector<std::string> { },
-        ""
+        "",
+        false
     };
 
     auto result = opts.validate_options();
@@ -135,7 +141,8 @@ TEST_CASE("4: Fail if no output files are specified", "cli-validate") {
         std::vector<std::string> { },
         std::vector<std::string> { },
         std::vector<std::string> { },
-        ""
+        "",
+        false
     };
 
     auto result = opts.validate_options();
@@ -153,7 +160,8 @@ TEST_CASE("5: Fail if no output files are specified", "cli-validate") {
         std::vector<std::string> { },
         std::vector<std::string> { },
         std::vector<std::string> { },
-        lying_output_directory
+        lying_output_directory,
+        false
     };
 
     auto result = opts.validate_options();
@@ -172,7 +180,8 @@ TEST_CASE("6: Fail if an input file does not exist", "cli-validate") {
         std::vector<std::string> { other_header.parent_path() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path
+        output_path,
+        false
     };
 
     auto result = opts.validate_options();
@@ -191,7 +200,8 @@ TEST_CASE("7: Fail if an included file does not exist", "cli-validate") {
         std::vector<std::string> { other_header.parent_path() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path
+        output_path,
+        false
     };
 
     auto result = opts.validate_options();
@@ -210,7 +220,8 @@ TEST_CASE("8: Fail if an included file contains '..'", "cli-validate") {
         std::vector<std::string> { other_header.parent_path() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path
+        output_path,
+        false
     };
 
     auto result = opts.validate_options();
@@ -229,7 +240,8 @@ TEST_CASE("9: Fail if an included path does not exist", "cli-validate") {
         std::vector<std::string> { std::filesystem::temp_directory_path() /= "cli-validate/9/other" },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path
+        output_path,
+        false
     };
 
     auto result = opts.validate_options();
@@ -249,7 +261,8 @@ TEST_CASE("10: Fail if an included path contains '..'", "cli-validate") {
         std::vector<std::string> { other_header.parent_path() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path
+        output_path,
+        false
     };
 
     auto result = opts.validate_options();

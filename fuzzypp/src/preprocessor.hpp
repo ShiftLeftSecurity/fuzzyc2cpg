@@ -17,7 +17,10 @@ namespace fuzzypp::preprocessor {
             generate_simplecpp_opts(const fuzzypp::cliopts::CliOptions& options);
 
             static const std::string 
-            stringify(const std::string& filename, const simplecpp::DUI& options);
+            stringify(const std::string& filename, const fuzzypp::cliopts::CliOptions& options);
+
+            static void
+            print_preprocessor_errors(const simplecpp::OutputList& output_list);
     };
 }
 
