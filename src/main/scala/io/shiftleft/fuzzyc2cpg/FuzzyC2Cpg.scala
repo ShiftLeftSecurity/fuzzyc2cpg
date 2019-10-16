@@ -1,7 +1,6 @@
 package io.shiftleft.fuzzyc2cpg
 
-import java.nio.file.Path
-
+import java.nio.file.{Files, Path}
 import io.shiftleft.codepropertygraph.generated.Languages
 import io.shiftleft.fuzzyc2cpg.Utils.{getGlobalNamespaceBlockFullName, newEdge, newNode}
 import io.shiftleft.fuzzyc2cpg.output.protobuf.OutputModuleFactory
@@ -10,13 +9,17 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.slf4j.LoggerFactory
+
 import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
+
+  private val logger = LoggerFactory.getLogger(getClass)
 
   def this(outputPath: String) = {
     this(
@@ -24,9 +27,49 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
         .asInstanceOf[CpgOutputModuleFactory])
   }
 
-  def runAndOutput(fileAndDirNames: Array[String]) = {
-    val inputPaths = fileAndDirNames
-    val sourceFileNames = SourceFiles.determine(inputPaths.toList).sorted
+  def runWithPreprocessorAndOutput(sourcePaths: List[String],
+                                   includeFiles: List[String],
+                                   includePaths: List[String],
+                                   defines: List[String],
+                                   undefines: List[String],
+                                   preprocessorExecutable: String): Unit = {
+    // Create temp dir to store preprocessed source.
+    val preprocessedPath = Files.createTempDirectory("fuzzyc2cpg_preprocessed_")
+    logger.info(s"Writing preprocessed files to [$preprocessedPath]")
+
+    val preprocessorLogFile = Files.createTempFile("fuzzyc2cpg_preprocessor_log", ".txt").toFile
+    logger.info(s"Writing preprocessor logs to [$preprocessorLogFile]")
+
+    val sourceFileNames = SourceFiles.determine(sourcePaths)
+
+    val cmd = Seq(preprocessorExecutable,
+                  "-o", preprocessedPath.toString,
+                  "-f", sourceFileNames.mkString(","),
+                  "--include", includeFiles.mkString(","),
+                  "-I", includePaths.mkString(","),
+                  "-D", defines.mkString(","),
+                  "-U", undefines.mkString(","))
+
+    // Run preprocessor
+    logger.info("Running preprocessor...")
+    val process = new ProcessBuilder()
+      .redirectOutput(preprocessorLogFile)
+      .redirectError(preprocessorLogFile)
+      .command(cmd: _*)
+      .start()
+    val exitCode = process.waitFor()
+
+    if (exitCode == 0) {
+      logger.info("Preprocessing complete, starting CPG generation...")
+      runAndOutput(List(preprocessedPath.toString))
+    } else {
+      logger.error(s"Error occurred whilst running preprocessor. Exit code [$exitCode].")
+    }
+  }
+
+  def runAndOutput(sourcePaths: List[String]): Unit = {
+    // TODO (pp-workflow): Allow user to specify custom source file extensions.
+    val sourceFileNames = SourceFiles.determine(sourcePaths).sorted
 
     val filenameToNodes = createStructuralCpg(sourceFileNames, outputModuleFactory)
 
@@ -175,22 +218,41 @@ object FuzzyC2CpgCache {
 
 object FuzzyC2Cpg extends App {
 
-  val DEFAULT_CPG_OUT_FILE = "cpg.bin.zip"
-
   private val logger = LoggerFactory.getLogger(getClass)
 
   parseConfig.foreach { config =>
     try {
-      new FuzzyC2Cpg(config.outputPath).runAndOutput(config.inputPaths.toArray)
+      val fuzzyc = new FuzzyC2Cpg(config.outputPath)
+
+      if (config.usePreprocessor) {
+        fuzzyc.runWithPreprocessorAndOutput(
+          config.inputPaths,
+          config.includeFiles,
+          config.includePaths,
+          config.defines,
+          config.undefines,
+          config.preprocessorExecutable)
+      } else {
+        fuzzyc.runAndOutput(config.inputPaths)
+      }
+
     } catch {
-      case exception: Exception =>
-        logger.error("Failed to generate CPG.", exception)
-        System.exit(1)
+      case NonFatal(ex) =>
+        logger.error("Failed to generate CPG.", ex)
     }
-    System.exit(0)
   }
 
-  case class Config(inputPaths: Seq[String], outputPath: String)
+  final case class Config(inputPaths: List[String] = List.empty,
+                          outputPath: String = "cpg.bin.zip",
+                          includeFiles: List[String] = List.empty,
+                          includePaths: List[String] = List.empty,
+                          defines:  List[String] = List.empty,
+                          undefines: List[String] = List.empty,
+                          preprocessorExecutable: String = "./fuzzypp/bin/fuzzyppcli") {
+    lazy val usePreprocessor: Boolean =
+      includeFiles.nonEmpty || includePaths.nonEmpty || defines.nonEmpty || undefines.nonEmpty
+  }
+
   def parseConfig: Option[Config] =
     new scopt.OptionParser[Config](getClass.getSimpleName) {
       arg[String]("<input-dir>")
@@ -200,7 +262,25 @@ object FuzzyC2Cpg extends App {
       opt[String]("out")
         .text("output filename")
         .action((x, c) => c.copy(outputPath = x))
-
-    }.parse(args, Config(List(), DEFAULT_CPG_OUT_FILE))
+      opt[String]("include")
+        .unbounded()
+        .text("header include files")
+        .action((incl, cfg) => cfg.copy(includeFiles = cfg.includeFiles :+ incl))
+      opt[String]('I', "")
+        .unbounded()
+        .text("header include paths")
+        .action((incl, cfg) => cfg.copy(includePaths = cfg.includePaths :+ incl))
+      opt[String]('D', "define")
+        .unbounded()
+        .text("define a name")
+        .action((d, cfg) => cfg.copy(defines = cfg.defines :+ d))
+      opt[String]('U', "undefine")
+        .unbounded()
+        .text("undefine a name")
+        .action((u, cfg) => cfg.copy(undefines = cfg.undefines :+ u))
+      opt[String]("preprocessor-executable")
+        .text("path to the preprocessor executable")
+        .action((s, cfg) => cfg.copy(preprocessorExecutable = s))
+    }.parse(args, Config())
 
 }

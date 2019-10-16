@@ -21,9 +21,31 @@ the following prerequisites:
 Additional build-time dependencies are automatically downloaded as part
 of the build process. To build fuzzyc2cpg issue the command `sbt stage`.
 
+Optionally, you may also build the preprocessor included with fuzzyc2cpg. This will enable you to specify any include
+files that your application uses for more complete CPG generation. Any defines and macros will also be fully processed.
+
+To build the preprocessor, see the preprocessor [README](./fuzzypp/README.md)/
+
 ## Running
 
-To run fuzzyc2cpg in order to produce a code property graph issue the
-command
-`./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> --out <path/to/outputCpg>`.
+To produce a code property graph _*without preprocessing*_  issue the command:
+```shell script
+./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> --out <path/to/outputCpg>
+`````
+
+To produce a code property graph _*with preprocessing*_, ensure that you have the preprocessor binary available
+and issue the command:
+```shell script
+./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> \ 
+                --out <path/to/outputCpg> \
+                --include <path/to/include/file.h>
+                -I <path/to/include/dir>
+                --define DEF,DEF_VAL=2
+                --undefine UNDEF
+                --preprocessor-executable <path/to/preprocessor/executable>
+```
+
+All preprocessor options accept multiple values, each separated by a comma (`,`). 
+By default, fuzzyc2cpg will attempt to execute the preprocessor at `./fuzzypp/bin/fuzzyppcli`.
+
 
