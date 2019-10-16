@@ -37,6 +37,7 @@ To produce a code property graph _*with preprocessing*_, ensure that you have th
 and issue the command:
 ```shell script
 ./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> \
+                --verbose
                 --source-file-ext .cxx 
                 --out <path/to/outputCpg> \
                 --include <path/to/include/file.h>

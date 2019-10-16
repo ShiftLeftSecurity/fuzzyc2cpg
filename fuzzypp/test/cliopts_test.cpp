@@ -8,7 +8,7 @@
 #include "test_utils.hpp"
 
 TEST_CASE("1: Parse command line arguments", "cli-parse") { 
-    const int argc = 19;
+    const int argc = 20;
     const char* argv[] = {
         "prog-name",
         "-f", "/path/to/a/file",
