@@ -1,18 +1,18 @@
 package io.shiftleft.fuzzyc2cpg
 
-import java.nio.file.{Files, Path}
+import org.slf4j.LoggerFactory
+
 import io.shiftleft.codepropertygraph.generated.Languages
-import io.shiftleft.fuzzyc2cpg.Utils.{getGlobalNamespaceBlockFullName, newEdge, newNode}
+import io.shiftleft.fuzzyc2cpg.Utils.{getGlobalNamespaceBlockFullName, newEdge, newNode, _}
+import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.output.protobuf.OutputModuleFactory
-import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
+import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
-import org.slf4j.LoggerFactory
+import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 
-import io.shiftleft.fuzzyc2cpg.Utils._
-import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
-import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
+import java.nio.file.{Files, Path}
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
@@ -43,13 +43,21 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
-    val cmd = Seq(preprocessorExecutable,
-                  "-o", preprocessedPath.toString,
-                  "-f", sourceFileNames.mkString(","),
-                  "--include", includeFiles.mkString(","),
-                  "-I", includePaths.mkString(","),
-                  "-D", defines.mkString(","),
-                  "-U", undefines.mkString(","))
+    val cmd = Seq(
+      preprocessorExecutable,
+      "-o",
+      preprocessedPath.toString,
+      "-f",
+      sourceFileNames.mkString(","),
+      "--include",
+      includeFiles.mkString(","),
+      "-I",
+      includePaths.mkString(","),
+      "-D",
+      defines.mkString(","),
+      "-U",
+      undefines.mkString(",")
+    )
 
     // Run preprocessor
     logger.info("Running preprocessor...")
@@ -225,18 +233,15 @@ object FuzzyC2Cpg extends App {
       val fuzzyc = new FuzzyC2Cpg(config.outputPath)
 
       if (config.usePreprocessor) {
-        fuzzyc.runWithPreprocessorAndOutput(
-          config.inputPaths,
-          config.sourceFileExtensions,
-          config.includeFiles,
-          config.includePaths,
-          config.defines,
-          config.undefines,
-          config.preprocessorExecutable)
+        fuzzyc.runWithPreprocessorAndOutput(config.inputPaths,
+                                            config.sourceFileExtensions,
+                                            config.includeFiles,
+                                            config.includePaths,
+                                            config.defines,
+                                            config.undefines,
+                                            config.preprocessorExecutable)
       } else {
-        fuzzyc.runAndOutput(
-          config.inputPaths,
-          config.sourceFileExtensions)
+        fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions)
       }
 
     } catch {
@@ -250,7 +255,7 @@ object FuzzyC2Cpg extends App {
                           sourceFileExtensions: Set[String] = Set(".c", ".cpp", ".h", ".hpp"),
                           includeFiles: Set[String] = Set.empty,
                           includePaths: Set[String] = Set.empty,
-                          defines:  Set[String] = Set.empty,
+                          defines: Set[String] = Set.empty,
                           undefines: Set[String] = Set.empty,
                           preprocessorExecutable: String = "./fuzzypp/bin/fuzzyppcli") {
     lazy val usePreprocessor: Boolean =
