@@ -8,21 +8,19 @@ object SourceFiles {
     * For a given array of input paths, determine all C/C++
     * source files by inspecting filename extensions.
     * */
-  def determine(inputPaths: List[String]): List[String] = {
+  def determine(inputPaths: Set[String], sourceFileExtensions: Set[String]): Set[String] = {
+    def hasSourceFileExtension(file: File): Boolean =
+      file.extension.exists(sourceFileExtensions.contains)
 
-    def hasSourceFileExtension(file: File): Boolean = {
-      val ext = file.extension
-      ext.contains(".c") || ext.contains(".cpp") || ext.contains(".h") || ext.contains(".hpp")
-    }
+    val (dirs, files) = inputPaths
+      .map(File(_))
+      .partition(_.isDirectory)
 
-    val (dirs, files) = inputPaths.partition(File(_).isDirectory)
-
-    val matchingFiles = files.filter(f => hasSourceFileExtension(File(f)))
+    val matchingFiles = files.filter(hasSourceFileExtension).map(_.toString)
     val matchingFilesFromDirs = dirs
-      .flatMap(dir => File(dir).listRecursively.filter(hasSourceFileExtension))
+      .flatMap(_.listRecursively.filter(hasSourceFileExtension))
       .map(File(".").path.relativize(_).toString)
 
     matchingFiles ++ matchingFilesFromDirs
   }
-
 }

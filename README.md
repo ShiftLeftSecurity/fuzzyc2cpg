@@ -36,16 +36,21 @@ To produce a code property graph _*without preprocessing*_  issue the command:
 To produce a code property graph _*with preprocessing*_, ensure that you have the preprocessor binary available
 and issue the command:
 ```shell script
-./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> \ 
+./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> \
+                --source-file-ext .cxx 
                 --out <path/to/outputCpg> \
                 --include <path/to/include/file.h>
                 -I <path/to/include/dir>
-                --define DEF,DEF_VAL=2
+                --define DEF
+                --define DEF_VAL=2
                 --undefine UNDEF
                 --preprocessor-executable <path/to/preprocessor/executable>
 ```
 
-All preprocessor options accept multiple values, each separated by a comma (`,`). 
+All preprocessor options may be specified more than once, with the exception of `--out` and `--preprocessor-executable`.
 By default, fuzzyc2cpg will attempt to execute the preprocessor at `./fuzzypp/bin/fuzzyppcli`.
 
-
+Run the following to see a complete list of available options:
+```shell script
+./fuzzyc2cpg.sh --help
+```
