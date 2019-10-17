@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <list>
 #include <optional>
+#include <ostream>
 #include <string>
 
 #include <cxxopts.hpp>
@@ -17,6 +18,7 @@ namespace fuzzypp::cliopts {
             const std::vector<std::string> defines;
             const std::vector<std::string> undefines;
             const std::string output_directory;
+            const bool verbose;
 
             // TODO: Add a `verbose` option for printing of errors etc.
             CliOptions(const std::vector<std::string> _files,
@@ -24,10 +26,12 @@ namespace fuzzypp::cliopts {
                        const std::vector<std::string> _include_paths,
                        const std::vector<std::string> _defines,
                        const std::vector<std::string> _undefines,
-                       const std::string _output_directory) :
+                       const std::string _output_directory,
+                       const bool _verbose) :
                        files(_files), include_files(_include_files), 
                        include_paths(_include_paths), defines(_defines), 
-                       undefines(_undefines), output_directory(_output_directory) {}
+                       undefines(_undefines), output_directory(_output_directory), 
+                       verbose(_verbose) {}
 
             CliOptions(CliOptions&) = delete;
             CliOptions(CliOptions&&) = default;
@@ -37,6 +41,9 @@ namespace fuzzypp::cliopts {
 
             const std::optional<std::string>
             validate_options() const;
+
+            friend std::ostream& 
+            operator<<(std::ostream& out, const CliOptions& opts);
 
         private:
             inline static const std::vector<std::string> 

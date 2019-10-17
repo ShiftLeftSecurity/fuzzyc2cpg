@@ -16,7 +16,8 @@ TEST_CASE("1: Preprocess an input file, preserving comments", "preprocess") {
         std::vector<std::string> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -42,7 +43,8 @@ TEST_CASE("2: Preprocess an input file with an included file", "preprocess") {
         std::vector<std::string> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -73,7 +75,8 @@ TEST_CASE("3: Preprocess an input file with an included path", "preprocess") {
         std::vector<std::string> { header_file.parent_path() },
         std::vector<std::string> {},
         std::vector<std::string> {},
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -106,7 +109,8 @@ TEST_CASE("4: Preprocess an input file with a define", "preprocess") {
         std::vector<std::string> {},
         std::vector<std::string> { "CAKE" },
         std::vector<std::string> {},
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -135,7 +139,8 @@ TEST_CASE("5: Preprocess an input file with a define value", "preprocess") {
         std::vector<std::string> {},
         std::vector<std::string> { "CAKE=0" },
         std::vector<std::string> {},
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -165,7 +170,8 @@ TEST_CASE("6: Preprocess an input file with an undefine", "preprocess") {
         std::vector<std::string> {},
         std::vector<std::string> {},
         std::vector<std::string> { "CAKE" },
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -196,7 +202,8 @@ TEST_CASE("7: Elide any include directives for which an explict header file can 
         std::vector<std::string> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -224,7 +231,8 @@ TEST_CASE("8: Elide any include directives for which a header can not be found i
         std::vector<std::string> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -254,7 +262,8 @@ TEST_CASE("9: Elide any defines which are also specified in the list of undefine
         std::vector<std::string> {},
         std::vector<std::string> { "CAKE" },
         std::vector<std::string> { "CAKE" },
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -287,7 +296,8 @@ TEST_CASE("10: Correctly handle paths containing .", "preprocess") {
         std::vector<std::string> { header_file.parent_path() },
         std::vector<std::string> {},
         std::vector<std::string> {},
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
@@ -318,7 +328,8 @@ TEST_CASE("11: Defines from headers are correctly imported", "preprocess") {
         std::vector<std::string> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        output_dir
+        output_dir,
+        false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);

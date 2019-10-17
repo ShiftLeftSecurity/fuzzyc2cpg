@@ -20,6 +20,7 @@ namespace fuzzypp::cliopts {
                 ("include", "A set of files to include on the header search path", cxxopts::value<std::vector<std::string>>(), "FILE")
                 ("D,define", "A set of defined values", cxxopts::value<std::vector<std::string>>(), "NAME[=VALUE]")
                 ("U,undefine", "A set of undefined values", cxxopts::value<std::vector<std::string>>(), "NAME")
+                ("verbose", "Print additional diagnostic information")
                 ("help", "Print help.");
 
             auto result = options.parse(argc, argv);
@@ -35,6 +36,7 @@ namespace fuzzypp::cliopts {
             auto undefs = extract_vector(result, "undefine");
             auto output = result.count("output") ?
                 result["output"].as<std::string>() : "";
+            auto verbose = result.count("verbose") > 0;
 
             return std::optional<CliOptions> {
                 CliOptions {
@@ -43,7 +45,8 @@ namespace fuzzypp::cliopts {
                     i_paths,
                     defs,
                     undefs,
-                    output
+                    output,
+                    verbose
                 }
             };
         } catch (const cxxopts::OptionException& e) {
@@ -99,4 +102,43 @@ namespace fuzzypp::cliopts {
         return std::optional<std::string> {};
     }
 
+    std::ostream& 
+    operator<<(std::ostream& out, const CliOptions& opts) {
+        out << "Command line arguments:" << std::endl;
+        out << "=======================" << std::endl;
+
+        out << "Output directory: " << opts.output_directory << std::endl;
+        
+        out << "Source files:" << std::endl;
+        for (const auto& src_file : opts.files) {
+            out << "=> " << src_file << std::endl;
+        }
+        out << std::endl;
+
+        out << "Include files:" << std::endl;
+        for (const auto& incl_file : opts.include_files) {
+            out << "=> " << incl_file << std::endl;
+        }
+        out << std::endl;
+
+        out << "Include paths:" << std::endl;
+        for (const auto& incl_path : opts.include_paths) {
+            out << "=> " << incl_path << std::endl;
+        }
+        out << std::endl;
+
+        out << "Defines:" << std::endl;
+        for (const auto& define : opts.defines) {
+            out << "=> " << define << std::endl;
+        }
+        out << std::endl;
+
+        out << "Undefines:" << std::endl;
+        for (const auto& undefine : opts.undefines) {
+            out << "=> " << undefine << std::endl;
+        }
+        out << std::endl;
+
+        return out;
+    }
 }

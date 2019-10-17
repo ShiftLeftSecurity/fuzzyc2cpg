@@ -19,6 +19,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    if (opts->verbose) {
+        std::cout << *opts << std::endl;
+    }
+
     fuzzypp::preprocessor::Preprocessor::preprocess(*opts);
 
     return 0;

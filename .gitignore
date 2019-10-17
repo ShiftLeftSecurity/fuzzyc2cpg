@@ -8,6 +8,8 @@
 
 private-key.pem
 
+cpg.bin.zip
+
 # Created by https://www.gitignore.io/api/c++,cmake,linux
 # Edit at https://www.gitignore.io/?templates=c++,cmake,linux
 

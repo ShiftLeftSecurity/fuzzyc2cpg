@@ -9,7 +9,6 @@
 namespace fuzzypp::preprocessor {
     void 
     Preprocessor::preprocess(const fuzzypp::cliopts::CliOptions& options) {
-        auto opts = generate_simplecpp_opts(options);
         const auto output_path = std::filesystem::path { options.output_directory };
 
         auto write_to_file = [&](const auto& file_name) {
@@ -18,7 +17,7 @@ namespace fuzzypp::preprocessor {
             if (output_file.has_parent_path()) std::filesystem::create_directories(output_file.parent_path());
             
             std::ofstream output { output_file, std::ofstream::trunc };
-            output << stringify(file_name, opts);
+            output << stringify(file_name, options);
         };
 
         std::for_each(options.files.cbegin(),
@@ -39,7 +38,10 @@ namespace fuzzypp::preprocessor {
     }
 
     const std::string
-    Preprocessor::stringify(const std::string& filename, const simplecpp::DUI& options) {
+    Preprocessor::stringify(const std::string& filename, 
+                            const fuzzypp::cliopts::CliOptions& options) {
+        auto simplecpp_opts = generate_simplecpp_opts(options);
+
         simplecpp::OutputList output_list;
         std::vector<std::string> files;
         
@@ -52,9 +54,46 @@ namespace fuzzypp::preprocessor {
         // Leaving as an empty map for the time being.
         std::map<std::string, simplecpp::TokenList*> included { };
 
-        simplecpp::preprocess(output_tokens, raw_tokens, files, included, options, &output_list);
+        simplecpp::preprocess(output_tokens, raw_tokens, files, included, simplecpp_opts, &output_list);
+        if (options.verbose) print_preprocessor_errors(output_list);
         simplecpp::cleanup(included);
 
         return output_tokens.stringify();
+    }
+
+    void
+    Preprocessor::print_preprocessor_errors(const simplecpp::OutputList& output_list) {
+        std::cerr << "Preprocessor errors:" << std::endl;
+        std::cerr << "====================" << std::endl; 
+
+        for (const auto& output : output_list) {
+            std::cerr << "=> " << output.location.file() << ':' << output.location.line << ": ";
+        
+            switch (output.type) {
+                case simplecpp::Output::ERROR:
+                    std::cerr << "#error: ";
+                    break;
+                case simplecpp::Output::WARNING:
+                    std::cerr << "#warning: ";
+                    break;
+                case simplecpp::Output::MISSING_HEADER:
+                    std::cerr << "missing header: ";
+                    break;
+                case simplecpp::Output::INCLUDE_NESTED_TOO_DEEPLY:
+                    std::cerr << "include nested too deeply: ";
+                    break;
+                case simplecpp::Output::SYNTAX_ERROR:
+                    std::cerr << "syntax error: ";
+                    break;
+                case simplecpp::Output::PORTABILITY_BACKSLASH:
+                    std::cerr << "portability: ";
+                    break;
+                case simplecpp::Output::UNHANDLED_CHAR_ERROR:
+                    std::cerr << "unhandled char error: ";
+                    break;
+            }
+
+            std::cerr << output.msg << std::endl;
+        }
     }
 }
