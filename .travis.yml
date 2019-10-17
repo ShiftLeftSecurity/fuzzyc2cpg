@@ -25,7 +25,6 @@ before_install:
   -out private-key.pem -d; gpg --import --batch private-key.pem; fi
 stages:
 - name: test
-- name: test-fuzzpp
 - name: release-jfrog
   if: branch = master AND type = push
 - name: release-sonatype
@@ -56,3 +55,18 @@ cache:
   - "$HOME/.sbt/launchers"
   - "$HOME/.ivy2/cache"
   - "$HOME/.coursier"
+
+before_deploy:
+  - zip ./fuzzypp/bin/fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli
+
+deploy:
+  edge: true
+  provider: releases
+  cleanup: false
+  token: "$GITHUB_TOKEN"
+  file:
+    - "./fuzzypp/bin/fuzzyppcli.zip"
+    # TODO: Publish Windows build.
+  on:
+    tags: true
+
