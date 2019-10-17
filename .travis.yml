@@ -56,13 +56,16 @@ cache:
   - "$HOME/.ivy2/cache"
   - "$HOME/.coursier"
 
+before_deploy:
+  - zip ./fuzzypp/bin/fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli
+
 deploy:
   edge: true
   provider: releases
   cleanup: false
   token: "$GITHUB_TOKEN"
   file:
-    - "./fuzzypp/bin/fuzzyppcli"
+    - "./fuzzypp/bin/fuzzyppcli.zip"
     # TODO: Publish Windows build.
   on:
     tags: true
