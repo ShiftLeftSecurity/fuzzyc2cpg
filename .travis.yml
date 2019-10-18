@@ -5,13 +5,6 @@ if: tag IS blank
 branches:
   only:
   - master
-addons:
-  apt:
-    sources:
-    - sourceline: ppa:ubuntu-toolchain-r/test
-    packages:
-    - cmake
-    - g++-8
 env:
   matrix:
   - CXX=/usr/bin/g++-8
@@ -34,6 +27,13 @@ stages:
 jobs:
   include:
   - stage: test
+    addons:
+      apt:
+        sources:
+        - sourceline: ppa:ubuntu-toolchain-r/test
+        packages:
+        - cmake
+        - g++-8
     script:
     - sbt scalafmtCheck +test
     - cmake ./fuzzypp
@@ -70,5 +70,6 @@ cache:
   - "$HOME/.sbt/launchers"
   - "$HOME/.ivy2/cache"
   - "$HOME/.coursier"
-
+  - "./target"
+  - "./fuzzypp/bin"
 
