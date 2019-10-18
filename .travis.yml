@@ -48,7 +48,7 @@ jobs:
     script: sbt ciReleaseSonatype
   - stage: release-preprocessor
     script: skip
-    before_deploy: zip ./fuzzypp/bin/fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli
+    before_deploy: zip -j ./fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli
     deploy:
       edge: true
       provider: releases
@@ -56,7 +56,7 @@ jobs:
       token: "$GITHUB_TOKEN"
       target_commitish: "$TRAVIS_COMMIT"
       file:
-        - "./fuzzypp/bin/fuzzyppcli.zip"
+        - "./fuzzyppcli.zip"
         # TODO: Publish Windows build.
 
 before_cache:
