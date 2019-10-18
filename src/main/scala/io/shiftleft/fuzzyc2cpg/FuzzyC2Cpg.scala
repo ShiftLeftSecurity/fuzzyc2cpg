@@ -44,8 +44,8 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
     val cmd = Seq(
-      "--verbose",
       preprocessorExecutable,
+      "--verbose",
       "-o",
       preprocessedPath.toString,
       "-f",
