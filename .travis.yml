@@ -29,6 +29,8 @@ stages:
   if: branch = master AND type = push
 - name: release-sonatype
   if: branch = master AND type = push
+- name: release-preprocessor
+  if: branch = master AND type = push
 jobs:
   include:
   - stage: test
@@ -44,6 +46,19 @@ jobs:
       \"$JFROG_PASS\")" ciRelease
   - stage: release-sonatype
     script: sbt ciReleaseSonatype
+  - stage: release-preprocessor
+    script: skip
+    before_deploy: zip ./fuzzypp/bin/fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli
+    deploy:
+      edge: true
+      provider: releases
+      cleanup: false
+      token: "$GITHUB_TOKEN"
+      target_commitish: "$TRAVIS_COMMIT"
+      file:
+        - "./fuzzypp/bin/fuzzyppcli.zip"
+        # TODO: Publish Windows build.
+
 before_cache:
 - find $HOME/.sbt -name "*.lock" -type f -delete
 - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
@@ -56,17 +71,4 @@ cache:
   - "$HOME/.ivy2/cache"
   - "$HOME/.coursier"
 
-before_deploy:
-  - zip ./fuzzypp/bin/fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli
-
-deploy:
-  edge: true
-  provider: releases
-  cleanup: false
-  token: "$GITHUB_TOKEN"
-  file:
-    - "./fuzzypp/bin/fuzzyppcli.zip"
-    # TODO: Publish Windows build.
-  on:
-    tags: true
 
