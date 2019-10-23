@@ -9,15 +9,12 @@
 namespace fuzzypp::preprocessor {
     void 
     Preprocessor::preprocess(const fuzzypp::cliopts::CliOptions& options) {
-        const auto output_path = std::filesystem::path { options.output_directory };
-
-        auto write_to_file = [&](const auto& file_name) {
-            auto file_path = std::filesystem::path { file_name }.relative_path();
-            auto output_file = (std::filesystem::weakly_canonical(output_path) /= file_path).lexically_normal();
+        auto write_to_file = [&](const auto& file_path) {
+            auto relative_file_path = file_path.relative_path();
+            auto output_file = (std::filesystem::weakly_canonical(options.output_directory) /= relative_file_path).lexically_normal();
             if (output_file.has_parent_path()) std::filesystem::create_directories(output_file.parent_path());
-            
             std::ofstream output { output_file, std::ofstream::trunc };
-            output << stringify(file_name, options);
+            output << stringify(file_path, options);
         };
 
         std::for_each(options.files.cbegin(),
@@ -29,8 +26,8 @@ namespace fuzzypp::preprocessor {
     Preprocessor::generate_simplecpp_opts(const fuzzypp::cliopts::CliOptions& options) {
         simplecpp::DUI simple_opts;
 
-        simple_opts.includes = std::list<std::string> { options.include_files.cbegin(), options.include_files.cend() };
-        simple_opts.includePaths = std::list<std::string> { options.include_paths.cbegin(), options.include_paths.cend() };
+        simple_opts.includes = to_string_list(options.include_files);
+        simple_opts.includePaths = to_string_list(options.include_paths);
         simple_opts.defines = std::list<std::string> { options.defines.cbegin(), options.defines.cend() };
         simple_opts.undefined = std::set<std::string> { options.undefines.cbegin(), options.undefines.cend() };
 
@@ -38,16 +35,16 @@ namespace fuzzypp::preprocessor {
     }
 
     const std::string
-    Preprocessor::stringify(const std::string& filename, 
+    Preprocessor::stringify(const std::filesystem::path& file_path, 
                             const fuzzypp::cliopts::CliOptions& options) {
         auto simplecpp_opts = generate_simplecpp_opts(options);
 
         simplecpp::OutputList output_list;
         std::vector<std::string> files;
         
-        std::ifstream input_file { filename };
+        std::ifstream input_file { file_path };
 
-        simplecpp::TokenList raw_tokens { input_file, files, filename, &output_list };
+        simplecpp::TokenList raw_tokens { input_file, files, file_path.string(), &output_list };
         simplecpp::TokenList output_tokens { files };
 
         // Initialising this with simplecpp::load seems to double-include files...

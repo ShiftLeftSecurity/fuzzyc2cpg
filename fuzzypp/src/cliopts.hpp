@@ -1,6 +1,7 @@
 #ifndef FUZZYPP_CLIOPTS_HPP
 #define FUZZYPP_CLIOPTS_HPP
 
+#include <algorithm>
 #include <filesystem>
 #include <list>
 #include <optional>
@@ -12,21 +13,20 @@
 namespace fuzzypp::cliopts {
     class CliOptions {
         public:
-            const std::vector<std::string> files;
-            const std::vector<std::string> include_files;
-            const std::vector<std::string> include_paths;
+            const std::vector<std::filesystem::path> files;
+            const std::vector<std::filesystem::path> include_files;
+            const std::vector<std::filesystem::path> include_paths;
             const std::vector<std::string> defines;
             const std::vector<std::string> undefines;
-            const std::string output_directory;
+            const std::filesystem::path output_directory;
             const bool verbose;
 
-            // TODO: Add a `verbose` option for printing of errors etc.
-            CliOptions(const std::vector<std::string> _files,
-                       const std::vector<std::string> _include_files,
-                       const std::vector<std::string> _include_paths,
+            CliOptions(const std::vector<std::filesystem::path> _files,
+                       const std::vector<std::filesystem::path> _include_files,
+                       const std::vector<std::filesystem::path> _include_paths,
                        const std::vector<std::string> _defines,
                        const std::vector<std::string> _undefines,
-                       const std::string _output_directory,
+                       const std::filesystem::path _output_directory,
                        const bool _verbose) :
                        files(_files), include_files(_include_files), 
                        include_paths(_include_paths), defines(_defines), 
@@ -47,9 +47,21 @@ namespace fuzzypp::cliopts {
 
         private:
             inline static const std::vector<std::string> 
-            extract_vector(const cxxopts::ParseResult& parsed, const std::string& name) {
+            extract_elements(const cxxopts::ParseResult& parsed, const std::string& name) {
                 return parsed.count(name) ? 
                     parsed[name].as<std::vector<std::string>>() : std::vector<std::string>();
+            }
+
+            static const std::vector<std::filesystem::path> 
+            extract_paths(const cxxopts::ParseResult& parsed, const std::string& name) { 
+                auto path_strings = extract_elements(parsed, name);
+            
+                std::vector<std::filesystem::path> normalised;
+                std::transform(path_strings.cbegin(), path_strings.cend(), std::back_inserter(normalised),
+                               [](const auto& path_str) { 
+                                   return std::filesystem::path { path_str }.make_preferred(); } );
+
+                return normalised;
             }
 
             inline static bool

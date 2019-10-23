@@ -7,4 +7,7 @@ namespace fuzzypp::tests {
 
     const std::string
     read_file_content(const std::filesystem::path& file_path);
+
+    const std::string
+    to_native_path(const std::string& path);
 }

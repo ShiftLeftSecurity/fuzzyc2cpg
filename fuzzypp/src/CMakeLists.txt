@@ -14,7 +14,9 @@ set_target_properties(${FUZZYPP_LIB_NAME} PROPERTIES
                       CXX_EXTENSIONS OFF
                       ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/lib")
 
-target_link_libraries(${FUZZYPP_LIB_NAME} stdc++fs -static)
+if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    target_link_libraries(${FUZZYPP_LIB_NAME} stdc++fs -static)
+endif()
 
 
 # Build CLI.
@@ -27,4 +29,9 @@ set_target_properties(${FUZZYPP_CLI_NAME} PROPERTIES
                       CXX_EXTENSIONS OFF
                       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
-target_link_libraries(${FUZZYPP_CLI_NAME} ${FUZZYPP_LIB_NAME} stdc++fs -static)
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    target_link_libraries(${FUZZYPP_CLI_NAME} ${FUZZYPP_LIB_NAME})
+else()
+    target_link_libraries(${FUZZYPP_CLI_NAME} ${FUZZYPP_LIB_NAME} stdc++fs -static)
+endif()
+

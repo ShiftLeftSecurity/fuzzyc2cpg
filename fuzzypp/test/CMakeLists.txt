@@ -17,6 +17,10 @@ set_target_properties(${FUZZYPP_TEST_NAME} PROPERTIES
                       CXX_EXTENSIONS OFF
                       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
-target_link_libraries(${FUZZYPP_TEST_NAME} ${FUZZYPP_LIB_NAME} stdc++fs -static)
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    target_link_libraries(${FUZZYPP_TEST_NAME} ${FUZZYPP_LIB_NAME})
+else()
+    target_link_libraries(${FUZZYPP_TEST_NAME} ${FUZZYPP_LIB_NAME} stdc++fs -static)
+endif()
 
 add_test(NAME fuzzyppcli_tests COMMAND ${FUZZYPP_TEST_NAME})
