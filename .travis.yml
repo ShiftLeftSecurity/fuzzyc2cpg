@@ -6,8 +6,6 @@ branches:
   only:
   - master
 env:
-  matrix:
-  - CXX=/usr/bin/g++-8
   global:
   - secure: QRQImE4dgKHqT3dKsUUd8NbrSQLfem0CuY92UkDy6qTuFrLg+1ancbmMglzvUQhCYnVqdRZ9BnbHKNHc+t7sJIY4vqpq610sYaxHilMTYUyKkyt1CCgZoX4OP+g/Xx/veSY+TfKsz1EfsXnTFRbVhGDWUJ5iBnz0uN3ZdqOmivyCLshJ37rygciDW5R7AC7ona/qjkTDme/FgREeH6GZswaQSDWDB/hXJ52Fl68vzsDJtiTkAtczGkmbsP5T9BRNX1PLBPkn1ZIk4sRzul+O4Jy4hbApzV47A9urjo4Ch0hP0N/6HGgQ4sePezd4GlYfhh+6B4Pw4K2gIcyizmZPjBBEwEDwK+mcblvxtWzb90b2ZrLprRE3Vb45JOd8yaDMuSzpL3rUuSZm7obJ2DxtuI2TAjwTezzLTKYyR4rQ3fg9QBX+GnEsm9Dol18A+Dv+4PdxqdPx5iOZo7YUl5JIW2HnRG+DOqngudLBGuL9clBR5a4Y5uuq9+FJKqdkh5rMrcSVsGXr+ORCWbUlkedNDNQDZPhGDKP8LVw4sUuSUfladLjz9zXpIGv/RqbGCwLt2FyoOJCrqR7hzfYZeiXd0XQkntsb2xT1mlkLzWh6Xy+hylzVM/X7fRazZzdwi40nOOAslzQ29ltA3bAOrP32cFeu0KslggEvPWaGZn7Elho=
   - secure: fjPmhJeIZaydeabQyirtKVshrqdLuFUa8wpJ4r9IDigsvRWqH3TfDBoDATYW6XlT+go7V6TbgqQquJgCa3r16Di67I+ybU/YQajcEOaC27VL0xHLGIc/4U0+qGciKXUxKaKkS8Jt1FGuFSXBsfVRj05f6Y5rL4+Pb2BPOm8qCgsofjjLUZjbult66xBCzhrlakTMkaC/Lno3vO9zzl99RiDobnjE7p0bku2z26WH+C8jEleiouixxzpC0BUwmwSeNru2hTc5J4Np58dS2eihCIWhAQCCtyKQjNqg4ZaCNMbWfZsbLCihSwpQ/raPPOd4E6kSax52siffhukFx6zieh0VO/TKu2EhueCRt8TjLXMfJR6c1gQobDfh+bzVR1Pwh6VB2I11ZmLCGYryqK7x0aMkE2lO/iyYwROavVVIRpRpMuDyc7mHjTMHIvrdeuZy9VElFPn/GQNlTRJXxIZuMgCocNKtFu0Ve68pLylWfLQQ+V9vzqAxpV9tpPgI9CDLByeC7vscOF+OLEqYKRdV1sqU6cbij5YtH5t7+4N4tAcb1toBLxkjvDUsL5kEi9fxlNDDe2r8rKef/deM/OZpKpYQObjEb8hzC21Op1CkkQ2IYZSopgqMywRto5Sw7Nkgw4teI4m3LOjMocOR+kSCSYdfdgiTCGFDeM8lRfHQt9A=
@@ -34,11 +32,20 @@ jobs:
         packages:
         - cmake
         - g++-8
+    env:
+      CXX=/usr/bin/g++-8
     script:
     - sbt scalafmtCheck +test
     - cmake ./fuzzypp
     - cmake --build . -- -j4
     - "./fuzzypp/bin/fuzzyppcli-tests"
+  - stage: test
+    os: windows
+    language: cpp
+    script:
+    - cmake -G "Visual Studio 15 2017" -A "x64" ./fuzzypp
+    - cmake --build . --config Release
+    - "./fuzzypp/bin/Release/fuzzyppcli-tests.exe"
   - stage: release-jfrog
     script: sbt ciReleaseTagNextVersion 'set publishTo := Some("releases" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")'
       "set credentials += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\",
@@ -47,7 +54,7 @@ jobs:
     script: sbt ciReleaseSonatype
   - stage: release-preprocessor
     script: skip
-    before_deploy: zip -j ./fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli
+    before_deploy: zip -j ./fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli ./fuzzypp/bin/Release/fuzzyppcli.exe
     deploy:
       edge: true
       provider: releases
@@ -55,7 +62,7 @@ jobs:
       token: "$GITHUB_TOKEN"
       target_commitish: "$TRAVIS_COMMIT"
       file:
-      - "./fuzzyppcli.zip"
+        - "./fuzzyppcli.zip"
 before_cache:
 - find $HOME/.sbt -name "*.lock" -type f -delete
 - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete

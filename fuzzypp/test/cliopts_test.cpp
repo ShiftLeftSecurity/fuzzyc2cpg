@@ -83,12 +83,12 @@ TEST_CASE("1: Pass validation", "cli-validate") {
     auto output_path = std::filesystem::temp_directory_path() /= std::filesystem::path { "cli-validate/1/output" };
 
     auto opts = fuzzypp::cliopts::CliOptions {
-        std::vector<std::string> { source_file },
-        std::vector<std::string> { header_file },
-        std::vector<std::string> { other_header.parent_path() },
+        std::vector<std::string> { source_file.string() },
+        std::vector<std::string> { header_file.string() },
+        std::vector<std::string> { other_header.parent_path().string() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path,
+        output_path.string(),
         false
     };
 
@@ -101,13 +101,15 @@ TEST_CASE("2: Fail if an input file contains '..'", "cli-validate") {
     auto other_header = fuzzypp::tests::create_temp_file("cli-validate/2/other/header.hpp");
     auto output_path = std::filesystem::temp_directory_path() /= std::filesystem::path { "cli-validate/2/output" };
 
+    auto bad_input_file = std::filesystem::temp_directory_path() /= "cli-validate/2/..";
+
     auto opts = fuzzypp::cliopts::CliOptions {
-        std::vector<std::string> { std::filesystem::temp_directory_path() /= "cli-validate/2/.." },
-        std::vector<std::string> { header_file },
-        std::vector<std::string> { other_header.parent_path() },
+        std::vector<std::string> { bad_input_file.string() },
+        std::vector<std::string> { header_file.string() },
+        std::vector<std::string> { other_header.parent_path().string() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path,
+        output_path.string(),
         false
     };
 
@@ -136,7 +138,7 @@ TEST_CASE("4: Fail if no output files are specified", "cli-validate") {
     auto source_file = fuzzypp::tests::create_temp_file("cli-validate/4/source.cpp");
     
     auto opts = fuzzypp::cliopts::CliOptions {
-        std::vector<std::string> { source_file },
+        std::vector<std::string> { source_file.string() },
         std::vector<std::string> { },
         std::vector<std::string> { },
         std::vector<std::string> { },
@@ -155,12 +157,12 @@ TEST_CASE("5: Fail if no output files are specified", "cli-validate") {
     auto lying_output_directory = fuzzypp::tests::create_temp_file("cli-validate/5/outdir");
 
     auto opts = fuzzypp::cliopts::CliOptions {
-        std::vector<std::string> { source_file },
+        std::vector<std::string> { source_file.string() },
         std::vector<std::string> { },
         std::vector<std::string> { },
         std::vector<std::string> { },
         std::vector<std::string> { },
-        lying_output_directory,
+        lying_output_directory.string(),
         false
     };
 
@@ -174,19 +176,21 @@ TEST_CASE("6: Fail if an input file does not exist", "cli-validate") {
     auto other_header = fuzzypp::tests::create_temp_file("cli-validate/6/other/header.hpp");
     auto output_path = std::filesystem::temp_directory_path() /= std::filesystem::path { "cli-validate/6/output" };
 
+    auto fake_input_file = std::filesystem::temp_directory_path() /= "cli-validate/6/source.cpp";
+
     auto opts = fuzzypp::cliopts::CliOptions {
-        std::vector<std::string> { std::filesystem::temp_directory_path() /= "cli-validate/6/source.cpp" },
-        std::vector<std::string> { header_file },
-        std::vector<std::string> { other_header.parent_path() },
+        std::vector<std::string> { fake_input_file.string() },
+        std::vector<std::string> { header_file.string() },
+        std::vector<std::string> { other_header.parent_path().string() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path,
+        output_path.string(),
         false
     };
 
     auto result = opts.validate_options();
     REQUIRE(result.has_value());
-    REQUIRE(*result == "File [/tmp/cli-validate/6/source.cpp] does not exist.");
+    REQUIRE(*result == "File [" + fake_input_file.string() + "] does not exist.");
 }
 
 TEST_CASE("7: Fail if an included file does not exist", "cli-validate") {
@@ -194,19 +198,21 @@ TEST_CASE("7: Fail if an included file does not exist", "cli-validate") {
     auto other_header = fuzzypp::tests::create_temp_file("cli-validate/7/other/header.hpp");
     auto output_path = std::filesystem::temp_directory_path() /= std::filesystem::path { "cli-validate/7/output" };
 
+    auto fake_include_file = std::filesystem::temp_directory_path() /= "cli-validate/7/source.hpp";
+
     auto opts = fuzzypp::cliopts::CliOptions {
-        std::vector<std::string> { source_file },
-        std::vector<std::string> { std::filesystem::temp_directory_path() /= "cli-validate/7/source.hpp" },
-        std::vector<std::string> { other_header.parent_path() },
+        std::vector<std::string> { source_file.string() },
+        std::vector<std::string> { fake_include_file.string() },
+        std::vector<std::string> { other_header.parent_path().string() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path,
+        output_path.string(),
         false
     };
 
     auto result = opts.validate_options();
     REQUIRE(result.has_value());
-    REQUIRE(*result == "Include file [/tmp/cli-validate/7/source.hpp] does not exist.");
+    REQUIRE(*result == "Include file [" + fake_include_file.string() + "] does not exist.");
 }
 
 TEST_CASE("8: Fail if an included file contains '..'", "cli-validate") {
@@ -214,13 +220,15 @@ TEST_CASE("8: Fail if an included file contains '..'", "cli-validate") {
     auto other_header = fuzzypp::tests::create_temp_file("cli-validate/8/other/header.hpp");
     auto output_path = std::filesystem::temp_directory_path() /= std::filesystem::path { "cli-validate/8/output" };
 
+    auto bad_include_file = std::filesystem::temp_directory_path() /= "cli-validate/8/..";
+
     auto opts = fuzzypp::cliopts::CliOptions {
-        std::vector<std::string> { source_file },
-        std::vector<std::string> { std::filesystem::temp_directory_path() /= "cli-validate/8/.." },
-        std::vector<std::string> { other_header.parent_path() },
+        std::vector<std::string> { source_file.string() },
+        std::vector<std::string> { bad_include_file.string() },
+        std::vector<std::string> { other_header.parent_path().string() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path,
+        output_path.string(),
         false
     };
 
@@ -234,19 +242,21 @@ TEST_CASE("9: Fail if an included path does not exist", "cli-validate") {
     auto header_file = fuzzypp::tests::create_temp_file("cli-validate/9/source.hpp");
     auto output_path = std::filesystem::temp_directory_path() /= std::filesystem::path { "cli-validate/9/output" };
 
+    auto fake_include_path = std::filesystem::temp_directory_path() /= "cli-validate/9/other";
+
     auto opts = fuzzypp::cliopts::CliOptions {
-        std::vector<std::string> { source_file },
-        std::vector<std::string> { header_file },
-        std::vector<std::string> { std::filesystem::temp_directory_path() /= "cli-validate/9/other" },
+        std::vector<std::string> { source_file.string() },
+        std::vector<std::string> { header_file.string() },
+        std::vector<std::string> { fake_include_path.string() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path,
+        output_path.string(),
         false
     };
 
     auto result = opts.validate_options();
     REQUIRE(result.has_value());
-    REQUIRE(*result == "Include path [/tmp/cli-validate/9/other] does not exist.");
+    REQUIRE(*result == "Include path [" + fake_include_path.string() + "] does not exist.");
 }
 
 TEST_CASE("10: Fail if an included path contains '..'", "cli-validate") {
@@ -256,12 +266,12 @@ TEST_CASE("10: Fail if an included path contains '..'", "cli-validate") {
     auto output_path = std::filesystem::temp_directory_path() /= std::filesystem::path { "cli-validate/10/output" };
 
     auto opts = fuzzypp::cliopts::CliOptions {
-        std::vector<std::string> { source_file },
-        std::vector<std::string> { header_file },
-        std::vector<std::string> { other_header.parent_path() },
+        std::vector<std::string> { source_file.string() },
+        std::vector<std::string> { header_file.string() },
+        std::vector<std::string> { other_header.parent_path().string() },
         std::vector<std::string> { "DEF" },
         std::vector<std::string> { "UNDEF" },
-        output_path,
+        output_path.string(),
         false
     };
 
