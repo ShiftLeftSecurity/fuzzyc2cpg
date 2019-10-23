@@ -169,17 +169,15 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     driver.setNamespaceBlock(namespaceBlock);
     driver.setFileNode(fileNode)
 
-
     try {
       driver.parseAndWalkFile(filename)
     } catch {
-      case ex : RuntimeException => {
+      case ex: RuntimeException => {
         logger.warn("Cannot parse module: " + filename + ", skipping")
         logger.warn("Complete exception: ", ex)
         return
       }
     }
-
 
     val outputModule = outputModuleFactory.create()
     outputModule.setOutputIdentifier(
