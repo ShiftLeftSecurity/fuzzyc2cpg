@@ -12,7 +12,7 @@ public class AstNode {
 
   protected List<AstNode> children;
   protected int childNumber;
-  private CodeLocation location = new CodeLocation();
+  private CodeLocation location = CodeLocation.apply();
   private boolean isInCFG = false;
 
   // refers to the parsed source code, used for wiring goto labels

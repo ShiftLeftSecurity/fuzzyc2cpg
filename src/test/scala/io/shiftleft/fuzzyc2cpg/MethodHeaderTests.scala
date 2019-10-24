@@ -17,6 +17,8 @@ class MethodHeaderTests extends WordSpec with Matchers {
       methods.head.value2(NodeKeys.SIGNATURE) shouldBe "int(int,int)"
       methods.head.value2(NodeKeys.LINE_NUMBER) shouldBe 1
       methods.head.value2(NodeKeys.COLUMN_NUMBER) shouldBe 0
+      methods.head.value2(NodeKeys.LINE_NUMBER_END) shouldBe 3
+      methods.head.value2(NodeKeys.COLUMN_NUMBER_END) shouldBe 0
     }
 
     "have correct METHOD_PARAMETER_IN nodes for method foo" in {
