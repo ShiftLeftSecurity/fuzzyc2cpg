@@ -10,7 +10,7 @@ object NodeProperty extends Enumeration {
   type NodeProperty = Value
   val ORDER, ARGUMENT_INDEX, NAME, FULL_NAME, CODE, EVALUATION_STRATEGY, TYPE_FULL_NAME, TYPE_DECL_FULL_NAME, SIGNATURE,
   DISPATCH_TYPE, METHOD_FULL_NAME, METHOD_INST_FULL_NAME, IS_EXTERNAL, PARSER_TYPE_NAME, AST_PARENT_TYPE,
-  AST_PARENT_FULL_NAME, LINE_NUMBER, COLUMN_NUMBER, ALIAS_TYPE_FULL_NAME = Value
+  AST_PARENT_FULL_NAME, LINE_NUMBER, COLUMN_NUMBER, ALIAS_TYPE_FULL_NAME, INHERITS_FROM_TYPE_FULL_NAME= Value
 }
 
 object NodeKind extends Enumeration {
@@ -55,6 +55,8 @@ trait CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType] {
   def addNodeProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: Int)
 
   def addNodeProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: Boolean)
+
+  def addNodeProperty(nodeBuilder: NodeBuilderType, property: NodeProperty, value: List[String])
 
   def createEdgeBuilder(dst: NodeType, src: NodeType, edgeKind: EdgeKind): EdgeBuilderType
 

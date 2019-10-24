@@ -70,6 +70,10 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       adapter.addNodeProperty(nodeBuilder, property, value)
       nodeBuilder
     }
+    def addProperty(property: NodeProperty, value: List[String]): NodeBuilderType = {
+      adapter.addNodeProperty(nodeBuilder, property, value)
+      nodeBuilder
+    }
     def createNode(astNode: AstNode): NodeType = {
       adapter.createNode(nodeBuilder, astNode)
     }
@@ -703,13 +707,20 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     // once the parser handles namespaces.
     var name = astClassDef.identifier.toString
     name = name.substring(1, name.length - 1)
+    val baseClassList = astClassDef.baseClasses.asScala.map{identifier =>
+      val baseClassName = identifier.toString
+      baseClassName.substring(1, baseClassName.length - 1)
+    }.toList
 
-    val cpgTypeDecl = adapter
+    val cpgTypeDeclBuilder = adapter
       .createNodeBuilder(NodeKind.TYPE_DECL)
       .addProperty(NodeProperty.NAME, name)
       .addProperty(NodeProperty.FULL_NAME, name)
       .addProperty(NodeProperty.IS_EXTERNAL, value = false)
-      .createNode(astClassDef)
+    if(!baseClassList.isEmpty){
+      cpgTypeDeclBuilder.addProperty(NodeProperty.INHERITS_FROM_TYPE_FULL_NAME, baseClassList)
+    }
+    val cpgTypeDecl = cpgTypeDeclBuilder.createNode(astClassDef)
 
     addAstChild(cpgTypeDecl)
 
@@ -719,6 +730,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
         template.accept(this)
       }
     }
+
 
     pushContext(cpgTypeDecl, 1, parentIsClassDef = true)
     astClassDef.content.accept(this)

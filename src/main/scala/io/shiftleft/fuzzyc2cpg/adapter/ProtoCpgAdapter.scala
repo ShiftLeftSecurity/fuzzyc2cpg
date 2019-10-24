@@ -45,6 +45,10 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
     nodeBuilder.addBooleanProperty(translateNodeProperty(property), value)
   }
 
+  override def addNodeProperty(nodeBuilder: Node.Builder, property: NodeProperty, value: List[String]): Unit = {
+    nodeBuilder.addStringListProperty(translateNodeProperty(property), value)
+  }
+
   override def createEdgeBuilder(dst: Node, src: Node, edgeKind: EdgeKind): Edge.Builder = {
     Edge
       .newBuilder()
@@ -96,6 +100,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
       case NodeProperty.LINE_NUMBER          => NodePropertyName.LINE_NUMBER
       case NodeProperty.COLUMN_NUMBER        => NodePropertyName.COLUMN_NUMBER
       case NodeProperty.ALIAS_TYPE_FULL_NAME => NodePropertyName.ALIAS_TYPE_FULL_NAME
+      case NodeProperty.INHERITS_FROM_TYPE_FULL_NAME => NodePropertyName.INHERITS_FROM_TYPE_FULL_NAME
     }
   }
 

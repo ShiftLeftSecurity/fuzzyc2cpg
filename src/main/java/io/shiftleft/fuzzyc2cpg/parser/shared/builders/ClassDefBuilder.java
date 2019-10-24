@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.parser.shared.builders;
 
+import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import io.shiftleft.fuzzyc2cpg.FunctionParser;
@@ -27,6 +28,12 @@ public class ClassDefBuilder extends TemplateAstBuilder<ClassDefStatement> {
   public void setName(FunctionParser.Class_nameContext ctx) {
     thisItem.identifier = new Identifier();
     AstNodeFactory.initializeFromContext(thisItem.identifier, ctx);
+  }
+
+  public void addBaseClass(ModuleParser.Base_classContext ctx){
+    Identifier bc = new Identifier();
+    AstNodeFactory.initializeFromContext(bc, ctx.identifier());
+    thisItem.addBaseClass(bc);
   }
 
   public void setContent(CompoundStatement content) {

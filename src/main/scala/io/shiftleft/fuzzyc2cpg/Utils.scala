@@ -4,7 +4,7 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode
 import io.shiftleft.proto.cpg.Cpg
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.{NodeType, Property}
-import io.shiftleft.proto.cpg.Cpg.{CpgStruct, PropertyValue}
+import io.shiftleft.proto.cpg.Cpg.{CpgStruct, PropertyValue, StringList}
 
 object Utils {
 
@@ -24,6 +24,15 @@ object Utils {
     Property.newBuilder
       .setName(name)
       .setValue(PropertyValue.newBuilder.setBoolValue(value).build)
+  }
+
+  def newStringListProperty(name: Cpg.NodePropertyName, value: List[String]): Property.Builder = {
+    val slb = StringList.newBuilder()
+    value.map{slb.addValues(_)}
+    slb.build()
+    Property.newBuilder
+      .setName(name)
+      .setValue(PropertyValue.newBuilder.setStringList(slb).build)
   }
 
   def newNode(nodeType: NodeType): Node.Builder = {
@@ -66,6 +75,10 @@ object Utils {
     def addBooleanProperty(name: Cpg.NodePropertyName, value: Boolean): Node.Builder = {
       nodeBuilder.addProperty(newBooleanProperty(name, value))
     }
+    def addStringListProperty(name: Cpg.NodePropertyName, value: List[String]): Node.Builder = {
+      nodeBuilder.addProperty(newStringListProperty(name, value))
+    }
+
   }
 
   implicit class CpgStructBuilderWrapper(cpgStructBuilder: CpgStruct.Builder) {

@@ -42,6 +42,10 @@ class AstToCpgTests extends WordSpec with Matchers {
       vertex.property(property.toString, value)
     }
 
+    override def addNodeProperty(vertex: Vertex, property: NodeProperty, value: List[String]): Unit = {
+      vertex.property(property.toString, value)
+    }
+
     override def createEdgeBuilder(dst: Vertex, src: Vertex, edgeKind: EdgeKind): Edge = {
       src.addEdge(edgeKind.toString, dst)
     }
@@ -711,6 +715,46 @@ class AstToCpgTests extends WordSpec with Matchers {
 
       aliasTypeDecl.checkForSingle(NodeKeys.FULL_NAME, "abc")
       aliasTypeDecl.checkForSingle(NodeKeys.ALIAS_TYPE_FULL_NAME, "foo")
+    }
+
+    "be correct for single inheritance" in new Fixture(
+      """
+        |class Base {public: int i;};
+        |class Derived : public Base{
+        |public:
+        | char x;
+        | int method(){return i;};
+        |};
+      """.stripMargin
+    ) {
+
+      val derivedL = getTypeDecl("Derived")
+      derivedL.checkForSingle()
+
+      val derived = derivedL.head
+      // todo: clean up once /codepropertygraph/issues/429 is fixed
+      derived.valueMap().get("INHERITS_FROM_TYPE_FULL_NAME").asInstanceOf[Some[List[String]]].value shouldBe List("Base")
+    }
+
+    "be correct for multiple inheritance" in new Fixture(
+      """
+        |class OneBase {public: int i;};
+        |class TwoBase {public: int j;};
+        |
+        |class Derived : public OneBase, protected TwoBase{
+        |public:
+        | char x;
+        | int method(){return i;};
+        |};
+      """.stripMargin
+    ) {
+
+      val derivedL = getTypeDecl("Derived")
+      derivedL.checkForSingle()
+
+      val derived = derivedL.head
+      // todo: clean up once /codepropertygraph/issues/429 is fixed
+      derived.valueMap().get("INHERITS_FROM_TYPE_FULL_NAME").asInstanceOf[Some[List[String]]].value shouldBe List("OneBase", "TwoBase")
     }
 
   }
