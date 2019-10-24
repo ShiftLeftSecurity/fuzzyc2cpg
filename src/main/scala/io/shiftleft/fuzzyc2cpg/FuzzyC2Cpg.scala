@@ -16,7 +16,7 @@ import java.nio.file.{Files, Path}
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
-
+@deprecated()
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   private val logger = LoggerFactory.getLogger(getClass)

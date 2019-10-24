@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <catch.hpp>
 
 #include <cliopts.hpp>
@@ -8,21 +10,21 @@
 TEST_CASE("1: Preprocess an input file, preserving comments", "preprocess") {
     const auto source_content = "int main ( ) { } // A sight to behold!";
     const auto source_file = fuzzypp::tests::create_temp_file("preprocess/1/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/1/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/1/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> {},
+        std::vector<std::filesystem::path> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        std::vector<std::string> {},
-        std::vector<std::string> {},
-        output_dir.string(),
+        output_dir,
         false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
-    auto result_path = std::filesystem::path { output_dir } /= source_file.relative_path();
+    auto result_path = std::filesystem::path { output_dir } /= source_file;
     auto result = fuzzypp::tests::read_file_content(result_path);
     
     REQUIRE(result == source_content);
@@ -35,22 +37,28 @@ TEST_CASE("2: Preprocess an input file with an included file", "preprocess") {
 
     auto header_file = fuzzypp::tests::create_temp_file("preprocess/2/source.hpp", header_content);
     auto source_file = fuzzypp::tests::create_temp_file("preprocess/2/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/2/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/2/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
-        std::vector<std::string> { header_file.string() },
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> { header_file },
+        std::vector<std::filesystem::path> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        std::vector<std::string> {},
-        output_dir.string(),
+        output_dir,
         false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
+// SimpleCPP for whatever reason converts header paths into Unix form when printing #line directives...
+    auto header_file_str = header_file.string();
+#ifdef _WIN32
+    std::replace(header_file_str.begin(), header_file_str.end(), '\\', '/');   
+#endif
+
     const auto expected = "\n"
-                          "#line 1 \"" + header_file.string() + "\"\n"
+                          "#line 1 \"" + header_file_str + "\"\n"
                           "int x = 5 ;\n"
                           "#line 2 \"" + source_file.string() + "\"\n"
                           "int main ( ) { return x ; } // A sight to behold!";
@@ -67,22 +75,28 @@ TEST_CASE("3: Preprocess an input file with an included path", "preprocess") {
 
     auto header_file = fuzzypp::tests::create_temp_file("preprocess/3/other/header.hpp", header_content);
     auto source_file = fuzzypp::tests::create_temp_file("preprocess/3/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/3/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/3/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> {},
+        std::vector<std::filesystem::path> { header_file.parent_path() },
         std::vector<std::string> {},
-        std::vector<std::string> { header_file.parent_path().string() },
         std::vector<std::string> {},
-        std::vector<std::string> {},
-        output_dir.string(),
+        output_dir,
         false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
+    // SimpleCPP for whatever reason converts header paths into Unix form when printing #line directives...
+    auto header_file_str = header_file.string();
+#ifdef _WIN32
+    std::replace(header_file_str.begin(), header_file_str.end(), '\\', '/');   
+#endif
+
     const auto expected = "\n"
-                          "#line 1 \"" + header_file.string() + "\"\n"
+                          "#line 1 \"" + header_file_str + "\"\n"
                           "int x = 5 ;\n"
                           "#line 2 \"" + source_file.string() + "\"\n"
                           "int main ( ) { return x ; } // A sight to behold!";
@@ -101,15 +115,15 @@ TEST_CASE("4: Preprocess an input file with a define", "preprocess") {
                                 "#endif\n"
                                 "} // A sight to behold!";
     auto source_file = fuzzypp::tests::create_temp_file("preprocess/4/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/4/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/4/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
-        std::vector<std::string> {},
-        std::vector<std::string> {},
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> {},
+        std::vector<std::filesystem::path> {},
         std::vector<std::string> { "CAKE" },
         std::vector<std::string> {},
-        output_dir.string(),
+        output_dir,
         false
     };
 
@@ -131,15 +145,15 @@ TEST_CASE("4: Preprocess an input file with a define", "preprocess") {
 TEST_CASE("5: Preprocess an input file with a define value", "preprocess") {
     const auto source_content = "int main() { return CAKE; } // A sight to behold!";
     auto source_file = fuzzypp::tests::create_temp_file("preprocess/5/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/5/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/5/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
-        std::vector<std::string> {},
-        std::vector<std::string> {},
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> {},
+        std::vector<std::filesystem::path> {},
         std::vector<std::string> { "CAKE=0" },
         std::vector<std::string> {},
-        output_dir.string(),
+        output_dir,
         false
     };
 
@@ -162,15 +176,15 @@ TEST_CASE("6: Preprocess an input file with an undefine", "preprocess") {
                                 "#endif\n"
                                 "} // A sight to behold!";
     auto source_file = fuzzypp::tests::create_temp_file("preprocess/6/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/6/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/6/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
-        std::vector<std::string> {},
-        std::vector<std::string> {},
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> {},
+        std::vector<std::filesystem::path> {},
         std::vector<std::string> {},
         std::vector<std::string> { "CAKE" },
-        output_dir.string(),
+        output_dir,
         false
     };
 
@@ -194,15 +208,15 @@ TEST_CASE("7: Elide any include directives for which an explict header file can 
     const auto source_content = "#include <andioop>\n"
                                 "int main ( ) { } // A sight to behold!";
     const auto source_file = fuzzypp::tests::create_temp_file("preprocess/7/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/7/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/7/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> {},
+        std::vector<std::filesystem::path> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        std::vector<std::string> {},
-        std::vector<std::string> {},
-        output_dir.string(),
+        output_dir,
         false
     };
 
@@ -223,15 +237,15 @@ TEST_CASE("8: Elide any include directives for which a header can not be found i
 
     auto header_file = fuzzypp::tests::create_temp_file("preprocess/8/other/header.hpp", header_content);
     auto source_file = fuzzypp::tests::create_temp_file("preprocess/8/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/8/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/8/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> {},
+        std::vector<std::filesystem::path> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        std::vector<std::string> {},
-        std::vector<std::string> {},
-        output_dir.string(),
+        output_dir,
         false
     };
 
@@ -254,15 +268,15 @@ TEST_CASE("9: Elide any defines which are also specified in the list of undefine
                                 "#endif\n"
                                 "} // A sight to behold!";
     auto source_file = fuzzypp::tests::create_temp_file("preprocess/9/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/9/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/9/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
-        std::vector<std::string> {},
-        std::vector<std::string> {},
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> {},
+        std::vector<std::filesystem::path> {},
         std::vector<std::string> { "CAKE" },
         std::vector<std::string> { "CAKE" },
-        output_dir.string(),
+        output_dir,
         false
     };
 
@@ -288,22 +302,28 @@ TEST_CASE("10: Correctly handle paths containing .", "preprocess") {
 
     auto header_file = fuzzypp::tests::create_temp_file("preprocess/10/./other/header.hpp", header_content);
     auto source_file = fuzzypp::tests::create_temp_file("preprocess/10/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/10/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/10/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> {},
+        std::vector<std::filesystem::path> { header_file.parent_path() },
         std::vector<std::string> {},
-        std::vector<std::string> { header_file.parent_path().string() },
         std::vector<std::string> {},
-        std::vector<std::string> {},
-        output_dir.string(),
+        output_dir,
         false
     };
 
     fuzzypp::preprocessor::Preprocessor::preprocess(opts);
 
+    // SimpleCPP for whatever reason converts header paths into Unix form when printing #line directives...
+    auto header_file_str = header_file.lexically_normal().string();
+#ifdef _WIN32
+    std::replace(header_file_str.begin(), header_file_str.end(), '\\', '/');   
+#endif
+
     const auto expected = "\n"
-                          "#line 1 \"" + header_file.string() + "\"\n"
+                          "#line 1 \"" + header_file_str + "\"\n" //
                           "int x = 5 ;\n"
                           "#line 2 \"" + source_file.string() + "\"\n"
                           "int main ( ) { return x ; } // A sight to behold!";
@@ -320,15 +340,15 @@ TEST_CASE("11: Defines from headers are correctly imported", "preprocess") {
 
     auto header_file = fuzzypp::tests::create_temp_file("preprocess/11/source.hpp", header_content);
     auto source_file = fuzzypp::tests::create_temp_file("preprocess/11/source.cpp", source_content);
-    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/11/output" };
+    const auto output_dir = std::filesystem::temp_directory_path() /= std::filesystem::path { "preprocess/11/output" }.make_preferred();
 
     fuzzypp::cliopts::CliOptions opts {
-        std::vector<std::string> { source_file.string() },
-        std::vector<std::string> { header_file.string() },
+        std::vector<std::filesystem::path> { source_file },
+        std::vector<std::filesystem::path> { header_file },
+        std::vector<std::filesystem::path> {},
         std::vector<std::string> {},
         std::vector<std::string> {},
-        std::vector<std::string> {},
-        output_dir.string(),
+        output_dir,
         false
     };
 

@@ -29,14 +29,17 @@ namespace fuzzypp::cliopts {
                 std::cout << options.help() << std::endl;
             }
 
-            auto files = extract_vector(result, "file");
-            auto i_paths = extract_vector(result, "I");
-            auto i_files = extract_vector(result, "include");
-            auto defs = extract_vector(result, "define");
-            auto undefs = extract_vector(result, "undefine");
-            auto output = result.count("output") ?
+            auto files = extract_paths(result, "file");
+            auto i_paths = extract_paths(result, "I");
+            auto i_files = extract_paths(result, "include");
+            auto defs = extract_elements(result, "define");
+            auto undefs = extract_elements(result, "undefine");
+            auto output_directory = result.count("output") ?
                 result["output"].as<std::string>() : "";
             auto verbose = result.count("verbose") > 0;
+
+            auto normalised_output_directory = 
+                std::filesystem::path { output_directory }.make_preferred();
 
             return std::optional<CliOptions> {
                 CliOptions {
@@ -45,7 +48,7 @@ namespace fuzzypp::cliopts {
                     i_paths,
                     defs,
                     undefs,
-                    output,
+                    normalised_output_directory,
                     verbose
                 }
             };
@@ -70,32 +73,29 @@ namespace fuzzypp::cliopts {
         }
 
         for (const auto& file : files) {
-            std::filesystem::path p { file };
-            if (!is_path_valid(p)) {
+            if (!is_path_valid(file)) {
                 return std::optional<std::string> { "File paths must not contain '..'." };
             }
-            if (!std::filesystem::is_regular_file(p)) {
-                return std::optional<std::string> { "File [" + file + "] does not exist." };
+            if (!std::filesystem::is_regular_file(file)) {
+                return std::optional<std::string> { "File [" + file.string() + "] does not exist." };
             }
         }
 
         for (const auto& i_file : include_files) {
-            std::filesystem::path p { i_file };
-            if (!is_path_valid(p)) {
+            if (!is_path_valid(i_file)) {
                 return std::optional<std::string> { "Include file paths must not contain '..'." };
             }
-            if (!std::filesystem::is_regular_file(p)) {
-                return std::optional<std::string> { "Include file [" + i_file + "] does not exist." };
+            if (!std::filesystem::is_regular_file(i_file)) {
+                return std::optional<std::string> { "Include file [" + i_file.string() + "] does not exist." };
             }
         }
 
         for (const auto& i_path : include_paths) {
-            std::filesystem::path p { i_path };
-            if (!is_path_valid(p)) {
+            if (!is_path_valid(i_path)) {
                 return std::optional<std::string> { "Include paths must not contain '..'." };
             }
-            if (!std::filesystem::is_directory(p)) {
-                return std::optional<std::string> { "Include path [" + i_path + "] does not exist." };
+            if (!std::filesystem::is_directory(i_path)) {
+                return std::optional<std::string> { "Include path [" + i_path.string() + "] does not exist." };
             }
         }
 
