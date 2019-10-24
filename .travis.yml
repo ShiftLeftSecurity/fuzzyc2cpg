@@ -40,10 +40,9 @@ jobs:
     - cmake --build . -- -j4
     - "./fuzzypp/bin/fuzzyppcli-tests"
   - stage: release-jfrog
-    script: sbt ciReleaseTagNextVersion 'set publishTo := Some("releases"
-      at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")' "set credentials
-      += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\", \"$JFROG_USER\",
-      \"$JFROG_PASS\")" ciRelease
+    script: sbt ciReleaseTagNextVersion 'set publishTo := Some("releases" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")'
+      "set credentials += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\",
+      \"$JFROG_USER\", \"$JFROG_PASS\")" ciRelease
   - stage: release-sonatype
     script: sbt ciReleaseSonatype
   - stage: release-preprocessor
@@ -56,9 +55,7 @@ jobs:
       token: "$GITHUB_TOKEN"
       target_commitish: "$TRAVIS_COMMIT"
       file:
-        - "./fuzzyppcli.zip"
-        # TODO: Publish Windows build.
-
+      - "./fuzzyppcli.zip"
 before_cache:
 - find $HOME/.sbt -name "*.lock" -type f -delete
 - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
@@ -72,4 +69,8 @@ cache:
   - "$HOME/.coursier"
   - "./target"
   - "./fuzzypp/bin"
-
+notifications:
+  slack:
+    secure: FeJ+o4Qe1sOx0goJuOslHMu9C/b9nmsTj4CO+U7sQIQi3eVXgDY5lN+CcK/tvt+9Xpm2TNvO8QP6KuJlogBAn10C3Wq/t3keeFvggD5BjoUhuAsxMjuGEgfFKiFQ8FM4SAmboIvRx8boIvBT6/uzigu8IlitKv0StjDfGEhcY0OyAcAV7/NQMKa9J9VcHhNNxMk3IOUYAnUBHi+k0YULCFF/OUkvJjGp+vIIDcELyn/3facQvY7vQcqgqZ9SVlGpkh2UtPS/dZTvk7o9ASi308cAjEwllRDqMghConVw4FBHv8F+ECi+lnEjm3NBB2W6wyoE+oucaIs3DCrKU7G6czCT0Jyc2mLf1v7zZbSngszeNkdpNg2OemkS+VbIsJoRUNM/Dbwva/Jxq4d90pEXlwEBEsmGAO7om/YH3uBx/PtTwYmMpDNg3SV2jH9X8T8jIMwT5Eh8k+i5s9sseJAl4tYrrqkYycJ6JpDfoDmknIoVy9QCmxvx49BgmEP1o7AhM2XvBNwUmAwCsgxmpS5UvD0HwJ++agbsW9B+yK+LNBOvcnl8l3Bh5uNH8iOzZjVZkX5996hkyuRPXW3MIDla39xQJyEOtslAw/T8Gy6Osa32xoiDgGC/ZcqQyWukV7og7sUDu80cKsmbOi9Hs+NlzmmgXSITqRvCxUYJDMSGKa0=
+    on_success: change
+    on_failure: always
