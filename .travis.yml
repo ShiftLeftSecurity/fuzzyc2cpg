@@ -16,11 +16,9 @@ before_install:
   -out private-key.pem -d; gpg --import --batch private-key.pem; fi
 stages:
 - name: test
-- name: release-jfrog
+- name: tag-release
   if: branch = master AND type = push
-- name: release-sonatype
-  if: branch = master AND type = push
-- name: release-preprocessor
+- name: release
   if: branch = master AND type = push
 jobs:
   include:
@@ -59,15 +57,17 @@ jobs:
     - taskkill //F //PID $(ps -Wla | tr -s ' ' | grep gpg | cut -f2 -d ' ')
     - ps -Wla | sort
     - echo $$  
-  - stage: release-jfrog
+  - stage: tag-release
+    script: sbt ciReleaseTagNextVersion
+  - stage: release
     script: sbt ciReleaseTagNextVersion 'set publishTo := Some("releases" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")'
       "set credentials += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\",
       \"$JFROG_USER\", \"$JFROG_PASS\")" ciRelease
-  - stage: release-sonatype
+  - stage: release
     script: sbt ciReleaseSonatype
-  - stage: release-preprocessor
+  - stage: release
     script: skip
-    before_deploy: zip -j ./fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli ./fuzzypp/bin/Release/fuzzyppcli.exe
+    before_deploy: zip -j ./fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli
     deploy:
       edge: true
       provider: releases
@@ -76,6 +76,18 @@ jobs:
       target_commitish: "$TRAVIS_COMMIT"
       file:
         - "./fuzzyppcli.zip"
+  - stage: release
+    os: windows
+    script: skip
+    before_deploy: zip -j ./fuzzyppcli-win.zip ./fuzzypp/bin/Release/fuzzyppcli.exe
+    deploy:
+      edge: true
+      provider: releases
+      cleanup: false
+      token: "$GITHUB_TOKEN"
+      target_commitish: "$TRAVIS_COMMIT"
+      file:
+        - "./fuzzyppcli-win.zip"
 cache:
   directories:
   - "$HOME/.sbt/1.0/dependency"
