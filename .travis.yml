@@ -45,11 +45,20 @@ jobs:
     - rm -rf $HOME/.ivy2/local
   - stage: test
     os: windows
+    env:
+      YARN_GPG=no # Travis Win builds hang when the build includes secrets (https://travis-ci.community/t/current-known-issues-please-read-this-before-posting-a-new-topic/264/9)
     language: cpp
     script:
     - cmake -G "Visual Studio 15 2017" -A "x64" ./fuzzypp
     - cmake --build . --config Release
     - "./fuzzypp/bin/Release/fuzzyppcli-tests.exe"
+    after_script:
+    - ps -ef
+    - ps -Wla | sort
+    - gpgconf --kill gpg-agent
+    - taskkill //F //PID $(ps -Wla | tr -s ' ' | grep gpg | cut -f2 -d ' ')
+    - ps -Wla | sort
+    - echo $$  
   - stage: release-jfrog
     script: sbt ciReleaseTagNextVersion 'set publishTo := Some("releases" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")'
       "set credentials += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\",
