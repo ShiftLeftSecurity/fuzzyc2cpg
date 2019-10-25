@@ -86,12 +86,15 @@ jobs:
       YARN_GPG=no # GPG causes Travis to hang in Windows.
     language: cpp
     script: skip
-    before_deploy: 7z a -r -tzip ./fuzzyppcli-win.zip ./fuzzypp/bin/Release/fuzzyppcli.exe
+    before_deploy: 
+      - export TRAVIS_TAG=$(git describe --tags --abbrev=0)
+      - 7z a -r -tzip ./fuzzyppcli-win.zip ./fuzzypp/bin/Release/fuzzyppcli.exe
     deploy:
       edge: true
       provider: releases
       cleanup: false
       token: "$GITHUB_TOKEN"
+      tag_name: "$TRAVIS_TAG"
       target_commitish: "$TRAVIS_COMMIT"
       file:
         - "./fuzzyppcli-win.zip"
