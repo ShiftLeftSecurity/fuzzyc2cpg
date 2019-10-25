@@ -727,6 +727,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       .addProperty(NodeProperty.IS_EXTERNAL, value = false)
     if(!baseClassList.isEmpty){
       cpgTypeDeclBuilder.addProperty(NodeProperty.INHERITS_FROM_TYPE_FULL_NAME, baseClassList)
+      baseClassList.map{registerType(_)}
     }
     val cpgTypeDecl = cpgTypeDeclBuilder.createNode(astClassDef)
 

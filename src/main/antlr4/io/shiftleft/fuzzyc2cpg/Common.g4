@@ -146,7 +146,6 @@ class_key: 'struct' | 'class' | 'union' | 'enum';
 class_def: template_decl? class_key gcc_attribute? class_name? template_args? base_classes? OPENING_CURLY {skipToEndOfObject(); } ;
 class_name: identifier;
 base_classes: ':' base_class (',' base_class)*;
-// todo: base_class: VIRTUAL? access_specifier? identifier ('<' template_args '>')?;
 base_class: VIRTUAL? access_specifier? identifier;
 
 

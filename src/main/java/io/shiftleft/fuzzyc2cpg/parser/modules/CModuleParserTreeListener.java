@@ -185,7 +185,6 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
     builder.setName(ctx);
   }
 
-
   private void emitDeclarationsForClass(DeclByClassContext ctx) {
 
     Init_declarator_listContext decl_list = ctx.init_declarator_list();
