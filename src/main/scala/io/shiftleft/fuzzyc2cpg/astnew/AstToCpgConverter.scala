@@ -62,6 +62,12 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       adapter.addNodeProperty(nodeBuilder, property, value)
       nodeBuilder
     }
+
+    def addProperty(property: NodeProperty, value: Option[Int]): NodeBuilderType = {
+      value.foreach(adapter.addNodeProperty(nodeBuilder, property, _))
+      nodeBuilder
+    }
+
     def addProperty(property: NodeProperty, value: Int): NodeBuilderType = {
       adapter.addNodeProperty(nodeBuilder, property, value)
       nodeBuilder
@@ -126,6 +132,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       .addProperty(NodeProperty.FULL_NAME, value = s"${astFunction.getName}")
       .addProperty(NodeProperty.LINE_NUMBER, astFunction.getLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, astFunction.getLocation.startPos)
+      .addProperty(NodeProperty.LINE_NUMBER_END, astFunction.getLocation.endLine)
+      .addProperty(NodeProperty.COLUMN_NUMBER_END, astFunction.getLocation.endPos)
       .addProperty(NodeProperty.SIGNATURE, signature)
       .createNode(astFunction)
 

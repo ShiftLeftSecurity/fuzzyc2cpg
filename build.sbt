@@ -3,7 +3,7 @@ organization := "io.shiftleft"
 scalaVersion := "2.12.10"
 enablePlugins(GitVersioning)
 
-val cpgVersion = "0.10.26"
+val cpgVersion = "0.10.78"
 
 libraryDependencies ++= Seq(
   "com.github.scopt"   %% "scopt"          % "3.7.0",

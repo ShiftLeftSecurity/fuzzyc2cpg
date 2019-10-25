@@ -99,6 +99,8 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
         NodePropertyName.AST_PARENT_FULL_NAME
       case NodeProperty.LINE_NUMBER          => NodePropertyName.LINE_NUMBER
       case NodeProperty.COLUMN_NUMBER        => NodePropertyName.COLUMN_NUMBER
+      case NodeProperty.LINE_NUMBER_END      => NodePropertyName.LINE_NUMBER_END
+      case NodeProperty.COLUMN_NUMBER_END    => NodePropertyName.COLUMN_NUMBER_END
       case NodeProperty.ALIAS_TYPE_FULL_NAME => NodePropertyName.ALIAS_TYPE_FULL_NAME
       case NodeProperty.INHERITS_FROM_TYPE_FULL_NAME => NodePropertyName.INHERITS_FROM_TYPE_FULL_NAME
     }

@@ -25,7 +25,8 @@ class ProgramStructureTests extends WordSpec with Matchers {
         .value(NodeKeys.NAME)
         .headOption
       fileName.isDefined shouldBe true
-      fileName.head shouldBe "src/test/resources/testcode/structure/structure.c"
+      fileName.head should not be "src/test/resources/testcode/structure/structure.c"
+      fileName.head should endWith("src/test/resources/testcode/structure/structure.c")
     }
 
     "contain AST edge from file node to namespace block" in {
