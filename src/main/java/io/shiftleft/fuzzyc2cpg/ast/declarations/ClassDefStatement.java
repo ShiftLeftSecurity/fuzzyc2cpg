@@ -15,7 +15,7 @@ public class ClassDefStatement extends Statement {
   public Identifier identifier = new DummyIdentifierNode();
   public CompoundStatement content = new CompoundStatement();
   protected TemplateParameterList templateParameterList;
-  public LinkedList<Identifier> baseClasses = new LinkedList<Identifier>();
+  public LinkedList<Identifier> baseClasses = new LinkedList<>();
 
   public void addChild(AstNode expression) {
     if (expression instanceof Identifier) {

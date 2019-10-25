@@ -732,8 +732,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       derivedL.checkForSingle()
 
       val derived = derivedL.head
-      // todo: clean up once /codepropertygraph/issues/429 is fixed
-      derived.valueMap().get("INHERITS_FROM_TYPE_FULL_NAME").asInstanceOf[Some[List[String]]].value shouldBe List("Base")
+      derived.value[List[String]](NodeKeys.INHERITS_FROM_TYPE_FULL_NAME.name) shouldBe List("Base")
     }
 
     "be correct for multiple inheritance" in new Fixture(
@@ -753,8 +752,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       derivedL.checkForSingle()
 
       val derived = derivedL.head
-      // todo: clean up once /codepropertygraph/issues/429 is fixed
-      derived.valueMap().get("INHERITS_FROM_TYPE_FULL_NAME").asInstanceOf[Some[List[String]]].value shouldBe List("OneBase", "TwoBase")
+      derived.value[List[String]](NodeKeys.INHERITS_FROM_TYPE_FULL_NAME.name) shouldBe List("OneBase", "TwoBase")
     }
 
   }
