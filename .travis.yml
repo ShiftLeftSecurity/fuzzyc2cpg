@@ -23,6 +23,7 @@ stages:
 jobs:
   include:
   - stage: test
+    name: Build and test FuzzyC2CPG JAR & preprocessor
     addons:
       apt:
         sources:
@@ -42,9 +43,10 @@ jobs:
     - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
     - rm -rf $HOME/.ivy2/local
   - stage: test
+    name: Build and test Windows preprocessor
     os: windows
     env:
-      YARN_GPG=no # Travis Win builds hang when the build includes secrets (https://travis-ci.community/t/current-known-issues-please-read-this-before-posting-a-new-topic/264/9)
+      YARN_GPG=no # GPG causes Travis to hang in Windows.
     language: cpp
     script:
     - cmake -G "Visual Studio 15 2017" -A "x64" ./fuzzypp
@@ -54,18 +56,21 @@ jobs:
     - ps -ef
     - ps -Wla | sort
     - gpgconf --kill gpg-agent
-    - taskkill //F //PID $(ps -Wla | tr -s ' ' | grep gpg | cut -f2 -d ' ')
     - ps -Wla | sort
     - echo $$  
   - stage: tag-release
+    name: Tag release
     script: sbt ciReleaseTagNextVersion
   - stage: release
-    script: sbt ciReleaseTagNextVersion 'set publishTo := Some("releases" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")'
+    name: Release to JFrog
+    script: sbt 'set publishTo := Some("releases" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")'
       "set credentials += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\",
       \"$JFROG_USER\", \"$JFROG_PASS\")" ciRelease
   - stage: release
+    name: Release to Sonatype
     script: sbt ciReleaseSonatype
   - stage: release
+    name: Release Unix preprocessor
     script: skip
     before_deploy: zip -j ./fuzzyppcli.zip ./fuzzypp/bin/fuzzyppcli
     deploy:
@@ -77,7 +82,9 @@ jobs:
       file:
         - "./fuzzyppcli.zip"
   - stage: release
+    name: Release Windows preprocessor
     os: windows
+    language: cpp
     script: skip
     before_deploy: zip -j ./fuzzyppcli-win.zip ./fuzzypp/bin/Release/fuzzyppcli.exe
     deploy:
