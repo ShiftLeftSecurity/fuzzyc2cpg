@@ -31,11 +31,9 @@ jobs:
         packages:
         - cmake
         - g++-8
-    env:
-      CXX=/usr/bin/g++-8
     script:
     - sbt scalafmtCheck +test
-    - cmake ./fuzzypp
+    - cmake -DCMAKE_CXX_COMPILER=/usr/bin/g++-8 ./fuzzypp
     - cmake --build . -- -j4
     - "./fuzzypp/bin/fuzzyppcli-tests"
     before_cache:
@@ -84,9 +82,11 @@ jobs:
   - stage: release
     name: Release Windows preprocessor
     os: windows
+    env:
+      YARN_GPG=no # GPG causes Travis to hang in Windows.
     language: cpp
     script: skip
-    before_deploy: zip -j ./fuzzyppcli-win.zip ./fuzzypp/bin/Release/fuzzyppcli.exe
+    before_deploy: 7z a -r -tzip ./fuzzyppcli-win.zip ./fuzzypp/bin/Release/fuzzyppcli.exe
     deploy:
       edge: true
       provider: releases
