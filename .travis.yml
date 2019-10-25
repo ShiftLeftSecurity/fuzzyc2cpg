@@ -39,6 +39,10 @@ jobs:
     - cmake ./fuzzypp
     - cmake --build . -- -j4
     - "./fuzzypp/bin/fuzzyppcli-tests"
+    before_cache:
+    - find $HOME/.sbt -name "*.lock" -type f -delete
+    - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+    - rm -rf $HOME/.ivy2/local
   - stage: test
     os: windows
     language: cpp
@@ -63,10 +67,6 @@ jobs:
       target_commitish: "$TRAVIS_COMMIT"
       file:
         - "./fuzzyppcli.zip"
-before_cache:
-- find $HOME/.sbt -name "*.lock" -type f -delete
-- find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
-- rm -rf $HOME/.ivy2/local
 cache:
   directories:
   - "$HOME/.sbt/1.0/dependency"
