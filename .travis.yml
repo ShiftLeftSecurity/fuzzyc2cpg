@@ -95,6 +95,7 @@ jobs:
       target_commitish: "$TRAVIS_COMMIT"
       file:
         - "./fuzzyppcli-win.zip"
+    after_deploy: gpgconf --kill gpg-agent
 cache:
   directories:
   - "$HOME/.sbt/1.0/dependency"
