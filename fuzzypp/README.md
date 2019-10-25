@@ -10,8 +10,14 @@ Compiling
 Requirements
 -----
 - [CMake](https://cmake.org/) (>= 3.10)
+
+For Unix builds:
 - [GNU Make](https://www.gnu.org/software/make/)
 - GCC with support for C++17.
+
+For Windows builds:
+- Visual Studio 2017
+- MSVC
 
 Building
 -----
@@ -20,16 +26,16 @@ From the `fuzzypp` directory, simply run:
 cmake --build .
 ```
 
-This will produce three statically-linked arifacts:
+This will produce three statically-linked artifacts:
 ```
-/lib/libfuzzyppcli-dev.a
-/bin/fuzzyppcli
-/bin/fuzzyppcli-tests
+/lib/libfuzzyppcli-dev(.a|.lib)
+/bin/fuzzyppcli(.exe)
+/bin/fuzzyppcli-tests(.exe)
 ```
 
 Running
 ---
-After building the application, run `./fuzzyppcli`.
+After building the application, run `./fuzzyppcli(.exe)`.
 
 Options
 -----

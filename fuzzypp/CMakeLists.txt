@@ -3,10 +3,17 @@ cmake_minimum_required(VERSION 3.10)
 project(fuzzyppcli VERSION 0.0.1 LANGUAGES CXX)
 
 # Set compile options. 
-add_compile_options(-O3)
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    add_compile_options(/O2
+                        /utf-8
+                        /MT)
+    add_link_options(/INCREMENTAL:NO
+                     /NODEFAULTLIB:MSVCRT)
+endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    add_compile_options(-Wall
+    add_compile_options(-O3
+                        -Wall
                         -Wextra
                         -Werror
                         -Wwrite-strings
@@ -26,7 +33,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wall
+    add_compile_options(-O3
+                        -Wall
                         -Werror)
 endif()
 
