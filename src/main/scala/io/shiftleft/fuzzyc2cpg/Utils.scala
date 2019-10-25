@@ -28,7 +28,7 @@ object Utils {
 
   def newStringListProperty(name: Cpg.NodePropertyName, value: List[String]): Property.Builder = {
     val slb = StringList.newBuilder()
-    value.map{slb.addValues(_)}
+    value.map { slb.addValues(_) }
     slb.build()
     Property.newBuilder
       .setName(name)
