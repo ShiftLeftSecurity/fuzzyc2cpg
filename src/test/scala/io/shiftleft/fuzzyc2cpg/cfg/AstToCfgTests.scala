@@ -45,6 +45,8 @@ class AstToCfgTests extends WordSpec with Matchers {
     override def addNodeProperty(nodeBuilder: CfgNode, property: NodeProperty, value: String): Unit = ???
     override def addNodeProperty(nodeBuilder: CfgNode, property: NodeProperty, value: Int): Unit = ???
     override def addNodeProperty(nodeBuilder: CfgNode, property: NodeProperty, value: Boolean): Unit = ???
+    override def addNodeProperty(nodeBuilder: CfgNode, property: NodeProperty, value: List[String]): Unit = ???
+
 
     override def createEdgeBuilder(dst: CfgNode, src: CfgNode, edgeKind: EdgeKind): CfgNodeEdgePairBuilder = {
       if (src.successors.exists(_.cfgNode == dst)) {

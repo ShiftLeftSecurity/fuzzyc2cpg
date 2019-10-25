@@ -3,6 +3,8 @@ package io.shiftleft.fuzzyc2cpg.parser.modules;
 import java.util.Iterator;
 import java.util.List;
 
+import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
+import io.shiftleft.fuzzyc2cpg.parser.AstNodeFactory;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import io.shiftleft.fuzzyc2cpg.ModuleBaseListener;
@@ -166,6 +168,12 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
 
     CompoundStatement content = parseClassContent(ctx);
     builder.setContent(content);
+
+    if(ctx.class_def().base_classes() != null && ctx.class_def().base_classes().base_class() != null) {
+      for (ModuleParser.Base_classContext baseClassCtx : ctx.class_def().base_classes().base_class()) {
+        builder.addBaseClass(baseClassCtx);
+      }
+    }
 
     p.notifyObserversOfItem(builder.getItem());
     emitDeclarationsForClass(ctx);
