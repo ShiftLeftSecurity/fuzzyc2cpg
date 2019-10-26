@@ -25,6 +25,7 @@ class ProgramStructureTests extends WordSpec with Matchers {
         .value(NodeKeys.NAME)
         .headOption
       fileName.isDefined shouldBe true
+      fileName.head should not contain ".."
       fileName.head should not be "src/test/resources/testcode/structure/structure.c"
       fileName.head should endWith("src/test/resources/testcode/structure/structure.c")
     }
