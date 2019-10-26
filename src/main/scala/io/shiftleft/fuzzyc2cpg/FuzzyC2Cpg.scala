@@ -117,7 +117,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
     def createFileNode(pathToFile: Path): Node = {
       newNode(NodeType.FILE)
-        .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.toString)
+        .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.normalize.toString)
         .build()
     }
 
