@@ -1,13 +1,15 @@
 package io.shiftleft.fuzzyc2cpg.antlrparsers.moduleparser;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
+
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
 
-public class FunctionParameterTests extends ModuleParserTest
-{
+public class FunctionParameterTests extends ModuleParserTest {
 
 	@Test
 	public void testFunctionPtrParam()
@@ -71,4 +73,12 @@ public class FunctionParameterTests extends ModuleParserTest
 		assertTrue(output.startsWith("(function_def"));
 	}
 
+	@Test
+	public void testMoveParameters() {
+		String input = "void foo(std::string&& s) {}";
+		ModuleParser parser = createParser(input);
+		String output = parser.function_def().toStringTree(parser);
+		assertEquals("(function_def (return_type (type_name (base_type void))) (function_name (identifier foo)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type std) :: (base_type string))) (parameter_id (rvalue_ref &&) (parameter_name (identifier s))))) )) (compound_statement { }))",
+					 output);
+	}
 }

@@ -28,8 +28,7 @@ public class ModuleFunctionParserInterface {
     try {
       driver.parseAndWalkString(text);
     } catch (RuntimeException ex) {
-      logger.info(ctx.function_name().getText() + " was skipped.");
-      //ex.printStackTrace();
+      logger.error(ctx.function_name().getText() + " was skipped."/*, ex*/);
     }
     CompoundStatement result = driver.getResult();
     Compound_statementContext statementContext = ctx.compound_statement();

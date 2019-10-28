@@ -22,9 +22,9 @@ code : (function_decl | function_def | simple_decl | using_directive | water)*;
 
 using_directive: USING NAMESPACE identifier ';';
 
-function_decl: ('extern' | template_decl)? return_type? function_name function_param_list ctor_list? ';';
+function_decl: ('extern'? | template_decl*) return_type? function_name function_param_list ctor_list? ';';
 
-function_def: template_decl? return_type? function_name function_param_list ctor_list? compound_statement;
+function_def: template_decl* return_type? function_name function_param_list ctor_list? compound_statement;
 
 return_type : (function_decl_specifiers* type_name) ptr_operator*;
 
@@ -33,7 +33,7 @@ function_param_list : '(' parameter_decl_clause? ')' CV_QUALIFIER* exception_spe
 parameter_decl_clause: (parameter_decl (',' parameter_decl)*) (',' '...')?
                      | VOID;
 parameter_decl : param_decl_specifiers parameter_id;
-parameter_id: ptrs? ('(' parameter_id ')' | parameter_name) type_suffix?;
+parameter_id: (ptrs | rvalue_ref)? ('(' parameter_id ')' | parameter_name) type_suffix?;
 
 compound_statement: OPENING_CURLY { skipToEndOfObject(); };
 
@@ -73,7 +73,7 @@ simple_decl : storage_class_specifier* var_decl;
 storage_class_specifier: (EXTERN | TYPEDEF);
 
 var_decl : class_def init_declarator_list? #declByClass
-         | template_decl? type_name init_declarator_list #declByType
+         | template_decl* type_name init_declarator_list #declByType
          ;
 
 init_declarator_list: init_declarator (',' init_declarator)* ';';

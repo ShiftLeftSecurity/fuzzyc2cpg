@@ -112,10 +112,9 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
 
   @Override
   public void enterTemplate_decl(ModuleParser.Template_declContext ctx) {
-    TemplateAstBuilder<?> builder = (TemplateAstBuilder<?>) p.builderStack.peek();
+    TemplateAstBuilder<?> builder = (TemplateAstBuilder) p.builderStack.peek();
     builder.setTemplateList(ctx);
   }
-
 
   @Override
   public void enterTemplate_name(ModuleParser.Template_nameContext ctx) {

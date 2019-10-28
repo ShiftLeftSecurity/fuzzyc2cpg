@@ -100,4 +100,4 @@ param_type_list: '(' VOID ')'
                | '(' (param_type (',' param_type)*)? ')';
 
 param_type: param_decl_specifiers param_type_id;
-param_type_id: ptrs? ('(' param_type_id ')' | parameter_name?) type_suffix?;
+param_type_id: (ptrs | rvalue_ref)? ('(' param_type_id ')' | parameter_name?) type_suffix?;
