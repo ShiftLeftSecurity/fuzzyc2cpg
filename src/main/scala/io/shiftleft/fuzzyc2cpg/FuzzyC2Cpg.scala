@@ -175,7 +175,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       case ex: RuntimeException => {
         logger.warn("Cannot parse module: " + filename + ", skipping")
         logger.warn("Complete exception: ", ex)
-        throw ex
+        return
       }
     }
 
