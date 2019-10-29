@@ -19,8 +19,8 @@ public class FunctionParameterTests extends ModuleParserTest {
 		ModuleParser parser = createParser(input);
 		String output = parser.function_def().toStringTree(parser);
 
-		assertTrue(output.startsWith(
-				"(function_def (return_type (type_name (base_type int))) (function_name (identifier foo)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type char))) (parameter_id (ptrs (ptr_operator *)) ( (parameter_id (ptrs (ptr_operator *)) (parameter_name (identifier param))) ) (type_suffix (param_type_list ( void )))))) )) (compound_statement { }))"));
+		assertEquals("(function_def (return_type (type_name (base_type int))) (function_name (identifier foo)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type char))) (parameter_id (parameter_ptrs (ptrs (ptr_operator *))) ( (parameter_id (parameter_ptrs (ptrs (ptr_operator *))) (parameter_name (identifier param))) ) (type_suffix (param_type_list ( void )))))) )) (compound_statement { }))",
+					 output);
 	}
 
 	@Test
@@ -78,7 +78,7 @@ public class FunctionParameterTests extends ModuleParserTest {
 		String input = "void foo(std::string&& s) {}";
 		ModuleParser parser = createParser(input);
 		String output = parser.function_def().toStringTree(parser);
-		assertEquals("(function_def (return_type (type_name (base_type void))) (function_name (identifier foo)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type std) :: (base_type string))) (parameter_id (rvalue_ref &&) (parameter_name (identifier s))))) )) (compound_statement { }))",
+		assertEquals("(function_def (return_type (type_name (base_type void))) (function_name (identifier foo)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type std) :: (base_type string))) (parameter_id (parameter_ptrs (rvalue_ref &&)) (parameter_name (identifier s))))) )) (compound_statement { }))",
 					 output);
 	}
 }

@@ -32,8 +32,10 @@ function_param_list : '(' parameter_decl_clause? ')' CV_QUALIFIER* exception_spe
 
 parameter_decl_clause: (parameter_decl (',' parameter_decl)*) (',' '...')?
                      | VOID;
-parameter_decl : param_decl_specifiers parameter_id;
-parameter_id: (ptrs | rvalue_ref)? ('(' parameter_id ')' | parameter_name) type_suffix?;
+parameter_ptrs: ptrs | rvalue_ref;
+parameter_decl: param_decl_specifiers parameter_id |
+                param_decl_specifiers parameter_ptrs?;
+parameter_id: parameter_ptrs? ('(' parameter_id ')' | parameter_name) type_suffix?;
 
 compound_statement: OPENING_CURLY { skipToEndOfObject(); };
 

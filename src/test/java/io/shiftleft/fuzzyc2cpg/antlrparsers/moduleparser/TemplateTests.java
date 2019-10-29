@@ -83,7 +83,6 @@ public class TemplateTests extends ModuleParserTest {
             output);
   }
 
-
   @Test
   public void testFunctionTemplate() {
     String input = "template <typename T> T foo(T t) {}";
@@ -159,6 +158,16 @@ public class TemplateTests extends ModuleParserTest {
   }
 
   @Test
+  public void testFunctionAnonParametersWithTemplate() {
+    String input = "template <typename A> A do_a(A) {}";
+    ModuleParser parser = createParser(input);
+    String output = parser.function_def().toStringTree(parser);
+
+    assertEquals("(function_def (template_decl template < (template_decl_param_list (template_decl_param (template_decl_keyword typename) (template_name A))) >) (return_type (type_name (base_type A))) (function_name (identifier do_a)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type A))))) )) (compound_statement { }))",
+            output);
+  }
+
+  @Test
   public void testFunctionDeclTemplate() {
     String input = "template <typename T> T foo(T t);";
     ModuleParser parser = createParser(input);
@@ -230,5 +239,15 @@ public class TemplateTests extends ModuleParserTest {
 
     assertEquals("(function_decl (template_decl template < (template_decl_param_list (template_decl_param (template_decl_keyword typename) (template_name A))) >) (template_decl template < (template_decl_param_list (template_decl_param (template_decl_keyword typename) (template_name B))) >) (return_type (type_name (base_type A))) (function_name (identifier do_a)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type B))) (parameter_id (parameter_name (identifier b))))) )) ;)",
                  output);
+  }
+
+  @Test
+  public void testFunctionDeclAnonParametersWithTemplate() {
+    String input = "template <typename A> A do_a(A);";
+    ModuleParser parser = createParser(input);
+    String output = parser.function_decl().toStringTree(parser);
+
+    assertEquals("(function_decl (template_decl template < (template_decl_param_list (template_decl_param (template_decl_keyword typename) (template_name A))) >) (return_type (type_name (base_type A))) (function_name (identifier do_a)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type A))))) )) ;)",
+            output);
   }
 }

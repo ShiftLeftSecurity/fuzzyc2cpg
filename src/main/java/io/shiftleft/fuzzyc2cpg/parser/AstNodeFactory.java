@@ -88,12 +88,17 @@ public class AstNodeFactory {
     Parameter param = new Parameter();
 
     Parameter_declContext paramCtx = ctx;
-    Parameter_nameContext paramName = getNameOfParameter(paramCtx);
-
     Identifier name = new Identifier();
+
+    if (ctx.parameter_id() != null) {
+      Parameter_nameContext paramName = getNameOfParameter(paramCtx);
+      initializeFromContext(name, paramName);
+    } else {
+      name.setCodeStr("<anonymous>");
+    }
+
     ParameterType type = new ParameterType();
     initializeFromContext(type, ctx);
-    initializeFromContext(name, paramName);
     initializeFromContext(param, ctx);
 
     param.addChild(type);
