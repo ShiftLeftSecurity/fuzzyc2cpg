@@ -168,6 +168,16 @@ public class TemplateTests extends ModuleParserTest {
   }
 
   @Test
+  public void testFunctionDefaultParamsWithTemplate() {
+    String input = "template <typename A> A do_a(A& a = x) {}";
+    ModuleParser parser = createParser(input);
+    String output = parser.function_def().toStringTree(parser);
+
+    assertEquals("(function_def (template_decl template < (template_decl_param_list (template_decl_param (template_decl_keyword typename) (template_name A))) >) (return_type (type_name (base_type A))) (function_name (identifier do_a)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type A))) (parameter_id (parameter_ptrs (ptrs (ptr_operator &))) (parameter_name (identifier a)) (default_parameter_value = (expr (assign_expr (conditional_expression (or_expression (and_expression (inclusive_or_expression (exclusive_or_expression (bit_and_expression (equality_expression (relational_expression (shift_expression (additive_expression (multiplicative_expression (cast_expression (unary_expression (postfix_expression (primary_expression (identifier x)))))))))))))))))))))) )) (compound_statement { }))",
+            output);
+  }
+
+  @Test
   public void testFunctionDeclTemplate() {
     String input = "template <typename T> T foo(T t);";
     ModuleParser parser = createParser(input);
@@ -248,6 +258,16 @@ public class TemplateTests extends ModuleParserTest {
     String output = parser.function_decl().toStringTree(parser);
 
     assertEquals("(function_decl (template_decl template < (template_decl_param_list (template_decl_param (template_decl_keyword typename) (template_name A))) >) (return_type (type_name (base_type A))) (function_name (identifier do_a)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type A))))) )) ;)",
-            output);
+                 output);
+  }
+
+  @Test
+  public void testFunctionDeclDefaultParamsWithTemplate() {
+    String input = "template <typename A> A do_a(A& a = x);";
+    ModuleParser parser = createParser(input);
+    String output = parser.function_decl().toStringTree(parser);
+
+    assertEquals("(function_decl (template_decl template < (template_decl_param_list (template_decl_param (template_decl_keyword typename) (template_name A))) >) (return_type (type_name (base_type A))) (function_name (identifier do_a)) (function_param_list ( (parameter_decl_clause (parameter_decl (param_decl_specifiers (type_name (base_type A))) (parameter_id (parameter_ptrs (ptrs (ptr_operator &))) (parameter_name (identifier a)) (default_parameter_value = (expr (assign_expr (conditional_expression (or_expression (and_expression (inclusive_or_expression (exclusive_or_expression (bit_and_expression (equality_expression (relational_expression (shift_expression (additive_expression (multiplicative_expression (cast_expression (unary_expression (postfix_expression (primary_expression (identifier x)))))))))))))))))))))) )) ;)",
+                 output);
   }
 }
