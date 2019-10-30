@@ -1,8 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.parsetreetoast;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.util.List;
 
 import org.antlr.v4.runtime.CharStream;
@@ -13,15 +10,15 @@ import io.shiftleft.fuzzyc2cpg.ModuleLexer;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.FunctionDefBase;
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.ParameterBase;
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.Template;
-import io.shiftleft.fuzzyc2cpg.ast.functionDef.TemplateParameterList;
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.*;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef;
+import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.ParameterType;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
 import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver;
+
+import static org.junit.Assert.*;
 
 public class ModuleBuildersTest
 {
@@ -310,14 +307,111 @@ public class ModuleBuildersTest
 		assertEquals("Z", secondTemplate.getName());
 	}
 
+	// Test for https://github.com/ShiftLeftSecurity/joern/issues/126
+	@Test
+	public void testFunctionWithAnonParameter() {
+		String input = "template <class C> C foo(C) {}";
+		List<AstNode> codeItems = parseInput(input);
+		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
+		ParameterList parameters = functionDef.getParameterList();
+		TemplateParameterList templates = functionDef.getTemplateParameterList();
+
+		assertEquals(1, parameters.size());
+		Parameter param = (Parameter) parameters.getChild(0);
+		assertEquals("<anonymous>", param.getName());
+		assertEquals("C", param.getType().getEscapedCodeStr());
+
+		assertEquals("foo", functionDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(1, templates.size());
+		assertEquals(1, templates.getChildCount());
+
+		Template firstTemplate = (Template) templates.getChild(0);
+		assertEquals(1, firstTemplate.getChildCount());
+		assertEquals("C", firstTemplate.getName());
+	}
+
+	@Test
+	public void testFunctionWithAnonRefParameter() {
+		String input = "template <class C> C foo(C&) {}";
+		List<AstNode> codeItems = parseInput(input);
+		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
+		ParameterList parameters = functionDef.getParameterList();
+		TemplateParameterList templates = functionDef.getTemplateParameterList();
+
+		assertEquals(1, parameters.size());
+		Parameter param = (Parameter) parameters.getChild(0);
+		assertEquals("<anonymous>", param.getName());
+		assertEquals("C &", param.getType().getEscapedCodeStr());
+
+		assertEquals("foo", functionDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(1, templates.size());
+		assertEquals(1, templates.getChildCount());
+
+		Template firstTemplate = (Template) templates.getChild(0);
+		assertEquals(1, firstTemplate.getChildCount());
+		assertEquals("C", firstTemplate.getName());
+	}
+
+	// Test for https://github.com/ShiftLeftSecurity/joern/issues/126
+	@Test
+	public void testFunctionDeclWithAnonParameter() {
+		String input = "template <class C> C foo(C);";
+		List<AstNode> codeItems = parseInput(input);
+		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
+		ParameterList parameters = functionDef.getParameterList();
+		TemplateParameterList templates = functionDef.getTemplateParameterList();
+
+		assertEquals(1, parameters.size());
+		Parameter param = (Parameter) parameters.getChild(0);
+		assertEquals("<anonymous>", param.getName());
+		assertEquals("C", param.getType().getEscapedCodeStr());
+
+		assertEquals("foo", functionDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(1, templates.size());
+		assertEquals(1, templates.getChildCount());
+
+		Template firstTemplate = (Template) templates.getChild(0);
+		assertEquals(1, firstTemplate.getChildCount());
+		assertEquals("C", firstTemplate.getName());
+	}
+
+	@Test
+	public void testFunctionDeclWithAnonRefParameter() {
+		String input = "template <class C> C foo(C&);";
+		List<AstNode> codeItems = parseInput(input);
+		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
+		ParameterList parameters = functionDef.getParameterList();
+		TemplateParameterList templates = functionDef.getTemplateParameterList();
+
+		assertEquals(1, parameters.size());
+		Parameter param = (Parameter) parameters.getChild(0);
+		assertEquals("<anonymous>", param.getName());
+		assertEquals("C &", param.getType().getEscapedCodeStr());
+
+		assertEquals("foo", functionDef.getIdentifier().getEscapedCodeStr());
+		assertEquals(1, templates.size());
+		assertEquals(1, templates.getChildCount());
+
+		Template firstTemplate = (Template) templates.getChild(0);
+		assertEquals(1, firstTemplate.getChildCount());
+		assertEquals("C", firstTemplate.getName());
+	}
+
 	@Test
 	public void testTemplateAssociationWithFunctionDecl() {
 		String input = "template <typename T, typename Z> T foo(T x);";
 		List<AstNode> codeItems = parseInput(input);
 		FunctionDef functionDef = (FunctionDef) codeItems.get(0);
-		TemplateParameterList templates = (TemplateParameterList) functionDef.getChild(1);
+		ParameterList parameters = functionDef.getParameterList();
+		TemplateParameterList templates = functionDef.getTemplateParameterList();
 
 		assertEquals("foo", functionDef.getIdentifier().getEscapedCodeStr());
+
+		assertEquals(1, parameters.size());
+		Parameter param = (Parameter) parameters.getChild(0);
+		assertEquals("x", param.getName());
+		assertEquals("T", param.getType().getEscapedCodeStr());
+
 		assertEquals(2, templates.size());
 		assertEquals(2, templates.getChildCount());
 

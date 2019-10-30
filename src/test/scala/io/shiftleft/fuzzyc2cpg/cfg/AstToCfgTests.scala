@@ -165,6 +165,7 @@ class AstToCfgTests extends WordSpec with Matchers {
       }
 
     "be correct for short-circuit AND expression" in
+      // TODO: Broken by supporting move params?
       new Fixture("x && y;") {
         succOf("ENTRY") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("y", TrueEdge), ("x && y", FalseEdge))

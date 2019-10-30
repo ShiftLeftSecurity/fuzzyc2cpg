@@ -13,7 +13,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 public class ParameterListBuilder extends AstNodeBuilder {
 
-  ParameterList thisItem;
+  private ParameterList thisItem;
 
   @Override
   public void createNew(ParserRuleContext ctx) {
@@ -25,12 +25,12 @@ public class ParameterListBuilder extends AstNodeBuilder {
   public void addParameter(Parameter_declContext aCtx,
       Stack<AstNodeBuilder> itemStack) {
     Parameter_declContext ctx = aCtx;
-    Parameter_idContext parameter_id = ctx.parameter_id();
     ParameterBase param = AstNodeFactory.create(ctx);
 
-    String baseType = ParseTreeUtils
-        .childTokenString(ctx.param_decl_specifiers());
-    String completeType = determineCompleteType(parameter_id, baseType);
+    String baseType = ParseTreeUtils.childTokenString(ctx.param_decl_specifiers());
+    String completeType = ctx.parameter_id() != null ?
+            determineCompleteType(ctx.parameter_id(), baseType) :
+            determineCompleteAnonymousType(ctx, baseType);
 
     ((ParameterType) param.getType()).setBaseType(baseType);
     ((ParameterType) param.getType()).setCompleteType(completeType);
@@ -38,46 +38,56 @@ public class ParameterListBuilder extends AstNodeBuilder {
     thisItem.addChild(param);
   }
 
-  public String determineCompleteType(Parameter_idContext parameter_id,
-      String baseType) {
-    String retType = baseType;
+  private String determineCompleteAnonymousType(Parameter_declContext ctx,
+                                                String baseType) {
+    StringBuilder retType = new StringBuilder(baseType);
 
-    // TODO: use a string-builder here and clean this up.
+    if (ctx.parameter_ptrs() != null) {
+      retType.append(" ");
+      retType.append(ParseTreeUtils.childTokenString(ctx.parameter_ptrs()));
+    }
+
+    return retType.toString();
+  }
+
+  private String determineCompleteType(Parameter_idContext parameter_id,
+                                       String baseType) {
+
+    StringBuilder retType = new StringBuilder(baseType);
 
     // iterate until nesting level is reached
     // where type is given.
-
     while (parameter_id.parameter_name() == null) {
+      final StringBuilder newCompleteType = new StringBuilder();
 
-      String newCompleteType = "";
+      newCompleteType.append("(");
 
-      newCompleteType += "(";
-
-      if (parameter_id.ptrs() != null) {
-        newCompleteType += ParseTreeUtils
-            .childTokenString(parameter_id.ptrs()) + " ";
+      if (parameter_id.parameter_ptrs() != null) {
+        newCompleteType.append(ParseTreeUtils.childTokenString(parameter_id.parameter_ptrs()));
+        newCompleteType.append(" ");
       }
       if (parameter_id.type_suffix() != null) {
-        newCompleteType += ParseTreeUtils
-            .childTokenString(parameter_id.type_suffix()) + " ";
+        newCompleteType.append(ParseTreeUtils.childTokenString(parameter_id.type_suffix()));
+        newCompleteType.append(" ");
       }
 
-      newCompleteType += retType;
-      newCompleteType += ")";
+      newCompleteType.append(retType);
+      newCompleteType.append(")");
       retType = newCompleteType;
       parameter_id = parameter_id.parameter_id();
     }
 
-    if (parameter_id.ptrs() != null) {
-      retType += " "
-          + ParseTreeUtils.childTokenString(parameter_id.ptrs());
-    }
-    if (parameter_id.type_suffix() != null) {
-      retType += " " + ParseTreeUtils
-          .childTokenString(parameter_id.type_suffix());
+    if (parameter_id.parameter_ptrs() != null) {
+      retType.append(" ");
+      retType.append(ParseTreeUtils.childTokenString(parameter_id.parameter_ptrs()));
     }
 
-    return retType;
+    if (parameter_id.type_suffix() != null) {
+      retType.append(" ");
+      retType.append(ParseTreeUtils.childTokenString(parameter_id.type_suffix()));
+    }
+
+    return retType.toString();
   }
 
 }
