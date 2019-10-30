@@ -35,7 +35,8 @@ parameter_decl_clause: (parameter_decl (',' parameter_decl)*) (',' '...')?
 parameter_ptrs: ptrs | rvalue_ref;
 parameter_decl: param_decl_specifiers parameter_id |
                 param_decl_specifiers parameter_ptrs?;
-parameter_id: parameter_ptrs? ('(' parameter_id ')' | parameter_name) type_suffix?;
+parameter_id: parameter_ptrs? ('(' parameter_id ')' | parameter_name) type_suffix? default_parameter_value?;
+default_parameter_value: '=' expr;
 
 compound_statement: OPENING_CURLY { skipToEndOfObject(); };
 
