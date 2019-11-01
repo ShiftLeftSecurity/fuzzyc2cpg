@@ -45,9 +45,9 @@ public class ModuleFunctionParserInterface {
     int startIndex = compound_statement.start.getStopIndex();
     int stopIndex = compound_statement.stop.getStopIndex();
 
-    // We insert new lines compensate for the missing code previous to the function.
+    // We insert new lines to compensate for the missing code previous to the function.
     // This gives us correct line numbers for the function and its content.
-    return StringUtils.repeat("\n",null, ctx.start.getLine() - 1)
+    return StringUtils.repeat("\n",null, ctx.compound_statement().start.getLine() - 1)
             + inputStream.getText(new Interval(startIndex + 1, stopIndex - 1));
   }
 
