@@ -13,8 +13,6 @@ before_install:
 - git fetch --tags
 stages:
 - name: test
-- name: tag-release
-  if: branch = master AND type = push
 - name: release
   if: branch = master AND type = push
 jobs:
@@ -53,17 +51,9 @@ jobs:
     - gpgconf --kill gpg-agent
     - ps -Wla | sort
     - echo $$  
-  - stage: tag-release
-    name: Tag release
-    script: sbt ciReleaseTagNextVersion
-  - stage: release
-    name: Release to JFrog
-    script: sbt 'set publishTo := Some("releases" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")'
-      "set credentials += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\",
-      \"$JFROG_USER\", \"$JFROG_PASS\")" ciRelease
   - stage: release
     name: Release to Bintray
-    script: sbt ciReleaseBintray
+    script: sbt ciReleaseTagNextVersion ciReleaseBintray
   - stage: release
     name: Release Unix preprocessor
     script: skip
