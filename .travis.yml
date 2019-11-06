@@ -13,6 +13,8 @@ before_install:
 - git fetch --tags
 stages:
 - name: test
+- name: tag-release
+  if: branch = master AND type = push
 - name: release
   if: branch = master AND type = push
 jobs:
@@ -51,9 +53,12 @@ jobs:
     - gpgconf --kill gpg-agent
     - ps -Wla | sort
     - echo $$  
+  - stage: tag-release
+    name: Tag release
+    script: sbt ciReleaseTagNextVersion
   - stage: release
     name: Release to Bintray
-    script: sbt ciReleaseTagNextVersion ciReleaseBintray
+    script: sbt ciReleaseBintray
   - stage: release
     name: Release Unix preprocessor
     script: skip
