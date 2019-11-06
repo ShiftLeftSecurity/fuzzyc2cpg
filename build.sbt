@@ -24,6 +24,7 @@ libraryDependencies ++= Seq(
 resolvers += "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public"
 ThisBuild / resolvers ++= Seq(
   Resolver.mavenLocal,
+  Resolver.jcenterRepo,
   "Artifactory release local" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local",
   "Apache public" at "https://repository.apache.org/content/groups/public/",
   "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public",
@@ -49,28 +50,4 @@ enablePlugins(JavaAppPackaging)
 
 scmInfo := Some(ScmInfo(url("https://github.com/ShiftLeftSecurity/fuzzyc2cpg"),
                             "scm:git@github.com:ShiftLeftSecurity/fuzzyc2cpg.git"))
-homepage := Some(url("https://github.com/ShiftLeftSecurity/fuzzyc2cpg/"))
 licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
-developers := List(
-  /* sonatype requires this to be non-empty */
-  Developer(
-    "fabsx00",
-    "Fabian Yamaguchi",
-    "fabs@shiftleft.io",
-    url("https://github.com/fabsx00")
-  ),
-  Developer(
-    "ml86",
-    "Markus Lottmann",
-    "markus@shiftleft.io",
-    url("https://github.com/ml86")
-  ),
-  Developer(
-    "julianthome",
-    "Julian Thome",
-    "julian.thome.de@gmail.com",
-    url("https://github.com/julianthome")
-  )
-)
-publishTo := sonatypePublishToBundle.value
-Global / useGpg := false
