@@ -11,9 +11,6 @@ env:
   - secure: fjPmhJeIZaydeabQyirtKVshrqdLuFUa8wpJ4r9IDigsvRWqH3TfDBoDATYW6XlT+go7V6TbgqQquJgCa3r16Di67I+ybU/YQajcEOaC27VL0xHLGIc/4U0+qGciKXUxKaKkS8Jt1FGuFSXBsfVRj05f6Y5rL4+Pb2BPOm8qCgsofjjLUZjbult66xBCzhrlakTMkaC/Lno3vO9zzl99RiDobnjE7p0bku2z26WH+C8jEleiouixxzpC0BUwmwSeNru2hTc5J4Np58dS2eihCIWhAQCCtyKQjNqg4ZaCNMbWfZsbLCihSwpQ/raPPOd4E6kSax52siffhukFx6zieh0VO/TKu2EhueCRt8TjLXMfJR6c1gQobDfh+bzVR1Pwh6VB2I11ZmLCGYryqK7x0aMkE2lO/iyYwROavVVIRpRpMuDyc7mHjTMHIvrdeuZy9VElFPn/GQNlTRJXxIZuMgCocNKtFu0Ve68pLylWfLQQ+V9vzqAxpV9tpPgI9CDLByeC7vscOF+OLEqYKRdV1sqU6cbij5YtH5t7+4N4tAcb1toBLxkjvDUsL5kEi9fxlNDDe2r8rKef/deM/OZpKpYQObjEb8hzC21Op1CkkQ2IYZSopgqMywRto5Sw7Nkgw4teI4m3LOjMocOR+kSCSYdfdgiTCGFDeM8lRfHQt9A=
 before_install:
 - git fetch --tags
-- if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_EVENT_TYPE" == "push" ]]; then openssl
-  aes-256-cbc -K $encrypted_b3f7bd94ef38_key -iv $encrypted_b3f7bd94ef38_iv -in private-key.pem.enc
-  -out private-key.pem -d; gpg --import --batch private-key.pem; fi
 stages:
 - name: test
 - name: tag-release
@@ -65,8 +62,8 @@ jobs:
       "set credentials += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\",
       \"$JFROG_USER\", \"$JFROG_PASS\")" ciRelease
   - stage: release
-    name: Release to Sonatype
-    script: sbt ciReleaseSonatype
+    name: Release to Bintray
+    script: sbt ciReleaseBintray
   - stage: release
     name: Release Unix preprocessor
     script: skip
