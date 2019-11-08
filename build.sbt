@@ -19,6 +19,8 @@ libraryDependencies ++= Seq(
   "org.apache.tinkerpop" % "tinkergraph-gremlin" % "3.4.3" % Test,
 )
 
+excludeDependencies += "org.apache.logging.log4j" % "log4j-slf4j-impl"
+
 // uncomment if you want to use a cpg version that has *just* been released
 // (it takes a few hours until it syncs to maven central)
 resolvers += "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public"

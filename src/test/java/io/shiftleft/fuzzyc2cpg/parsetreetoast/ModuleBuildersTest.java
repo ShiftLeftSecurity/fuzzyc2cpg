@@ -444,6 +444,20 @@ public class ModuleBuildersTest
 		assertEquals("Z", secondTemplate.getName());
 	}
 
+	@Test
+	public void testGlobalVariableDecl() {
+		String input = "int x;";
+		List <AstNode> codeItems = parseInput(input);
+		IdentifierDeclStatement stmt = (IdentifierDeclStatement) codeItems.get(0);
+
+		assertEquals(1, stmt.getChildCount());
+		IdentifierDecl decl = (IdentifierDecl) stmt.getChild(0);
+
+		assertEquals(2, decl.getChildCount());
+		assertEquals(decl.getType().completeType, "int");
+		assertEquals(decl.getName().getEscapedCodeStr(), "x");
+	}
+
 	private List<AstNode> parseInput(String input)
 	{
 		AntlrCModuleParserDriver parser = new AntlrCModuleParserDriver();

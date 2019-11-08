@@ -39,6 +39,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   private var typeNames = Set.empty[String]
 
   pushContext(cpgParent, 1)
+  scope.pushNewScope(cpgParent) // Push global scope
 
   private class Context(val cpgParent: NodeType,
                         var childNum: Int,
@@ -590,8 +591,6 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
         .createNode(identifierDecl)
       addAstChild(cpgMember)
     } else {
-      // We only process file level identifier declarations if they are typedefs.
-      // Everything else is ignored.
       if (!scope.isEmpty) {
         val localName = identifierDecl.getName.getEscapedCodeStr
         val cpgLocal = adapter
@@ -599,6 +598,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
           .addProperty(NodeProperty.CODE, localName)
           .addProperty(NodeProperty.NAME, localName)
           .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(declTypeName))
+          .addProperty(NodeProperty.LINE_NUMBER, identifierDecl.getLocation.startLine)
+          .addProperty(NodeProperty.COLUMN_NUMBER, identifierDecl.getLocation.startPos)
           .createNode(identifierDecl)
 
         val scopeParentNode =

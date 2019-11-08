@@ -148,6 +148,16 @@ class AstToCpgTests extends WordSpec with Matchers {
       result.size shouldBe 1
       result
     }
+
+    def getLocal(name: String): List[Vertex] = {
+      val result = graph.V
+        .hasLabel(NodeTypes.LOCAL)
+        .has(NodeKeys.NAME -> name)
+        .l
+
+      result.size shouldBe 1
+      result
+    }
   }
 
   "Method AST layout" should {
@@ -777,5 +787,27 @@ class AstToCpgTests extends WordSpec with Matchers {
       assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
       assignment.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 8)
     }
+
+    "correctly parse global variable declarations" in new Fixture("""
+        |int x;
+        |int y = 5;
+        |bool b;
+        |""".stripMargin) {
+      val localX = getLocal("x")
+      localX.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 2)
+      localX.checkForSingle[String](NodeKeys.TYPE_FULL_NAME, "int")
+      localX.checkForSingle[String](NodeKeys.CODE, "x")
+
+      val localY = getLocal("y")
+      localY.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 3)
+      localY.checkForSingle[String](NodeKeys.TYPE_FULL_NAME, "int")
+      localY.checkForSingle[String](NodeKeys.CODE, "y")
+
+      val localB = getLocal("b")
+      localB.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 4)
+      localB.checkForSingle[String](NodeKeys.TYPE_FULL_NAME, "bool")
+      localB.checkForSingle[String](NodeKeys.CODE, "b")
+    }
+
   }
 }
