@@ -1,11 +1,19 @@
 [![Build Status](https://secure.travis-ci.org/ShiftLeftSecurity/fuzzyc2cpg.png?branch=master)](http://travis-ci.org/ShiftLeftSecurity/fuzzyc2cpg)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.shiftleft/fuzzyc2cpg_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.shiftleft/fuzzyc2cpg_2.12)
+[![bintray](https://api.bintray.com/packages/shiftleft/maven/fuzzyc2cpg/images/download.svg)](https://bintray.com/shiftleft/maven/fuzzyc2cpg/_latestVersion)
 
 # fuzzyc2cpg
 
 **Note: for first-time users, we recommend building "joern" at https://github.com/ShiftLeftSecurity/joern/ instead. It contains both fuzzyc2cpg and a component for querying code property graphs, as well as a few helpful examples to get started.**
 
 A fuzzy parser for C/C++ that creates code property graphs according to the specification at https://github.com/ShiftLeftSecurity/codepropertygraph . This is a fork of the (now unmaintainted) version of Joern at https://github.com/octopus-platform/joern.
+
+## Using as a dependency
+`build.sbt`:
+```
+libraryDependencies += "io.shiftleft" %% "fuzzyc2cpg" % "x.y.z"
+resolvers += Resolver.bintrayRepo("shiftleft", "maven")
+```
+Other build tools: see [bintray instructions](https://bintray.com/shiftleft/maven/fuzzyc2cpg/_latestVersion).
 
 ## Building the code
 

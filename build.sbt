@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
 resolvers += "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public"
 ThisBuild / resolvers ++= Seq(
   Resolver.mavenLocal,
-  Resolver.jcenterRepo,
+  Resolver.bintrayRepo("shiftleft", "maven"),
   "Artifactory release local" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local",
   "Apache public" at "https://repository.apache.org/content/groups/public/",
   "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public",
