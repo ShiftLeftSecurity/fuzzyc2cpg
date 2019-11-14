@@ -80,7 +80,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String]): Unit = {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
-    val filenameToNodes = createStructuralCpg(sourceFileNames, outputModuleFactory)
+    val filenameToNodes = createStructuralCpg(sourceFileNames)
 
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
@@ -100,8 +100,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     }
   }
 
-  private def createStructuralCpg(filenames: Set[String],
-                                  cpgOutputModuleFactory: CpgOutputModuleFactory): Set[(String, NodesForFile)] = {
+  private def createStructuralCpg(filenames: Set[String]): Set[(String, NodesForFile)] = {
 
     def addMetaDataNode(cpg: CpgStruct.Builder): Unit = {
       val metaNode = newNode(NodeType.META_DATA)

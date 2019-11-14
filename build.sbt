@@ -3,20 +3,28 @@ organization := "io.shiftleft"
 scalaVersion := "2.12.10"
 enablePlugins(GitVersioning)
 
-val cpgVersion = "0.10.78"
+val cpgVersion = "0.10.127"
+val antlrVersion = "4.7.2"
 
 libraryDependencies ++= Seq(
-  "com.github.scopt"   %% "scopt"          % "3.7.0",
-  "org.antlr" % "antlr4-runtime" % "4.7.2",
-  "io.shiftleft" %% "codepropertygraph" % cpgVersion,
-  "io.shiftleft" %% "codepropertygraph-protos" % cpgVersion,
-  "org.slf4j" % "slf4j-simple" % "1.7.25" % Runtime,
-  "commons-cli" % "commons-cli" % "1.4",
-  "com.github.pathikrit" %% "better-files"  % "3.1.0",
-  "com.novocode" % "junit-interface" % "0.11" % Test,
-  "junit" % "junit" % "4.12" % Test,
-  "org.scalatest" %% "scalatest" % "3.0.3" % Test,
-  "org.apache.tinkerpop" % "tinkergraph-gremlin" % "3.4.3" % Test,
+  "com.github.scopt"     %% "scopt"                    % "3.7.0",
+  "org.antlr"            %  "antlr4-runtime"           % antlrVersion,
+  "io.shiftleft"         %% "codepropertygraph"        % cpgVersion,
+  "io.shiftleft"         %% "codepropertygraph-protos" % cpgVersion,
+  "ch.qos.logback"       %  "logback-classic"          % "1.2.3",
+  "commons-cli"          %  "commons-cli"              % "1.4",
+  "com.github.pathikrit" %% "better-files"             % "3.1.0",
+
+  "com.novocode"         %  "junit-interface"          % "0.11"  % Test,
+  "junit"                %  "junit"                    % "4.12"  % Test,
+  "org.scalatest"        %% "scalatest"                % "3.0.3" % Test,
+  "org.apache.tinkerpop" %  "tinkergraph-gremlin"      % "3.4.3" % Test,
+)
+
+excludeDependencies ++= Seq(
+  // This project uses Logback in place of Log4j
+  ExclusionRule("org.apache.logging.log4j", "log4j-slf4j-impl"),
+  ExclusionRule("org.slf4j", "slf4j-simple")
 )
 
 // uncomment if you want to use a cpg version that has *just* been released
@@ -31,19 +39,62 @@ ThisBuild / resolvers ++= Seq(
   "Bedatadriven for SOOT dependencies" at "https://nexus.bedatadriven.com/content/groups/public"
 )
 
-scalacOptions ++= Seq("-deprecation", "-feature")
+scalacOptions ++= Seq(
+  "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
+  "-encoding", "utf-8",                // Specify character encoding used by source files.
+  "-explaintypes",                     // Explain type errors in more detail.
+  "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
+  "-language:existentials",            // Existential types (besides wildcard types) can be written and inferred
+  "-language:experimental.macros",     // Allow macro definition (besides implementation and application)
+  "-language:higherKinds",             // Allow higher-kinded types
+  "-language:implicitConversions",     // Allow definition of implicit functions called views
+  "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
+  "-Xcheckinit",                       // Wrap field accessors to throw an exception on uninitialized access.
+  // "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+  "-Xfuture",                          // Turn on future language features.
+  "-Xlint:adapted-args",               // Warn if an argument list is modified to match the receiver.
+  "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
+  "-Xlint:constant",                   // Evaluation of a constant arithmetic expression results in an error.
+  "-Xlint:delayedinit-select",         // Selecting member of DelayedInit.
+  "-Xlint:doc-detached",               // A Scaladoc comment appears to be detached from its element.
+  "-Xlint:inaccessible",               // Warn about inaccessible types in method signatures.
+  "-Xlint:infer-any",                  // Warn when a type argument is inferred to be `Any`.
+  "-Xlint:missing-interpolator",       // A string literal appears to be missing an interpolator id.
+  "-Xlint:option-implicit",            // Option.apply used implicit view.
+  "-Xlint:package-object-classes",     // Class or object defined in package object.
+  "-Xlint:poly-implicit-overload",     // Parameterized overloaded implicit methods are not visible as view bounds.
+  "-Xlint:private-shadow",             // A private field (or class parameter) shadows a superclass field.
+  "-Xlint:stars-align",                // Pattern sequence wildcard must align with sequence component.
+  "-Xlint:type-parameter-shadow",      // A local type parameter shadows a type already in scope.
+  "-Xlint:unsound-match",              // Pattern match may not be typesafe.
+  "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
+  "-Ypartial-unification",             // Enable partial unification in type constructor inference
+  "-Ywarn-dead-code",                  // Warn when dead code is identified.
+  "-Ywarn-extra-implicit",             // Warn when more than one implicit parameter section is defined.
+  "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
+  "-Ywarn-infer-any",                  // Warn when a type argument is inferred to be `Any`.
+  "-Ywarn-nullary-override",           // Warn when non-nullary `def f()' overrides nullary `def f'.
+  // "-Ywarn-nullary-unit",               // Warn when nullary methods return Unit.
+  "-Ywarn-numeric-widen",              // Warn when numerics are widened.
+  "-Ywarn-unused:implicits",           // Warn if an implicit parameter is unused.
+  "-Ywarn-unused:imports",             // Warn if an import selector is not referenced.
+  "-Ywarn-unused:locals",              // Warn if a local definition is unused.
+  "-Ywarn-unused:params",              // Warn if a value parameter is unused.
+  "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
+  "-Ywarn-unused:privates",            // Warn if a private member is unused.
+  // "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
+)
+
 compile / javacOptions ++= Seq("-Xlint:all", "-Xlint:-cast", "-g")
-Test / javaOptions ++= Seq("-Dlog4j2.configurationFile=../cpg2sp/src/test/resources/log4j2-test.xml")
 Test / fork := true
 testOptions += Tests.Argument(TestFrameworks.JUnit, "-a", "-v")
 
 checkstyleConfigLocation := CheckstyleConfigLocation.File("config/checkstyle/google_checks.xml")
 checkstyleSeverityLevel := Some(CheckstyleSeverityLevel.Info)
-// checkstyle := checkstyle.triggeredBy(Compile / compile).value
 
 enablePlugins(Antlr4Plugin)
 Antlr4 / antlr4PackageName := Some("io.shiftleft.fuzzyc2cpg")
-Antlr4 / antlr4Version := "4.7"
+Antlr4 / antlr4Version := antlrVersion
 Antlr4 / javaSource := (sourceManaged in Compile).value
 
 enablePlugins(JavaAppPackaging)

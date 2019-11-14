@@ -33,7 +33,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
     val bodyCpg = CpgStruct.newBuilder()
     val cpgAdapter = new ProtoCpgAdapter(bodyCpg)
     val astToCpgConverter =
-      new AstToCpgConverter(fileNameOption.get, astParentNode, cpgAdapter)
+      new AstToCpgConverter(astParentNode, cpgAdapter)
     astToCpgConverter.convert(functionDef)
 
     val astToCfgConverter =
@@ -58,7 +58,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
   override def visit(classDefStatement: ClassDefStatement): Unit = {
     val cpgAdapter = new ProtoCpgAdapter(structureCpg)
     val astToCpgConverter =
-      new AstToCpgConverter(fileNameOption.get, astParentNode, cpgAdapter)
+      new AstToCpgConverter(astParentNode, cpgAdapter)
     astToCpgConverter.convert(classDefStatement)
   }
 
@@ -68,7 +68,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
   override def visit(identifierDeclStmt: IdentifierDeclStatement): Unit = {
     val cpgAdapter = new ProtoCpgAdapter(structureCpg)
     val astToCpgConverter =
-      new AstToCpgConverter(fileNameOption.get, astParentNode, cpgAdapter)
+      new AstToCpgConverter(astParentNode, cpgAdapter)
     astToCpgConverter.convert(identifierDeclStmt)
   }
 
