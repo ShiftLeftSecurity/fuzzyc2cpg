@@ -26,7 +26,6 @@ object AstToCpgConverter {
 }
 
 class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
-    containingFileName: String,
     cpgParent: NodeType,
     adapter: CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType])
     extends ASTNodeVisitor {
@@ -301,7 +300,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
 
   override def visit(astUnary: UnaryExpression): Unit = {
     Option(astUnary.getChild(0)) match {
-      case Some(child) =>
+      case Some(_) =>
         val operatorMethod = astUnary.getChild(0).getEscapedCodeStr match {
           case "+"  => Operators.plus
           case "-"  => Operators.minus

@@ -110,7 +110,7 @@ class AstToCfgConverter[NodeType, EdgeBuilderType, EdgeType](
       // might by empty.
       if (caseStack.numberOfLayers > 0) {
         val containsDefaultLabel = pendingCaseLabels.contains("default")
-        caseStack.store(dstNode, containsDefaultLabel)
+        caseStack.store((dstNode, containsDefaultLabel))
       }
       pendingCaseLabels = List()
     }

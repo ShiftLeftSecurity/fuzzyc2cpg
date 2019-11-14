@@ -118,14 +118,13 @@ class AstToCpgTests extends WordSpec with Matchers {
 
     driver.parseAndWalkTokenStream(tokens)
 
-    private val fileName = "codeFromString"
     val graph: ScalaGraph = TinkerGraph.open()
     private val astParentNode = graph.addVertex("NAMESPACE_BLOCK")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
 
     nodes.foreach { node =>
-      val astToProtoConverter = new AstToCpgConverter(fileName, astParentNode, cpgAdapter)
+      val astToProtoConverter = new AstToCpgConverter(astParentNode, cpgAdapter)
       astToProtoConverter.convert(node)
     }
 
