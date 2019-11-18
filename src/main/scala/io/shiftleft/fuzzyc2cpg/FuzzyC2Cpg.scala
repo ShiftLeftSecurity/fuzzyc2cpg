@@ -67,7 +67,8 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       logger.info(s"Preprocessing complete, files written to [$preprocessedPath], starting CPG generation...")
       runAndOutput(Set(preprocessedPath.toString), sourceFileExtensions)
     } else {
-      logger.error(s"Error occurred whilst running preprocessor. Log written to [$preprocessorLogFile]. Exit code [$exitCode].")
+      logger.error(
+        s"Error occurred whilst running preprocessor. Log written to [$preprocessorLogFile]. Exit code [$exitCode].")
     }
   }
 
