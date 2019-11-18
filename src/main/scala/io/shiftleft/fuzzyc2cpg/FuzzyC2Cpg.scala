@@ -15,6 +15,7 @@ import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 import java.nio.file.{Files, Path}
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
@@ -43,22 +44,15 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
-    val cmd = Seq(
-      preprocessorExecutable,
-      "--verbose",
-      "-o",
-      preprocessedPath.toString,
-      "-f",
-      sourceFileNames.mkString(","),
-      "--include",
-      includeFiles.mkString(","),
-      "-I",
-      includePaths.mkString(","),
-      "-D",
-      defines.mkString(","),
-      "-U",
-      undefines.mkString(",")
-    )
+    val commandBuffer = new ListBuffer[String]()
+    commandBuffer.append(preprocessorExecutable, "--verbose", "-o", preprocessedPath.toString)
+    if (sourceFileNames.nonEmpty) commandBuffer.append("-f", sourceFileNames.mkString(","))
+    if (includeFiles.nonEmpty) commandBuffer.append("--include", includeFiles.mkString(","))
+    if (includePaths.nonEmpty) commandBuffer.append("-I", includePaths.mkString(","))
+    if (defines.nonEmpty) commandBuffer.append("-D", defines.mkString(","))
+    if (undefines.nonEmpty) commandBuffer.append("-U", defines.mkString(","))
+
+    val cmd = commandBuffer.toList
 
     // Run preprocessor
     logger.info("Running preprocessor...")
@@ -70,10 +64,11 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     val exitCode = process.waitFor()
 
     if (exitCode == 0) {
-      logger.info("Preprocessing complete, starting CPG generation...")
+      logger.info(s"Preprocessing complete, files written to [$preprocessedPath], starting CPG generation...")
       runAndOutput(Set(preprocessedPath.toString), sourceFileExtensions)
     } else {
-      logger.error(s"Error occurred whilst running preprocessor. Exit code [$exitCode].")
+      logger.error(
+        s"Error occurred whilst running preprocessor. Log written to [$preprocessorLogFile]. Exit code [$exitCode].")
     }
   }
 

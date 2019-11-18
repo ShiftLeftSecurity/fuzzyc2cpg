@@ -19,7 +19,7 @@ object SourceFiles {
     val matchingFiles = files.filter(hasSourceFileExtension).map(_.toString)
     val matchingFilesFromDirs = dirs
       .flatMap(_.listRecursively.filter(hasSourceFileExtension))
-      .map(File(".").path.relativize(_).toString)
+      .map(_.toString)
 
     matchingFiles ++ matchingFilesFromDirs
   }
