@@ -2,11 +2,11 @@ package io.shiftleft.fuzzyc2cpg.ast;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
-abstract public class AstNodeBuilder {
+abstract public class AstNodeBuilder<T extends AstNode> {
 
-  protected AstNode item;
+  protected T item;
 
-  public AstNode getItem() {
+  public T getItem() {
     return item;
   }
 

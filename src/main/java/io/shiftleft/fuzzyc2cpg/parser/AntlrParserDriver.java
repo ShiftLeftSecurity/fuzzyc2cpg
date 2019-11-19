@@ -31,7 +31,7 @@ abstract public class AntlrParserDriver {
   // when ASTs are ready.
   // We should split this into two classes.
 
-  public Stack<AstNodeBuilder> builderStack = new Stack<AstNodeBuilder>();
+  public Stack<AstNodeBuilder<? extends AstNode>> builderStack = new Stack<>();
   public TokenSubStream stream;
   public String filename;
 
@@ -209,7 +209,7 @@ abstract public class AntlrParserDriver {
     stream = context.stream;
   }
 
-  public void setStack(Stack<AstNodeBuilder> aStack) {
+  public void setStack(Stack<AstNodeBuilder<? extends AstNode>> aStack) {
     builderStack = aStack;
   }
 

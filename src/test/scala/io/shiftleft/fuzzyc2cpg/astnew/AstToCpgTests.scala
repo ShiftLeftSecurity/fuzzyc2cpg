@@ -102,7 +102,7 @@ class AstToCpgTests extends WordSpec with Matchers {
 
       override def endOfUnit(ctx: ParserRuleContext, filename: String): Unit = {}
 
-      override def processItem(node: AstNode, builderStack: java.util.Stack[AstNodeBuilder]): Unit = {
+      override def processItem[T <: AstNode](node: T, builderStack: java.util.Stack[AstNodeBuilder[_ <: AstNode]]): Unit = {
         nodes = node :: nodes
       }
     }

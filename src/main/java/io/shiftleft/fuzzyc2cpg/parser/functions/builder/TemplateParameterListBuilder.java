@@ -8,7 +8,7 @@ import io.shiftleft.fuzzyc2cpg.ast.functionDef.Template;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.TemplateParameterList;
 import io.shiftleft.fuzzyc2cpg.parser.AstNodeFactory;
 
-public class TemplateParameterListBuilder extends AstNodeBuilder {
+public class TemplateParameterListBuilder extends AstNodeBuilder<TemplateParameterList> {
   private final TemplateParameterList templateParameterList = new TemplateParameterList();
 
   public TemplateParameterListBuilder() {

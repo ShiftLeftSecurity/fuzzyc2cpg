@@ -15,29 +15,28 @@ public class ClassDefBuilder extends TemplateAstBuilder<ClassDefStatement> {
   @Override
   public void createNew(ParserRuleContext ctx) {
     item = new ClassDefStatement();
-    thisItem = (ClassDefStatement) item;
-    AstNodeFactory.initializeFromContext(thisItem, ctx);
+    AstNodeFactory.initializeFromContext(item, ctx);
   }
 
   // TODO: merge the following two by introducing a wrapper
   public void setName(Class_nameContext ctx) {
-    thisItem.identifier = new Identifier();
-    AstNodeFactory.initializeFromContext(thisItem.identifier, ctx);
+    item.identifier = new Identifier();
+    AstNodeFactory.initializeFromContext(item.identifier, ctx);
   }
 
   public void setName(FunctionParser.Class_nameContext ctx) {
-    thisItem.identifier = new Identifier();
-    AstNodeFactory.initializeFromContext(thisItem.identifier, ctx);
+    item.identifier = new Identifier();
+    AstNodeFactory.initializeFromContext(item.identifier, ctx);
   }
 
   public void addBaseClass(ModuleParser.Base_classContext ctx){
     Identifier bc = new Identifier();
     AstNodeFactory.initializeFromContext(bc, ctx.identifier());
-    thisItem.addBaseClass(bc);
+    item.addBaseClass(bc);
   }
 
   public void setContent(CompoundStatement content) {
-    thisItem.content = content;
+    item.content = content;
   }
 
 }

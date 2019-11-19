@@ -1,26 +1,24 @@
 package io.shiftleft.fuzzyc2cpg.parser.shared.builders;
 
-import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
+
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDeclType;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
 import io.shiftleft.fuzzyc2cpg.parser.AstNodeFactory;
 import io.shiftleft.fuzzyc2cpg.parser.ParseTreeUtils;
 import io.shiftleft.fuzzyc2cpg.parser.shared.InitDeclContextWrapper;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.ParseTree;
 
-public class IdentifierDeclBuilder extends AstNodeBuilder {
-
-  IdentifierDecl thisItem;
+public class IdentifierDeclBuilder extends TemplateAstBuilder<IdentifierDecl> {
 
   @Override
   public void createNew(ParserRuleContext ctx) {
     item = new IdentifierDecl();
-    thisItem = (IdentifierDecl) item;
     AstNodeFactory.initializeFromContext(item, ctx);
   }
 
@@ -54,14 +52,14 @@ public class IdentifierDeclBuilder extends AstNodeBuilder {
         decl_ctx.getWrappedObject());
     newType.baseType = baseType;
     newType.completeType = completeType;
-    thisItem.addChild(newType);
+    item.addChild(newType);
   }
 
   public void setName(InitDeclContextWrapper decl_ctx) {
     ParserRuleContext identifier = decl_ctx.identifier();
     Identifier newName = new Identifier();
     AstNodeFactory.initializeFromContext(newName, identifier);
-    thisItem.addChild(newName);
+    item.addChild(newName);
   }
 
   public List<IdentifierDecl> getDeclarations(ParserRuleContext decl_list,
@@ -81,7 +79,7 @@ public class IdentifierDeclBuilder extends AstNodeBuilder {
       setType(decl_ctx, typeName);
       setName(decl_ctx);
 
-      declarations.add((IdentifierDecl) getItem());
+      declarations.add(getItem());
     }
     return declarations;
   }

@@ -11,19 +11,15 @@ import io.shiftleft.fuzzyc2cpg.parser.ParseTreeUtils;
 import java.util.Stack;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public class ParameterListBuilder extends AstNodeBuilder {
-
-  private ParameterList thisItem;
+public class ParameterListBuilder extends AstNodeBuilder<ParameterList> {
 
   @Override
   public void createNew(ParserRuleContext ctx) {
     item = new ParameterList();
-    thisItem = (ParameterList) item;
-    AstNodeFactory.initializeFromContext(thisItem, ctx);
+    AstNodeFactory.initializeFromContext(item, ctx);
   }
 
-  public void addParameter(Parameter_declContext aCtx,
-      Stack<AstNodeBuilder> itemStack) {
+  public void addParameter(Parameter_declContext aCtx) {
     Parameter_declContext ctx = aCtx;
     ParameterBase param = AstNodeFactory.create(ctx);
 
@@ -35,7 +31,7 @@ public class ParameterListBuilder extends AstNodeBuilder {
     ((ParameterType) param.getType()).setBaseType(baseType);
     ((ParameterType) param.getType()).setCompleteType(completeType);
 
-    thisItem.addChild(param);
+    item.addChild(param);
   }
 
   private String determineCompleteAnonymousType(Parameter_declContext ctx,
