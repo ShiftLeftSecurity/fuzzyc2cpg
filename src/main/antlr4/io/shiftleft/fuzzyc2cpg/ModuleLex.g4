@@ -12,7 +12,7 @@ GOTO: 'goto'; RETURN: 'return';
 TYPEDEF: 'typedef';
 EXTERN: 'extern';
 VOID: 'void'; UNSIGNED: 'unsigned'; SIGNED: 'signed';
-LONG: 'long'; CV_QUALIFIER :  'const' | 'volatile';
+LONG: 'long'; CV_QUALIFIER :  'const' | 'constexpr' | 'volatile';
 
 // Keywords shared among C++/Java
 
