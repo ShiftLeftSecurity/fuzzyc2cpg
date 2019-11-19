@@ -28,10 +28,10 @@ import io.shiftleft.fuzzyc2cpg.parser.shared.builders.TemplateAstBuilder;
 
 public class CModuleParserTreeListener extends ModuleBaseListener {
 
-  AntlrParserDriver p;
+  private final AntlrParserDriver p;
 
-  public CModuleParserTreeListener(AntlrParserDriver aP) {
-    p = aP;
+  public CModuleParserTreeListener(AntlrParserDriver p) {
+    this.p = p;
   }
 
   @Override
@@ -88,26 +88,26 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
   @Override
   public void enterReturn_type(ModuleParser.Return_typeContext ctx) {
     FunctionDefBuilder builder = (FunctionDefBuilder) p.builderStack.peek();
-    builder.setReturnType(ctx, p.builderStack);
+    builder.setReturnType(ctx);
   }
 
   @Override
   public void enterFunction_name(ModuleParser.Function_nameContext ctx) {
     FunctionDefBuilder builder = (FunctionDefBuilder) p.builderStack.peek();
-    builder.setName(ctx, p.builderStack);
+    builder.setName(ctx);
   }
 
   @Override
   public void enterFunction_param_list(
       ModuleParser.Function_param_listContext ctx) {
     FunctionDefBuilder builder = (FunctionDefBuilder) p.builderStack.peek();
-    builder.setParameterList(ctx, p.builderStack);
+    builder.setParameterList(ctx);
   }
 
   @Override
   public void enterParameter_decl(ModuleParser.Parameter_declContext ctx) {
     FunctionDefBuilder builder = (FunctionDefBuilder) p.builderStack.peek();
-    builder.addParameter(ctx, p.builderStack);
+    builder.addParameter(ctx);
   }
 
   @Override
@@ -128,23 +128,27 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
   public void enterDeclByType(ModuleParser.DeclByTypeContext ctx) {
     Init_declarator_listContext decl_list = ctx.init_declarator_list();
     Type_nameContext typeName = ctx.type_name();
-    emitDeclarations(decl_list, typeName, ctx);
+    IdentifierDeclBuilder builder = new IdentifierDeclBuilder();
+    p.builderStack.push(builder);
+    emitDeclarations(builder, decl_list, typeName, ctx);
   }
 
-  private void emitDeclarations(ParserRuleContext decl_list,
-      ParserRuleContext typeName, ParserRuleContext ctx) {
-    IdentifierDeclBuilder builder = new IdentifierDeclBuilder();
-    List<IdentifierDecl> declarations = builder.getDeclarations(decl_list,
-        typeName);
+  @Override
+  public void exitDeclByType(ModuleParser.DeclByTypeContext ctx) {
+    p.builderStack.pop();
+  }
 
+  private void emitDeclarations(IdentifierDeclBuilder identifierDeclBuilder,
+                                ParserRuleContext decl_list,
+                                ParserRuleContext typeName,
+                                ParserRuleContext ctx) {
+
+    List<IdentifierDecl> declarations = identifierDeclBuilder.getDeclarations(decl_list, typeName);
     IdentifierDeclStatement stmt = new IdentifierDeclStatement();
-    // stmt.initializeFromContext(ctx);
 
     boolean isTypedef = ctx.getParent().start.getText().equals("typedef");
 
-    Iterator<IdentifierDecl> it = declarations.iterator();
-    while (it.hasNext()) {
-      IdentifierDecl decl = it.next();
+    for (IdentifierDecl decl : declarations) {
       decl.setIsTypedef(isTypedef);
       stmt.addChild(decl);
     }
@@ -192,7 +196,7 @@ public class CModuleParserTreeListener extends ModuleBaseListener {
     }
 
     ParserRuleContext typeName = ctx.class_def().class_name();
-    emitDeclarations(decl_list, typeName, ctx);
+    emitDeclarations(new IdentifierDeclBuilder(), decl_list, typeName, ctx);
   }
 
   private CompoundStatement parseClassContent(

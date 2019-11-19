@@ -55,7 +55,7 @@ type_id_list: no_brackets* ('(' type_id_list ')' no_brackets*)*;
 // The following two contain 'water'-rules for expressions
 
 init_declarator : declarator (('(' expr? ')') | ('=' assign_expr_w_))?;
-declarator: ptrs? identifier type_suffix? |
+declarator: ptrs? identifier template_args? type_suffix? |
             ptrs? '(' func_ptrs identifier ')' type_suffix;
 
 type_suffix : ('[' constant_expr_w_ ']') | param_type_list;

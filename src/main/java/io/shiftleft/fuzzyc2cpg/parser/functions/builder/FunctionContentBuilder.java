@@ -141,7 +141,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
  * correctly nested AST.
  */
 
-public class FunctionContentBuilder extends AstNodeBuilder {
+public class FunctionContentBuilder extends AstNodeBuilder<AstNode> {
 
   ContentBuilderStack stack = new ContentBuilderStack();
   NestingReconstructor nesting = new NestingReconstructor(stack);

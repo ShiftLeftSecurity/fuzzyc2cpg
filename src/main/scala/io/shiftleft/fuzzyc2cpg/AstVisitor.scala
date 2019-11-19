@@ -82,7 +82,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
 
   override def endOfUnit(ctx: ParserRuleContext, filename: String): Unit = {}
 
-  override def processItem(node: AstNode, builderStack: util.Stack[AstNodeBuilder]): Unit = {
+  override def processItem[T <: AstNode](node: T, builderStack: util.Stack[AstNodeBuilder[_ <: AstNode]]): Unit = {
     node.accept(this)
   }
 }

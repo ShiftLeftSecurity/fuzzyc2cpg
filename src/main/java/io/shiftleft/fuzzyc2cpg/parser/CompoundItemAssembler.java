@@ -34,8 +34,8 @@ public class CompoundItemAssembler implements AntlrParserDriverObserver {
   }
 
   @Override
-  public void processItem(AstNode item, Stack<AstNodeBuilder> builderStack) {
-    compoundItem.addChild(item);
+  public <T extends AstNode> void processItem(T node, Stack<AstNodeBuilder<? extends AstNode>> builderStack) {
+    compoundItem.addChild(node);
   }
 
 }

@@ -110,11 +110,14 @@ template_decl_param_list: template_template template_decl_keyword template_name 
                           template_decl_param |
                           template_decl_param_list ',' template_decl_param;
 template_template: TEMPLATE '<' (template_decl_keyword ','?)+ '>';
-template_decl_param: (template_decl_keyword | identifier) template_name?;
+template_decl_param: (template_decl_keyword | CV_QUALIFIER? identifier) template_name? ptr_operator?;
 template_decl_keyword: 'typename' | 'class';
 template_name: ALPHA_NUMERIC+ ELLIPSIS? ;
 
-template_args: ('<' template_args '>' | '(' template_args ')' | CV_QUALIFIER? base_type ELLIPSIS? | ',')+;
+template_args: '<' template_args_param_list? '>';
+template_args_param_list: template_args_param |
+                          template_args_param_list ',' template_args_param;
+template_args_param: CV_QUALIFIER? base_type ptr_operator?;
 
 // water
 
@@ -151,7 +154,7 @@ base_class: VIRTUAL? access_specifier? identifier template_args?;
 
 
 type_name : (CV_QUALIFIER* (class_key | UNSIGNED | SIGNED)?
-            base_type ('<' template_args '>')? ('::' base_type ('<' template_args '>')? )*) CV_QUALIFIER?
+            base_type template_args? ('::' base_type template_args? )*) CV_QUALIFIER?
           | UNSIGNED
           | SIGNED
           ;

@@ -63,4 +63,14 @@ public class OtherTests extends ModuleParserTest
 			"(var_decl (type_name (base_type char)) (init_declarator_list (init_declarator (declarator (ptrs (ptr_operator *)) (identifier c)) = (assign_expr_w_ (assign_water \"start\"SOME_VAR\"end\"))) ;))",
 			output);
 	}
+
+	@Test
+	public void testMultipleDeclarations() {
+		String input = "int x, y;";
+		ModuleParser parser = createParser(input);
+		String output = parser.simple_decl().toStringTree(parser);
+
+		assertEquals("(simple_decl (var_decl (type_name (base_type int)) (init_declarator_list (init_declarator (declarator (identifier x))) , (init_declarator (declarator (identifier y))) ;)))",
+				     output);
+	}
 }
