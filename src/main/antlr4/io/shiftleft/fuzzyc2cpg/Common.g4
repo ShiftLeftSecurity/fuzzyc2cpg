@@ -114,15 +114,10 @@ template_decl_param: (template_decl_keyword | CV_QUALIFIER? identifier) template
 template_decl_keyword: 'typename' | 'class';
 template_name: ALPHA_NUMERIC+ ELLIPSIS? ;
 
-// TODO: New
 template_args: '<' template_args_param_list? '>';
 template_args_param_list: template_args_param |
                           template_args_param_list ',' template_args_param;
 template_args_param: CV_QUALIFIER? base_type ptr_operator?;
-
-//template_args: ('<' template_decl_param_list? '>' |
-//                CV_QUALIFIER? base_type ptr_operator? |
-//                ',')+;
 
 // water
 
