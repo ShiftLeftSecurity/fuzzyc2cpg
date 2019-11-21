@@ -42,7 +42,7 @@ public class AstNodeFactory {
     CharStream cs = ctx.getStart().getInputStream();
 
     if (cs.size() > 0) {
-      return startIdx <= stopIdx ? cs.toString().substring(startIdx, stopIdx + 1) : "";
+      return startIdx <= stopIdx ? cs.getText(Interval.of(startIdx, stopIdx)) : "";
     } else {
       return "";
     }

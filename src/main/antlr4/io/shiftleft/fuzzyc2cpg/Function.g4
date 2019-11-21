@@ -93,7 +93,7 @@ type_suffix : ('[' conditional_expression? ']') | param_type_list;
 simple_decl : (TYPEDEF?) var_decl;
 
 var_decl : class_def init_declarator_list? #declByClass
-         | template_decl? type_name init_declarator_list #declByType
+         | template_decl* type_name init_declarator_list #declByType
          ;
 
 init_declarator_list: init_declarator (',' init_declarator)* ';';
