@@ -2,72 +2,43 @@ grammar Common;
 
 import ModuleLex;
 
-@header{
+@header {
   import java.util.Stack;
 }
 
+@parser::members {
 
-@parser::members
-{
-            public boolean skipToEndOfObject()
-            {
-                Stack<Object> CurlyStack = new Stack<Object>();
-                Object o = new Object();
-                int t = _input.LA(1);
+    public void skipToEndOfObject() {
+        Stack<Object> CurlyStack = new Stack<>();
+        Object o = new Object();
+        int t = _input.LA(1);
 
-                while(t != EOF && !(CurlyStack.empty() && t == CLOSING_CURLY)){
-                    
-                    if(t == PRE_ELSE){
-                        Stack<Object> ifdefStack = new Stack<Object>();
-                        consume();
-                        t = _input.LA(1);
-                        
-                        while(t != EOF && !(ifdefStack.empty() && (t == PRE_ENDIF))){
-                            if(t == PRE_IF)
-                                ifdefStack.push(o);
-                            else if(t == PRE_ENDIF)
-                                ifdefStack.pop();
-                            consume();
-                            t = _input.LA(1);
-                        }
-                    }
-                    
-                    if(t == OPENING_CURLY)
-                        CurlyStack.push(o);
-                    else if(t == CLOSING_CURLY)
-                        CurlyStack.pop();
-                    
+        while (t != EOF && !(CurlyStack.empty() && t == CLOSING_CURLY)) {
+
+            if (t == PRE_ELSE){
+                Stack<Object> ifdefStack = new Stack<>();
+                consume();
+                t = _input.LA(1);
+
+                while (t != EOF && !(ifdefStack.empty() && (t == PRE_ENDIF))) {
+
+                    if (t == PRE_IF) ifdefStack.push(o);
+                    else if (t == PRE_ENDIF) ifdefStack.pop();
+
                     consume();
                     t = _input.LA(1);
                 }
-                if(t != EOF)
-                    consume();
-                return true;
             }
 
-   // this should go into FunctionGrammar but ANTLR fails
-   // to join the parser::members-section on inclusion
-   
-   public boolean preProcSkipToEnd()
-   {
-                Stack<Object> CurlyStack = new Stack<Object>();
-                Object o = new Object();
-                int t = _input.LA(1);
+            if (t == OPENING_CURLY) CurlyStack.push(o);
+            else if (t == CLOSING_CURLY) CurlyStack.pop();
 
-                while(t != EOF && !(CurlyStack.empty() && t == PRE_ENDIF)){
-                                        
-                    if(t == PRE_IF)
-                        CurlyStack.push(o);
-                    else if(t == PRE_ENDIF)
-                        CurlyStack.pop();
-                    
-                    consume();
-                    t = _input.LA(1);
-                }
-                if(t != EOF)
-                    consume();
-                return true;
-   }
+            consume();
+            t = _input.LA(1);
+        }
+
+        if(t != EOF) consume();
+    }
 
 }
 
@@ -147,7 +118,7 @@ rvalue_ref: '&&';
 
 class_key: 'struct' | 'class' | 'union' | 'enum';
 
-class_def: template_decl* class_key gcc_attribute? class_name? template_args? base_classes? OPENING_CURLY {skipToEndOfObject(); } ;
+class_def: template_decl* class_key gcc_attribute? class_name? template_args? base_classes? OPENING_CURLY { skipToEndOfObject(); } ;
 class_name: identifier;
 base_classes: ':' base_class (',' base_class)*;
 base_class: VIRTUAL? access_specifier? identifier template_args?;

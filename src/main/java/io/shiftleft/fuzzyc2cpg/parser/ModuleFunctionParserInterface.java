@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 public class ModuleFunctionParserInterface {
 
-  static Logger logger = LoggerFactory.getLogger(ModuleFunctionParserInterface.class);
+  private static Logger logger = LoggerFactory.getLogger(ModuleFunctionParserInterface.class);
 
   // Extracts compound statement from input stream
   // as a string and passes that string to the

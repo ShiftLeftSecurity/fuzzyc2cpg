@@ -1,6 +1,9 @@
 package io.shiftleft.fuzzyc2cpg.parser;
 
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
+import scala.Char;
 
 import io.shiftleft.fuzzyc2cpg.FunctionParser.InitDeclWithAssignContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.StatementContext;
@@ -36,21 +39,13 @@ public class AstNodeFactory {
     int startIdx = ctx.start.getStartIndex();
     int stopIdx = ctx.stop != null ? ctx.stop.getStopIndex() : -1;
 
-    String ret;
-    // Check for size > 0 is required because toString() method in
-    // ANTLR crashes on empty input streams.
-    if (ctx.getStart().getInputStream().size() > 0) {
-      ret = ctx.getStart().getInputStream().toString();
-      if(startIdx <= stopIdx) {
-        ret = ret.substring(startIdx, stopIdx + 1);
-      } else {
-        ret = "";
-      }
-    } else {
-      ret = "";
-    }
+    CharStream cs = ctx.getStart().getInputStream();
 
-    return ret;
+    if (cs.size() > 0) {
+      return startIdx <= stopIdx ? cs.getText(Interval.of(startIdx, stopIdx)) : "";
+    } else {
+      return "";
+    }
   }
 
   public static void initializeFromContext(Expression node,

@@ -533,8 +533,7 @@ public class FunctionContentBuilder extends AstNodeBuilder<AstNode> {
     IdentifierDeclBuilder declBuilder = new IdentifierDeclBuilder();
     declBuilder.createNew(ctx);
     declBuilder.setType(wrappedContext, typeName);
-    IdentifierDecl identifierDecl = (IdentifierDecl) declBuilder.getItem();
-    return identifierDecl;
+    return declBuilder.getItem();
   }
 
   private ParserRuleContext getTypeFromParent() {

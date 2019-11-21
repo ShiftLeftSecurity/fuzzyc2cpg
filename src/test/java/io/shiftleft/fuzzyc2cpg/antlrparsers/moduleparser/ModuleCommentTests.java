@@ -31,6 +31,17 @@ public class ModuleCommentTests extends ModuleParserTest {
   }
 
   @Test
+  public void shouldParseSingleLineCommentWithEmojiInFunction() {
+    String input = "static int altgid(void){\n" +
+            "// This is the peach emoji: \uD83C\uDF51\n" +
+            "return 1;\n" +
+            "}";
+    ModuleParser parser = createHiddenParser(input);
+    assertTokenEqualsString(parser.getCurrentToken(), "// This is the peach emoji: \uD83C\uDF51\n");
+  }
+
+
+  @Test
   public void shouldParseSingleLineCommentInStruct() {
     String input = "struct foo {\n" +
       "int x;\n" +

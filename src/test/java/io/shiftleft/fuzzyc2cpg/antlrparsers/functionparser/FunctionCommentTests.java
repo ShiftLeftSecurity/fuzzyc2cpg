@@ -38,6 +38,20 @@ public class FunctionCommentTests extends FunctionParserTestBase {
     assertEquals(parser.getCurrentToken().getText(), "/* This is a block comment! */");
   }
 
+  @Test
+  public void testLineCommentWithEmoji() {
+    String input = "int x = 5; // Peachy! \uD83C\uDF51";
+    FunctionParser parser = createHiddenParser(input);
+    assertEquals(parser.getCurrentToken().getText(), "// Peachy! \uD83C\uDF51");
+  }
+
+  @Test
+  public void testBlockCommentWithEmoji() {
+    String input = "int x = 5; // Peachy! \uD83C\uDF51";
+    FunctionParser parser = createHiddenParser(input);
+    assertEquals(parser.getCurrentToken().getText(), "// Peachy! \uD83C\uDF51");
+  }
+
   private void compareParses(String actual, String expected) {
     AntlrParserDriver functionParser = createFunctionDriver();
     ParseTree actualTree = functionParser.parseString(actual);
@@ -71,6 +85,20 @@ public class FunctionCommentTests extends FunctionParserTestBase {
   @Test
   public void testBlockCommentWithinStatementDriver() {
     String inputWithComment = "int /* This is a block comment! */ x = 5;";
+    String inputWithoutComment = "int x = 5;";
+    compareParses(inputWithComment, inputWithoutComment);
+  }
+
+  @Test
+  public void testLineCommentWithEmojiDriver() {
+    String inputWithComment = "int x = 5; // Peachy! \uD83C\uDF51";
+    String inputWithoutComment = "int x = 5;";
+    compareParses(inputWithComment, inputWithoutComment);
+  }
+
+  @Test
+  public void testBlockCommentWithEmojiDriver() {
+    String inputWithComment = "int /* Peachy! \uD83C\uDF51 */ x = 5;";
     String inputWithoutComment = "int x = 5;";
     compareParses(inputWithComment, inputWithoutComment);
   }
