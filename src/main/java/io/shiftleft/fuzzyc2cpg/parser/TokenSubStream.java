@@ -8,11 +8,11 @@ import org.antlr.v4.runtime.TokenSource;
 
 public class TokenSubStream extends CommonTokenStream {
 
-  protected int stopIndex = -1;
-  protected int startIndex = 0;
+  private int stopIndex = -1;
+  private int startIndex = 0;
 
-  protected Stack<Integer> stopIndexStack = new Stack<Integer>();
-  protected Stack<Integer> startIndexStack = new Stack<Integer>();
+  private Stack<Integer> stopIndexStack = new Stack<Integer>();
+  private Stack<Integer> startIndexStack = new Stack<Integer>();
 
   public TokenSubStream(TokenSource tokenSource) {
     super(tokenSource);
@@ -41,22 +41,13 @@ public class TokenSubStream extends CommonTokenStream {
 
   @Override
   public Token LT(int k) {
-    lazyInit();
-    if (k == 0) {
-      return null;
-    }
-    if (k < 0) {
-      return LB(-k);
-    }
-
-    int i = p + k - 1;
-    sync(i);
-
-    if (i >= tokens.size() || (stopIndex != -1 && i >= stopIndex)) { // return EOF token
-      // EOF must be last token
+    int newIdx = p + k - 1;
+    if (stopIndex != -1 && newIdx >= stopIndex) {
+      sync(newIdx);
       return tokens.get(tokens.size() - 1);
+    } else {
+      return super.LT(k);
     }
-    return tokens.get(i);
   }
 
 }

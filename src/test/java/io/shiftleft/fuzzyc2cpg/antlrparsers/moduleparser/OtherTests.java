@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import io.shiftleft.fuzzyc2cpg.ModuleParser;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class OtherTests extends ModuleParserTest
@@ -72,5 +74,21 @@ public class OtherTests extends ModuleParserTest
 
 		assertEquals("(simple_decl (var_decl (type_name (base_type int)) (init_declarator_list (init_declarator (declarator (identifier x))) , (init_declarator (declarator (identifier y))) ;)))",
 				     output);
+	}
+
+	// See https://github.com/ShiftLeftSecurity/fuzzyc2cpg/issues/158
+	@Test
+	public void testEmojiFuncComment() {
+		String input = "int meaning_of_life() {\n" +
+					   "  // This is the peach emoji: \uD83C\uDF51\n" +
+					   "  const auto x = *y;\n" +
+				 	   "  return 42;\n" +
+				       "}";
+
+		ModuleParser parser = createParser(input);
+		String output = parser.function_def().toStringTree(parser);
+
+		assertEquals("(function_def (return_type (type_name (base_type int))) (function_name (identifier meaning_of_life)) (function_param_list ( )) (compound_statement { const auto x = * y ; return 42 ; }))",
+				output);
 	}
 }

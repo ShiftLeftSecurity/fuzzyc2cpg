@@ -1,11 +1,12 @@
 package io.shiftleft.fuzzyc2cpg.antlrparsers.moduleparser;
 
-import io.shiftleft.fuzzyc2cpg.ModuleLexer;
-import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
+
+import io.shiftleft.fuzzyc2cpg.ModuleLexer;
+import io.shiftleft.fuzzyc2cpg.ModuleParser;
 
 public class ModuleParserTest {
 
@@ -24,5 +25,4 @@ public class ModuleParserTest {
 		ModuleParser parser = new ModuleParser(tokens);
 		return parser;
 	}
-
 }

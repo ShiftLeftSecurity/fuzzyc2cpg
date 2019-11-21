@@ -1,6 +1,24 @@
 grammar Function;
 import ModuleLex, Common;
 
+@parser::members {
+   public void preProcSkipToEnd() {
+        Stack<Object> CurlyStack = new Stack<>();
+        Object o = new Object();
+        int t = _input.LA(1);
+
+        while(t != EOF && !(CurlyStack.empty() && t == PRE_ENDIF)){
+
+            if(t == PRE_IF) CurlyStack.push(o);
+            else if(t == PRE_ENDIF) CurlyStack.pop();
+
+            consume();
+            t = _input.LA(1);
+        }
+        if(t != EOF) consume();
+   }
+}
+
 statements: (pre_opener
             | pre_closer
             | pre_else {preProcSkipToEnd(); }
@@ -65,7 +83,7 @@ init_declarator: declarator '(' expr? ')' #initDeclWithCall
                | declarator #initDeclSimple
                ;
 
-declarator: ptrs? identifier type_suffix? |
+declarator: ptrs? identifier template_args? type_suffix? |
             ptrs? '(' func_ptrs identifier ')' type_suffix;
 
 type_suffix : ('[' conditional_expression? ']') | param_type_list;
