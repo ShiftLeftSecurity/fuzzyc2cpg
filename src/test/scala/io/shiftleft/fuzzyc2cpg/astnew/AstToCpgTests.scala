@@ -71,6 +71,9 @@ class AstToCpgTests extends WordSpec with Matchers {
     def expandCondition: List[Vertex] =
       vertexList.flatMap(_.start.out(EdgeTypes.CONDITION).l)
 
+    def expandArgument: List[Vertex] =
+      vertexList.flatMap(_.start.out(EdgeTypes.ARGUMENT).l)
+
     def filterOrder(order: Int): List[Vertex] = {
       vertexList.filter(_.value2(NodeKeys.ORDER) == order)
     }
@@ -128,19 +131,18 @@ class AstToCpgTests extends WordSpec with Matchers {
       astToProtoConverter.convert(node)
     }
 
-    def getMethod(name: String): List[Vertex] = {
-      val result = graph.V
-        .hasLabel(NodeTypes.METHOD)
-        .has(NodeKeys.NAME -> name)
-        .l
+    def getMethod(name: String): List[Vertex] =
+      getVertices(name, NodeTypes.METHOD)
 
-      result.size shouldBe 1
-      result
-    }
+    def getTypeDecl(name: String): List[Vertex] =
+      getVertices(name, NodeTypes.TYPE_DECL)
 
-    def getTypeDecl(name: String): List[Vertex] = {
+    def getCall(name: String): List[Vertex] =
+      getVertices(name, NodeTypes.CALL)
+
+    def getVertices(name: String, nodeType: String): List[Vertex] = {
       val result = graph.V
-        .hasLabel(NodeTypes.TYPE_DECL)
+        .hasLabel(nodeType)
         .has(NodeKeys.NAME -> name)
         .l
 
@@ -754,6 +756,39 @@ class AstToCpgTests extends WordSpec with Matchers {
       derived.value[List[String]](NodeKeys.INHERITS_FROM_TYPE_FULL_NAME.name) shouldBe List("OneBase", "TwoBase")
     }
 
+    "be correct for method calls" in new Fixture(
+      """
+        |void foo(int x) {
+        |  bar(x);
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("bar")
+      call.checkForSingle()
+
+      val args = call.expandArgument
+      args.checkForSingle(NodeKeys.CODE, "x")
+    }
+
+    "be correct for method returns" in new Fixture(
+      """
+        |void double(int x) {
+        |  return x * 2;
+        |}
+        |""".stripMargin
+    ) {
+      val method = getMethod("double")
+      method.checkForSingle()
+
+      val methodBody = method.expandAst(NodeTypes.BLOCK)
+      methodBody.checkForSingle()
+
+      val methodReturn = methodBody.expandAst(NodeTypes.RETURN)
+      methodReturn.checkForSingle()
+
+      val args = methodReturn.expandArgument
+      args.checkForSingle(NodeKeys.CODE, "x * 2")
+    }
   }
 
   "AST" should {

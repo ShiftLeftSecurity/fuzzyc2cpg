@@ -42,7 +42,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   private class Context(val cpgParent: NodeType,
                         var childNum: Int,
                         val parentIsClassDef: Boolean,
-                        var addConditionEdgeOnNextAstEdge: Boolean = false) {}
+                        var addConditionEdgeOnNextAstEdge: Boolean = false,
+                        var addArgumentEdgeOnNextAstEdge: Boolean = false) {}
 
   private def pushContext(cpgParent: NodeType, startChildNum: Int, parentIsClassDef: Boolean = false): Unit = {
     contextStack = new Context(cpgParent, startChildNum, parentIsClassDef) :: contextStack
@@ -206,6 +207,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   }
 
   override def visit(argument: Argument): Unit = {
+    context.addArgumentEdgeOnNextAstEdge = true
     argument.getExpression.accept(this)
   }
 
@@ -557,7 +559,10 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     addAstChild(cpgReturn)
 
     pushContext(cpgReturn, 1)
-    Option(astReturn.getReturnExpression).foreach(_.accept(this))
+    Option(astReturn.getReturnExpression).foreach { returnExpr =>
+      context.addArgumentEdgeOnNextAstEdge = true
+      returnExpr.accept(this)
+    }
     popContext()
   }
 
@@ -760,15 +765,27 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       .createEdgeBuilder(child, context.cpgParent, EdgeKind.AST)
       .createEdge()
     context.childNum += 1
+
     if (context.addConditionEdgeOnNextAstEdge) {
       addConditionChild(child)
       context.addConditionEdgeOnNextAstEdge = false
+    }
+
+    if (context.addArgumentEdgeOnNextAstEdge) {
+      addArgumentChild(child)
+      context.addArgumentEdgeOnNextAstEdge = false
     }
   }
 
   private def addConditionChild(child: NodeType): Unit = {
     adapter
       .createEdgeBuilder(child, context.cpgParent, EdgeKind.CONDITION)
+      .createEdge()
+  }
+
+  private def addArgumentChild(child: NodeType): Unit = {
+    adapter
+      .createEdgeBuilder(child, context.cpgParent, EdgeKind.ARGUMENT)
       .createEdge()
   }
 
