@@ -133,6 +133,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
       case EdgeKind.CFG       => Edge.EdgeType.CFG
       case EdgeKind.REF       => Edge.EdgeType.REF
       case EdgeKind.CONDITION => Edge.EdgeType.CONDITION
+      case EdgeKind.ARGUMENT  => Edge.EdgeType.ARGUMENT
     }
   }
 

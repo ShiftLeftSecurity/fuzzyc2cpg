@@ -27,7 +27,7 @@ object EdgeProperty extends Enumeration {
 
 object EdgeKind extends Enumeration {
   type EdgeKind = Value
-  val AST, CFG, REF, CONDITION = Value
+  val AST, CFG, REF, CONDITION, ARGUMENT = Value
 }
 
 trait CfgEdgeType

@@ -1,5 +1,7 @@
 package io.shiftleft.fuzzyc2cpg
 
+import java.nio.file.Paths
+
 import io.shiftleft.codepropertygraph.generated.NodeKeys
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.scalatest.{Matchers, WordSpec}
@@ -26,8 +28,14 @@ class ProgramStructureTests extends WordSpec with Matchers {
         .headOption
       fileName.isDefined shouldBe true
       fileName.head should not contain ".."
-      fileName.head should not be "src/test/resources/testcode/structure/structure.c"
-      fileName.head should endWith("src/test/resources/testcode/structure/structure.c")
+
+      // Construct a platform-independent path.
+      val path = Paths
+        .get("src", "test", "resources", "testcode", "structure", "structure.c")
+        .toString
+
+      fileName.head should not be path.toString
+      fileName.head should endWith(path.toString)
     }
 
     "contain AST edge from file node to namespace block" in {
