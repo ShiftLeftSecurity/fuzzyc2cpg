@@ -559,4 +559,8 @@ class AstToCfgConverter[NodeType, EdgeBuilderType, EdgeType](
     breakStack.popLayer()
     continueStack.popLayer()
   }
+
+  private def acceptChildren(node: AstNode): Unit = {
+    node.getChildIterator.forEachRemaining((child: AstNode) => child.accept(this))
+  }
 }

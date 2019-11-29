@@ -207,12 +207,11 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   }
 
   override def visit(argument: Argument): Unit = {
-    context.addArgumentEdgeOnNextAstEdge = true
     argument.getExpression.accept(this)
   }
 
   override def visit(argumentList: ArgumentList): Unit = {
-    acceptChildren(argumentList)
+    acceptChildren(argumentList, withArgEdges = true)
   }
 
   override def visit(astAssignment: AssignmentExpression): Unit = {
@@ -319,6 +318,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
         addAstChild(cpgUnary)
 
         pushContext(cpgUnary, 1)
+        context.addArgumentEdgeOnNextAstEdge = true
         astUnary.getChild(1).accept(this)
         popContext()
       case None =>
@@ -340,6 +340,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     addAstChild(cpgPostIncDecOp)
 
     pushContext(cpgPostIncDecOp, 1)
+    context.addArgumentEdgeOnNextAstEdge = true
     astPostIncDecOp.getChild(0).accept(this)
     popContext()
   }
@@ -355,6 +356,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     addAstChild(cpgCall)
 
     pushContext(cpgCall, 1)
+    // Argument edges are added when visiting each individual argument.
     astCall.getArgumentList.accept(this)
     popContext()
   }
@@ -432,8 +434,11 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     val falseExpression = astConditionalExpr.getChild(2)
     // avoid setting context.addConditionEdgeOnNextAstEdge in this.visit(condition), cf joern#91
     pushContext(cpgConditionalExpr, 1)
+    context.addArgumentEdgeOnNextAstEdge = true
     condition.getExpression.accept(this)
+    context.addArgumentEdgeOnNextAstEdge = true
     trueExpression.accept(this)
+    context.addArgumentEdgeOnNextAstEdge = true
     falseExpression.accept(this)
     popContext()
   }
@@ -630,6 +635,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     pushContext(cpgSizeof, 1)
     // Child 0 is just the keyword 'sizeof' which at this point is duplicate
     // information for us.
+    context.addArgumentEdgeOnNextAstEdge = true
     astSizeof.getChild(1).accept(this)
     popContext()
   }
@@ -658,7 +664,9 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     addAstChild(cpgArrayIndexing)
 
     pushContext(cpgArrayIndexing, 1)
+    context.addArgumentEdgeOnNextAstEdge = true
     astArrayIndexing.getArrayExpression.accept(this)
+    context.addArgumentEdgeOnNextAstEdge = true
     astArrayIndexing.getIndexExpression.accept(this)
     popContext()
   }
@@ -669,7 +677,9 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     addAstChild(cpgCast)
 
     pushContext(cpgCast, 1)
+    context.addArgumentEdgeOnNextAstEdge = true
     astCast.getCastTarget.accept(this)
+    context.addArgumentEdgeOnNextAstEdge = true
     astCast.getCastExpression.accept(this)
     popContext()
   }
@@ -681,7 +691,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     addAstChild(cpgMemberAccess)
 
     pushContext(cpgMemberAccess, 1)
-    acceptChildren(astMemberAccess)
+    acceptChildren(astMemberAccess, withArgEdges = true)
     popContext()
   }
 
@@ -692,7 +702,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     addAstChild(cpgPtrMemberAccess)
 
     pushContext(cpgPtrMemberAccess, 1)
-    acceptChildren(astPtrMemberAccess)
+    acceptChildren(astPtrMemberAccess, withArgEdges = true)
     popContext()
   }
 
@@ -755,8 +765,13 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     addAstChild(cpgBinaryExpr)
 
     pushContext(cpgBinaryExpr, 1)
+
+    context.addArgumentEdgeOnNextAstEdge = true
     astBinaryExpr.getLeft.accept(this)
+
+    context.addArgumentEdgeOnNextAstEdge = true
     astBinaryExpr.getRight.accept(this)
+
     popContext()
   }
 
@@ -764,6 +779,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     adapter
       .createEdgeBuilder(child, context.cpgParent, EdgeKind.AST)
       .createEdge()
+
     context.childNum += 1
 
     if (context.addConditionEdgeOnNextAstEdge) {
@@ -825,6 +841,13 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       .createNode()
 
     cpgNode
+  }
+
+  private def acceptChildren(node: AstNode, withArgEdges: Boolean = false): Unit = {
+    node.getChildIterator.forEachRemaining { child =>
+      context.addArgumentEdgeOnNextAstEdge = withArgEdges
+      child.accept(this)
+    }
   }
 
   private def registerType(typeName: String): String = {

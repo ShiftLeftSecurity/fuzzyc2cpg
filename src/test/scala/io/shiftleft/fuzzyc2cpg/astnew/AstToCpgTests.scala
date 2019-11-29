@@ -789,6 +789,138 @@ class AstToCpgTests extends WordSpec with Matchers {
       val args = methodReturn.expandArgument
       args.checkForSingle(NodeKeys.CODE, "x * 2")
     }
+
+    "be correct for binary method calls" in new Fixture(
+      """
+        |void double(int x) {
+        |  return x * 2;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.multiplication")
+      call.checkForSingle()
+
+      val callArgs = call.expandArgument
+      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "2")
+    }
+
+    "be correct for unary method calls" in new Fixture(
+      """
+        |bool invert(bool b) {
+        |  return !b;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.logicalNot")
+      call.checkForSingle()
+
+      val callArgs = call.expandArgument
+      callArgs.checkForSingle(NodeKeys.CODE, "b")
+    }
+
+    "be correct for post increment method calls" in new Fixture(
+      """
+        |int foo(int x) {
+        |  int sub = x--;
+        |  int pos = x++;
+        |  return pos;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.postIncrement")
+      call.checkForSingle()
+      val callArgs = call.expandArgument
+      callArgs.checkForSingle(NodeKeys.CODE, "x")
+
+      val callDec = getCall("<operator>.postDecrement")
+      callDec.checkForSingle()
+      val callArgsDec = callDec.expandArgument
+      callArgsDec.checkForSingle(NodeKeys.CODE, "x")
+    }
+
+    "be correct for conditional expressions containing calls" in new Fixture(
+      """
+        |int abs(int x) {
+        |  return x > 0 ? x : -x;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.conditionalExpression")
+      call.checkForSingle()
+
+      val callArgs = call.expandArgument
+      callArgs.check(3, x => x.value2[String](NodeKeys.CODE), "x > 0", "x", "-x")
+    }
+
+    "be correct for sizeof expressions" in new Fixture(
+      """
+        |size_t int_size() {
+        |  return sizeof(int);
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.sizeOf")
+      call.checkForSingle()
+
+      val callArgs = call.expandArgument
+      callArgs.checkForSingle(NodeKeys.CODE, "int")
+    }
+
+    "be correct for array indexing" in new Fixture(
+      """
+        |int head(int x[]) {
+        |  return x[0];
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.computedMemberAccess")
+      call.checkForSingle()
+
+      val callArgs = call.expandArgument
+      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "0")
+    }
+
+    "be correct for type casts" in new Fixture(
+      """
+        |int trunc(long x) {
+        |  return (int) x;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.cast")
+      call.checkForSingle()
+
+      val callArgs = call.expandArgument
+      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "int", "x")
+    }
+
+    "be correct for member accesses" in new Fixture(
+      """
+        |int trunc(Foo x) {
+        |  return x.count;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.memberAccess")
+      call.checkForSingle()
+
+      val callArgs = call.expandArgument
+      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "count")
+    }
+
+    "be correct for indirect member accesses" in new Fixture(
+      """
+        |int trunc(Foo* x) {
+        |  return x->count;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.indirectMemberAccess")
+      call.checkForSingle()
+
+      val callArgs = call.expandArgument
+      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "count")
+    }
   }
 
   "AST" should {
