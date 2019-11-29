@@ -845,7 +845,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
 
   private def acceptChildren(node: AstNode, withArgEdges: Boolean = false): Unit = {
     node.getChildIterator.forEachRemaining { child =>
-      if (withArgEdges) context.addArgumentEdgeOnNextAstEdge = true
+      context.addArgumentEdgeOnNextAstEdge = withArgEdges
       child.accept(this)
     }
   }
