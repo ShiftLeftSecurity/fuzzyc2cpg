@@ -34,6 +34,7 @@ resolvers += "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/pu
 ThisBuild / resolvers ++= Seq(
   Resolver.mavenLocal,
   Resolver.bintrayRepo("shiftleft", "maven"),
+  Resolver.bintrayRepo("mpollmeier", "maven"),
   "Artifactory release local" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local",
   "Apache public" at "https://repository.apache.org/content/groups/public/",
   "Sonatype OSS" at "https://oss.sonatype.org/content/repositories/public",
