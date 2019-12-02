@@ -1,6 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, Operators}
 import io.shiftleft.fuzzyc2cpg.Defines
 import io.shiftleft.fuzzyc2cpg.adapter.{CpgAdapter, EdgeKind, NodeKind, NodeProperty}

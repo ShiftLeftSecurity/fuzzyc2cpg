@@ -16,6 +16,7 @@ import java.nio.file.{Files, Path}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.collection.parallel.CollectionConverters._
 import scala.util.control.NonFatal
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
@@ -45,12 +46,12 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
     val commandBuffer = new ListBuffer[String]()
-    commandBuffer.append(preprocessorExecutable, "--verbose", "-o", preprocessedPath.toString)
-    if (sourceFileNames.nonEmpty) commandBuffer.append("-f", sourceFileNames.mkString(","))
-    if (includeFiles.nonEmpty) commandBuffer.append("--include", includeFiles.mkString(","))
-    if (includePaths.nonEmpty) commandBuffer.append("-I", includePaths.mkString(","))
-    if (defines.nonEmpty) commandBuffer.append("-D", defines.mkString(","))
-    if (undefines.nonEmpty) commandBuffer.append("-U", defines.mkString(","))
+    commandBuffer.appendAll(List(preprocessorExecutable, "--verbose", "-o", preprocessedPath.toString))
+    if (sourceFileNames.nonEmpty) commandBuffer.appendAll(List("-f", sourceFileNames.mkString(",")))
+    if (includeFiles.nonEmpty) commandBuffer.appendAll(List("--include", includeFiles.mkString(",")))
+    if (includePaths.nonEmpty) commandBuffer.appendAll(List("-I", includePaths.mkString(",")))
+    if (defines.nonEmpty) commandBuffer.appendAll(List("-D", defines.mkString(",")))
+    if (undefines.nonEmpty) commandBuffer.appendAll(List("-U", defines.mkString(",")))
 
     val cmd = commandBuffer.toList
 
@@ -84,7 +85,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     outputModuleFactory.persist()
   }
 
-  private def addFunctionDeclarations: Unit = {
+  private def addFunctionDeclarations(): Unit = {
     FuzzyC2CpgCache.sortedSignatures.foreach { signature =>
       FuzzyC2CpgCache.getDeclarations(signature).foreach {
         case (outputIdentifier, bodyCpg) =>
