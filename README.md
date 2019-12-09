@@ -38,7 +38,7 @@ To build the preprocessor, see the preprocessor [README](./fuzzypp/README.md)/
 
 To produce a code property graph _*without preprocessing*_  issue the command:
 ```shell script
-./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> --out <path/to/outputCpg>
+./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> --output <path/to/outputCpg>
 `````
 
 To produce a code property graph _*with preprocessing*_, ensure that you have the preprocessor binary available
@@ -47,7 +47,7 @@ and issue the command:
 ./fuzzyc2cpg.sh <path/to/sourceCodeDirectory> \
                 --verbose
                 --source-file-ext .cxx 
-                --out <path/to/outputCpg> \
+                --output <path/to/outputCpg> \
                 --include <path/to/include/file.h>
                 -I <path/to/include/dir>
                 --define DEF
@@ -56,7 +56,7 @@ and issue the command:
                 --preprocessor-executable <path/to/preprocessor/executable>
 ```
 
-All preprocessor options may be specified more than once, with the exception of `--out` and `--preprocessor-executable`.
+All preprocessor options may be specified more than once, with the exception of `--output` and `--preprocessor-executable`.
 By default, fuzzyc2cpg will attempt to execute the preprocessor at `./fuzzypp/bin/fuzzyppcli`.
 
 Run the following to see a complete list of available options:
