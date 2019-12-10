@@ -274,6 +274,13 @@ object FuzzyC2Cpg extends App {
         .text("source directories containing C/C++ code")
         .action((x, c) => c.copy(inputPaths = c.inputPaths + x))
       opt[String]("out")
+        .text("(DEPRECATED use `output`) output filename")
+        .action { (x, c) =>
+          logger.warn("`--out` is DEPRECATED. Use `--output` instead")
+          c.copy(outputPath = x)
+        }
+      opt[String]("output")
+        .abbr("o")
         .text("output filename")
         .action((x, c) => c.copy(outputPath = x))
       opt[String]("source-file-ext")
