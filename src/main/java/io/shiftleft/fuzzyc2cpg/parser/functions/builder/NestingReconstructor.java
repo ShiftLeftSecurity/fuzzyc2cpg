@@ -1,6 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.parser.functions.builder;
 
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.NewExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.ElseStatement;
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;

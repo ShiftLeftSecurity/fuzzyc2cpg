@@ -4,54 +4,7 @@ import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDeclType;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.AdditiveExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.AndExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Argument;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ArgumentList;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ArrayIndexing;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.BinaryExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.BinaryOperationExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.BitAndExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.CallExpressionBase;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Callee;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.CastExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.CastTarget;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ClassConstantExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ConditionalExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Constant;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.DoubleExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.EqualityExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ExclusiveOrExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ExpressionList;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ForInit;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.IdentifierList;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.IncDec;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.InclusiveOrExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.InitializerList;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.InstanceofExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.IntegerExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.MemberAccess;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.MultiplicativeExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.NewExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.OrExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PostIncDecOperationExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PostfixExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PrimaryExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PropertyExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PtrMemberAccess;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.RelationalExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ShiftExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Sizeof;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.SizeofOperand;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.StaticPropertyExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.StringExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryOperationExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryOperator;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Variable;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.*;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.*;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.SizeofExpression;
@@ -65,7 +18,6 @@ import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockStarter;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockStarterWithStmtAndCnd;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BreakOrContinueStatement;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Condition;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.JumpStatement;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Label;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Statement;
@@ -232,6 +184,10 @@ public interface ASTNodeVisitor {
 
   default void visit(NewExpression expression) {
     visit((CallExpressionBase)expression);
+  }
+
+  default void visit(DeleteExpression expression) {
+    visit((CallExpressionBase) expression);
   }
 
   default void visit(OrExpression expression) {
