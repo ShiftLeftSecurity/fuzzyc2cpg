@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.parser.functions.builder;
 
+import io.shiftleft.fuzzyc2cpg.FunctionParser;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.Additive_expressionContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.And_expressionContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.ArrayIndexingContext;
@@ -63,7 +64,7 @@ import io.shiftleft.fuzzyc2cpg.FunctionParser.Unary_operatorContext;
 import io.shiftleft.fuzzyc2cpg.FunctionParser.While_statementContext;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Constant;
+import io.shiftleft.fuzzyc2cpg.ast.expressions.*;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.CallExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.SizeofExpression;
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.ElseStatement;
@@ -71,42 +72,9 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.ClassDefStatement;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDecl;
 import io.shiftleft.fuzzyc2cpg.ast.declarations.IdentifierDeclType;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.AdditiveExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.AndExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Argument;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ArgumentList;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ArrayIndexing;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.AssignmentExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.BitAndExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Callee;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.CastExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.CastTarget;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ConditionalExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.EqualityExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ExclusiveOrExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ForInit;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.IncDec;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.InclusiveOrExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.InitializerList;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.MemberAccess;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.MultiplicativeExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.OrExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PostIncDecOperationExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PrimaryExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.PtrMemberAccess;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.RelationalExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.ShiftExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Sizeof;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.SizeofOperand;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryOperationExpression;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.UnaryOperator;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockCloser;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.BlockStarter;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Condition;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Label;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.Statement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.ExpressionStatement;
@@ -548,7 +516,7 @@ public class FunctionContentBuilder extends AstNodeBuilder<AstNode> {
       typeName = nodeToRuleContext.get(name);
     } else {
       throw new RuntimeException(
-          "No matching declaration statement/class definiton for init declarator");
+          "No matching declaration statement/class definition for init declarator");
     }
     return typeName;
   }
@@ -804,4 +772,28 @@ public class FunctionContentBuilder extends AstNodeBuilder<AstNode> {
     replaceTopOfStack(new ThrowStatement(), ctx);
   }
 
+    public void enterNewExpr(FunctionParser.New_expressionContext ctx) {
+      NewExpression expr = new NewExpression();
+      expr.setTargetClass(ctx.type_name());
+      // TODO: Set the arg list (e.g. class ctor params & array size)
+      expr.setArgumentList(new ArgumentList());
+      nodeToRuleContext.put(expr, ctx);
+      stack.push(expr);
+  }
+
+  public void exitNewExpr(FunctionParser.New_expressionContext ctx) {
+    nesting.consolidateSubExpression(ctx);
+  }
+
+  public void enterDeleteExpr(FunctionParser.Delete_expressionContext ctx) {
+    DeleteExpression expr = new DeleteExpression();
+    expr.setTarget(ctx.identifier());
+    expr.setArgumentList(new ArgumentList());
+    nodeToRuleContext.put(expr, ctx);
+    stack.push(expr);
+  }
+
+  public void exitDeleteExpr(FunctionParser.Delete_expressionContext ctx) {
+    nesting.consolidateSubExpression(ctx);
+  }
 }

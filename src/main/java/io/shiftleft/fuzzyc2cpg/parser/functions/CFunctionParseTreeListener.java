@@ -774,4 +774,27 @@ public class CFunctionParseTreeListener extends FunctionBaseListener {
     builder.enterThrowStatement(ctx);
   }
 
+  @Override
+  public void enterNew_expression(FunctionParser.New_expressionContext ctx) {
+    FunctionContentBuilder builder = (FunctionContentBuilder) p.builderStack.peek();
+    builder.enterNewExpr(ctx);
+  }
+
+  @Override
+  public void exitNew_expression(FunctionParser.New_expressionContext ctx) {
+    FunctionContentBuilder builder = (FunctionContentBuilder) p.builderStack.peek();
+    builder.exitNewExpr(ctx);
+  }
+
+  @Override
+  public void enterDelete_expression(FunctionParser.Delete_expressionContext ctx) {
+    FunctionContentBuilder builder = (FunctionContentBuilder) p.builderStack.peek();
+    builder.enterDeleteExpr(ctx);
+  }
+
+  @Override
+  public void exitDelete_expression(FunctionParser.Delete_expressionContext ctx) {
+    FunctionContentBuilder builder = (FunctionContentBuilder) p.builderStack.peek();
+    builder.exitDeleteExpr(ctx);
+  }
 }

@@ -921,6 +921,64 @@ class AstToCpgTests extends WordSpec with Matchers {
       val callArgs = call.expandArgument
       callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "count")
     }
+
+    "be correct for 'new' array" in new Fixture(
+      """
+        |int[] alloc(int n) {
+        |   int[] arr = new int[n];
+        |   return arr;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.new")
+      call.checkForSingle(NodeKeys.CODE, "new int[n]")
+
+      val callArgs = call.expandArgument
+      callArgs.check(1, x => x.value2[String](NodeKeys.CODE), "int")
+    }
+
+    "be correct for 'new' object" in new Fixture(
+      """
+        |Foo* alloc(int n) {
+        |   Foo* foo = new Foo(n, 42);
+        |   return foo;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.new")
+      call.checkForSingle(NodeKeys.CODE, "new Foo(n, 42)")
+
+      val callArgs = call.expandArgument
+      callArgs.check(1, x => x.value2[String](NodeKeys.CODE), "Foo")
+    }
+
+    "be correct for simple 'delete'" in new Fixture(
+      """
+        |int delete_number(int* n) {
+        |  delete n;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.delete")
+      call.checkForSingle(NodeKeys.CODE, "delete n")
+
+      val callArgs = call.expandArgument
+      callArgs.check(1, x => x.value2[String](NodeKeys.CODE), "n")
+    }
+
+    "be correct for array 'delete'" in new Fixture(
+      """
+        |void delete_number(int n[]) {
+        |  delete[] n;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.delete")
+      call.checkForSingle(NodeKeys.CODE, "delete[] n")
+
+      val callArgs = call.expandArgument
+      callArgs.check(1, x => x.value2[String](NodeKeys.CODE), "n")
+    }
   }
 
   "AST" should {

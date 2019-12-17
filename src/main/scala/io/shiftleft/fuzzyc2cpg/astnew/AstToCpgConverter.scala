@@ -361,6 +361,27 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     popContext()
   }
 
+  override def visit(astNew: NewExpression): Unit = {
+    val call = createCallNode(astNew, "<operator>.new")
+
+    addAstChild(call)
+    pushContext(call, 1)
+    context.addArgumentEdgeOnNextAstEdge = true
+    astNew.getTargetClass.accept(this)
+    astNew.getArgumentList.accept(this)
+    popContext()
+  }
+
+  override def visit(astDelete: DeleteExpression): Unit = {
+    val call = createCallNode(astDelete, Operators.delete);
+
+    addAstChild(call)
+    pushContext(call, 1)
+    context.addArgumentEdgeOnNextAstEdge = true;
+    astDelete.getTarget.accept(this)
+    popContext()
+  }
+
   override def visit(astConstant: Constant): Unit = {
     val constantType = deriveConstantTypeFromCode(astConstant.getEscapedCodeStr)
     val cpgConstant = adapter

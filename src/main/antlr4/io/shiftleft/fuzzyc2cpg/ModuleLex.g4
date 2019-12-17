@@ -29,6 +29,7 @@ AUTO: 'auto'; REGISTER: 'register';
 OPERATOR: 'operator';
 TEMPLATE: 'template';
 NEW: 'new';
+DELETE: 'delete';
 
 GCC_ATTRIBUTE : '__attribute__';
 
