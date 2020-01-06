@@ -4,6 +4,10 @@ Fuzzy PP
 FuzzyPP provides users with the ability to preprocess a set of input C/C++ files for use with the ShiftLeft 
 `fuzzyc2cpg` system.
 
+FuzzyPP can resolve macro definitions and #include preprocessor directives. It is also possible to provide the preprocessor with a list of defines, undefines and include files/paths. When the preprocessor encounters an #include statement, it will try to find it in the list of include files/paths specified by the user. If the include file is found, then it is substituted with the contents of the file, otherwise the include statement is omitted.
+
+Note: FuzzyPP has been tested on Windows and Linux with some select projects, but this has not been exhaustive. As a result, this is **beta** software and is not recommended for use in production systems.
+
 Compiling
 ---
 
