@@ -9,7 +9,7 @@ case class CpgTestFixture(projectName: String) {
     val dirName = String.format("src/test/resources/testcode/%s", projectName)
     val inmemoryOutputFactory = new OutputModuleFactory()
     val fuzzyc2Cpg = new FuzzyC2Cpg(inmemoryOutputFactory)
-    fuzzyc2Cpg.runAndOutput(Set(dirName), Set(".c", ".cpp", ".h", ".hpp"))
+    fuzzyc2Cpg.runAndOutput(Set(dirName), Set(".c", ".cc", ".cpp", ".h", ".hpp"))
     inmemoryOutputFactory.getInternalGraph
   }
 

@@ -257,7 +257,7 @@ object FuzzyC2Cpg extends App {
 
   final case class Config(inputPaths: Set[String] = Set.empty,
                           outputPath: String = "cpg.bin.zip",
-                          sourceFileExtensions: Set[String] = Set(".c", ".cpp", ".h", ".hpp"),
+                          sourceFileExtensions: Set[String] = Set(".c", ".cc", ".cpp", ".h", ".hpp"),
                           includeFiles: Set[String] = Set.empty,
                           includePaths: Set[String] = Set.empty,
                           defines: Set[String] = Set.empty,
@@ -285,7 +285,7 @@ object FuzzyC2Cpg extends App {
         .action((x, c) => c.copy(outputPath = x))
       opt[String]("source-file-ext")
         .unbounded()
-        .text("source file extensions to include when gathering source files. Defaults are .c, .cpp, .h and .hpp")
+        .text("source file extensions to include when gathering source files. Defaults are .c, .cc, .cpp, .h and .hpp")
         .action((pat, cfg) => cfg.copy(sourceFileExtensions = cfg.sourceFileExtensions + pat))
       opt[String]("include")
         .unbounded()
