@@ -42,11 +42,15 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   private class Context(val cpgParent: NodeType,
                         var childNum: Int,
                         val parentIsClassDef: Boolean,
+                        val parentIsMemberAccess: Boolean = false,
                         var addConditionEdgeOnNextAstEdge: Boolean = false,
                         var addArgumentEdgeOnNextAstEdge: Boolean = false) {}
 
-  private def pushContext(cpgParent: NodeType, startChildNum: Int, parentIsClassDef: Boolean = false): Unit = {
-    contextStack = new Context(cpgParent, startChildNum, parentIsClassDef) :: contextStack
+  private def pushContext(cpgParent: NodeType,
+                          startChildNum: Int,
+                          parentIsClassDef: Boolean = false,
+                          parentIsMemberAccess: Boolean = false): Unit = {
+    contextStack = new Context(cpgParent, startChildNum, parentIsClassDef, parentIsMemberAccess) :: contextStack
   }
 
   private def popContext(): Unit = {
@@ -414,6 +418,16 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   override def visit(astIdentifier: Identifier): Unit = {
     val identifierName = astIdentifier.getEscapedCodeStr
 
+    if (!contextStack.isEmpty && contextStack.head.parentIsMemberAccess && contextStack.head.childNum == 2) {
+      val cpgFieldIdentifier = adapter
+        .createNodeBuilder(NodeKind.FIELD_IDENTIFIER)
+        .addProperty(NodeProperty.CANONICAL_NAME, identifierName)
+        .addCommons(astIdentifier, context)
+        .createNode(astIdentifier)
+      addAstChild(cpgFieldIdentifier)
+      return
+    }
+
     val variableOption = scope.lookupVariable(identifierName)
     val identifierTypeName = variableOption match {
       case Some((_, variableTypeName)) =>
@@ -438,6 +452,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
           .createEdge()
       case None =>
     }
+
   }
 
   override def visit(condition: Condition): Unit = {
@@ -680,7 +695,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
 
   override def visit(astArrayIndexing: ArrayIndexing): Unit = {
     val cpgArrayIndexing =
-      createCallNode(astArrayIndexing, Operators.computedMemberAccess)
+      createCallNode(astArrayIndexing, Operators.indirectIndexAccess)
 
     addAstChild(cpgArrayIndexing)
 
@@ -707,22 +722,22 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
 
   override def visit(astMemberAccess: MemberAccess): Unit = {
     val cpgMemberAccess =
-      createCallNode(astMemberAccess, Operators.memberAccess)
+      createCallNode(astMemberAccess, Operators.fieldAccess)
 
     addAstChild(cpgMemberAccess)
 
-    pushContext(cpgMemberAccess, 1)
+    pushContext(cpgMemberAccess, 1, parentIsMemberAccess = true)
     acceptChildren(astMemberAccess, withArgEdges = true)
     popContext()
   }
 
   override def visit(astPtrMemberAccess: PtrMemberAccess): Unit = {
     val cpgPtrMemberAccess =
-      createCallNode(astPtrMemberAccess, Operators.indirectMemberAccess)
+      createCallNode(astPtrMemberAccess, Operators.indirectFieldAccess)
 
     addAstChild(cpgPtrMemberAccess)
 
-    pushContext(cpgPtrMemberAccess, 1)
+    pushContext(cpgPtrMemberAccess, 1, parentIsMemberAccess = true)
     acceptChildren(astPtrMemberAccess, withArgEdges = true)
     popContext()
   }

@@ -103,6 +103,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
       case NodeProperty.COLUMN_NUMBER_END            => NodePropertyName.COLUMN_NUMBER_END
       case NodeProperty.ALIAS_TYPE_FULL_NAME         => NodePropertyName.ALIAS_TYPE_FULL_NAME
       case NodeProperty.INHERITS_FROM_TYPE_FULL_NAME => NodePropertyName.INHERITS_FROM_TYPE_FULL_NAME
+      case NodeProperty.CANONICAL_NAME               => NodePropertyName.CANONICAL_NAME
     }
   }
 
@@ -124,6 +125,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
       case NodeKind.NAMESPACE_BLOCK     => Node.NodeType.NAMESPACE_BLOCK
       case NodeKind.CONTROL_STRUCTURE   => Node.NodeType.CONTROL_STRUCTURE
       case NodeKind.UNKNOWN             => Node.NodeType.UNKNOWN
+      case NodeKind.FIELD_IDENTIFIER    => Node.NodeType.FIELD_IDENTIFIER
     }
   }
 
