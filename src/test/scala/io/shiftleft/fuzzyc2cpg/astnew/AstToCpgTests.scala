@@ -1,7 +1,9 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
+import java.util.prefs.NodeChangeListener
+
 import gremlin.scala._
-import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
+import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeyNames, NodeKeys, NodeTypes, Operators}
 import io.shiftleft.fuzzyc2cpg.ModuleLexer
 import io.shiftleft.fuzzyc2cpg.adapter.CpgAdapter
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
@@ -105,7 +107,8 @@ class AstToCpgTests extends WordSpec with Matchers {
 
       override def endOfUnit(ctx: ParserRuleContext, filename: String): Unit = {}
 
-      override def processItem[T <: AstNode](node: T, builderStack: java.util.Stack[AstNodeBuilder[_ <: AstNode]]): Unit = {
+      override def processItem[T <: AstNode](node: T,
+                                             builderStack: java.util.Stack[AstNodeBuilder[_ <: AstNode]]): Unit = {
         nodes = node :: nodes
       }
     }
@@ -542,13 +545,19 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      val memberAccess = block.expandAst(NodeTypes.CALL)
-      memberAccess.checkForSingle(NodeKeys.NAME, Operators.memberAccess)
+      val fieldAccess = block.expandAst(NodeTypes.CALL)
+      fieldAccess.checkForSingle(NodeKeys.NAME, Operators.fieldAccess)
 
-      val arguments = memberAccess.expandAst(NodeTypes.IDENTIFIER)
-      arguments.check(2, arg => {
+      val arguments = fieldAccess.expandAst(NodeTypes.IDENTIFIER)
+      arguments.check(1, arg => {
         (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
-      }, expectations = ("x", 1), ("a", 2))
+      }, expectations = ("x", 1))
+      fieldAccess
+        .expandAst(NodeTypes.FIELD_IDENTIFIER)
+        .check(1, arg => {
+          (arg.value2(NodeKeys.CODE), arg.value2(NodeKeys.CANONICAL_NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+        }, expectations = ("a", "a", 2))
+
     }
 
     "be correct for indirect member access" in new Fixture("""
@@ -560,13 +569,18 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
 
-      val memberAccess = block.expandAst(NodeTypes.CALL)
-      memberAccess.checkForSingle(NodeKeys.NAME, Operators.indirectMemberAccess)
+      val fieldAccess = block.expandAst(NodeTypes.CALL)
+      fieldAccess.checkForSingle(NodeKeys.NAME, Operators.indirectFieldAccess)
 
-      val arguments = memberAccess.expandAst(NodeTypes.IDENTIFIER)
-      arguments.check(2, arg => {
+      val arguments = fieldAccess.expandAst(NodeTypes.IDENTIFIER)
+      arguments.check(1, arg => {
         (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
-      }, expectations = ("x", 1), ("a", 2))
+      }, expectations = ("x", 1))
+      fieldAccess
+        .expandAst(NodeTypes.FIELD_IDENTIFIER)
+        .check(1, arg => {
+          (arg.value2(NodeKeys.CODE), arg.value2(NodeKeys.CANONICAL_NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+        }, expectations = ("a", "a", 2))
     }
 
     "be correct for sizeof operator on identifier with brackets" in new Fixture(
@@ -873,7 +887,7 @@ class AstToCpgTests extends WordSpec with Matchers {
         |}
         |""".stripMargin
     ) {
-      val call = getCall("<operator>.computedMemberAccess")
+      val call = getCall("<operator>.indirectIndexAccess")
       call.checkForSingle()
 
       val callArgs = call.expandArgument
@@ -901,11 +915,15 @@ class AstToCpgTests extends WordSpec with Matchers {
         |}
         |""".stripMargin
     ) {
-      val call = getCall("<operator>.memberAccess")
+      val call = getCall("<operator>.fieldAccess")
       call.checkForSingle()
 
       val callArgs = call.expandArgument
       callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "count")
+      callArgs.check(2, x => x.label(), NodeTypes.IDENTIFIER, NodeTypes.FIELD_IDENTIFIER)
+      callArgs.check(2, x => {
+        if (x.label() == NodeTypes.FIELD_IDENTIFIER) { x.value2[String](NodeKeys.CANONICAL_NAME) } else { "" }
+      }, "", "count")
     }
 
     "be correct for indirect member accesses" in new Fixture(
@@ -915,11 +933,15 @@ class AstToCpgTests extends WordSpec with Matchers {
         |}
         |""".stripMargin
     ) {
-      val call = getCall("<operator>.indirectMemberAccess")
+      val call = getCall("<operator>.indirectFieldAccess")
       call.checkForSingle()
 
       val callArgs = call.expandArgument
       callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "count")
+      callArgs.check(2, x => x.label(), NodeTypes.IDENTIFIER, NodeTypes.FIELD_IDENTIFIER)
+      callArgs.check(2, x => {
+        if (x.label() == NodeTypes.FIELD_IDENTIFIER) { x.value2[String](NodeKeys.CANONICAL_NAME) } else { "" }
+      }, "", "count")
     }
 
     "be correct for 'new' array" in new Fixture(
