@@ -29,14 +29,15 @@ public class FunctionDef extends FunctionDefBase {
   }
 
   @Override
-  public String getFunctionSignature() {
-    String retval = getIdentifier().getEscapedCodeStr();
+  public String getFunctionSignature(boolean includeParameterName) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(getIdentifier().getEscapedCodeStr());
     if (getParameterList() != null) {
-      retval += " (" + getParameterList().getEscapedCodeStr() + ")";
+      sb.append(" (").append(getParameterList().getEscapedCodeStr(includeParameterName)).append(")");
     } else {
-      retval += " ()";
+      sb.append(" ()");
     }
-    return retval;
+    return sb.toString();
   }
 
   @Override

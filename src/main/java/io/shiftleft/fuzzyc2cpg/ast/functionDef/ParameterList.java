@@ -32,21 +32,23 @@ public class ParameterList extends AstNode implements Iterable<ParameterBase> {
 
   @Override
   public String getEscapedCodeStr() {
+    return getEscapedCodeStr(true);
+  }
 
+  public String getEscapedCodeStr(boolean includeParameterName) {
     if (parameters.size() == 0) {
       setCodeStr("");
       return getCodeStr();
     }
 
-    Iterator<ParameterBase> i = parameters.iterator();
     StringBuilder s = new StringBuilder();
-    for (; i.hasNext(); ) {
-      ParameterBase param = i.next();
-      s.append(param.getEscapedCodeStr() + " , ");
-    }
 
-    setCodeStr(s.toString());
-    setCodeStr(getCodeStr().substring(0, s.length() - 3));
+    parameters.iterator().forEachRemaining(param -> {
+      if (includeParameterName) s.append(param.getEscapedCodeStr()).append(",");
+      else s.append(param.getType().getEscapedCodeStr()).append(",");
+    });
+
+    setCodeStr(s.substring(0, s.length() - 1));
 
     return getCodeStr();
   }

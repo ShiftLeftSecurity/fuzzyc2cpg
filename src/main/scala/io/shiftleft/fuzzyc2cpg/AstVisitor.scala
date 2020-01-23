@@ -45,9 +45,9 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
       // corresponding definition, in which case the declaration will be
       // removed again and is never persisted. Persisting of declarations
       // happens after concurrent processing of compilation units.
-      FuzzyC2CpgCache.add(functionDef.getFunctionSignature, outputIdentifier, bodyCpg)
+      FuzzyC2CpgCache.add(functionDef.getFunctionSignature(false), outputIdentifier, bodyCpg)
     } else {
-      FuzzyC2CpgCache.remove(functionDef.getFunctionSignature)
+      FuzzyC2CpgCache.remove(functionDef.getFunctionSignature(false))
       outputModule.persistCpg(bodyCpg)
     }
   }
