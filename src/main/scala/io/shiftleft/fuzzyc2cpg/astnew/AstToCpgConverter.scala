@@ -129,7 +129,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       .append(returnType)
       .append("(")
       .append(astFunction.getParameterList.getEscapedCodeStr(false))
-      .append(")").toString()
+      .append(")")
+      .toString()
 
     val cpgMethod = adapter
       .createNodeBuilder(NodeKind.METHOD)
