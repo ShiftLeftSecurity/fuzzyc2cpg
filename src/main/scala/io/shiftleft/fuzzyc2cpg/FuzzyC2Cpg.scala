@@ -211,7 +211,7 @@ object FuzzyC2CpgCache {
     * */
   def remove(signature: String): Unit = {
     functionDeclarations.synchronized {
-      functionDeclarations.put(signature, mutable.ListBuffer())
+      functionDeclarations.remove(signature)
     }
   }
 

@@ -13,7 +13,7 @@ public abstract class FunctionDefBase extends AstNode {
 
   public abstract String getName();
 
-  public abstract String getFunctionSignature();
+  public abstract String getFunctionSignature(boolean includeParameterName);
 
   public ReturnType getReturnType() {
     return returnType;
@@ -52,7 +52,7 @@ public abstract class FunctionDefBase extends AstNode {
 
   @Override
   public String getEscapedCodeStr() {
-    setCodeStr(getFunctionSignature());
+    setCodeStr(getFunctionSignature(true));
     return getCodeStr();
   }
 

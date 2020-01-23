@@ -125,10 +125,12 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     } else {
       "int"
     }
-    val signature = returnType +
-      astFunction.getParameterList.asScala
-        .map(_.getType.getEscapedCodeStr)
-        .mkString("(", ",", ")")
+    val signature = new StringBuilder()
+      .append(returnType)
+      .append("(")
+      .append(astFunction.getParameterList.getEscapedCodeStr(false))
+      .append(")").toString()
+
     val cpgMethod = adapter
       .createNodeBuilder(NodeKind.METHOD)
       .addProperty(NodeProperty.NAME, astFunction.getName)
