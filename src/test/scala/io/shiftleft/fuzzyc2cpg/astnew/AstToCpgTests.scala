@@ -1,9 +1,11 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
-import java.util.prefs.NodeChangeListener
-
 import gremlin.scala._
-import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeyNames, NodeKeys, NodeTypes, Operators}
+import org.antlr.v4.runtime.{CharStreams, ParserRuleContext}
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
+import org.scalatest.{Matchers, WordSpec}
+
+import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
 import io.shiftleft.fuzzyc2cpg.ModuleLexer
 import io.shiftleft.fuzzyc2cpg.adapter.CpgAdapter
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
@@ -13,9 +15,6 @@ import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.fuzzyc2cpg.parser.{AntlrParserDriverObserver, TokenSubStream}
-import org.antlr.v4.runtime.{CharStreams, ParserRuleContext}
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
-import org.scalatest.{Matchers, WordSpec}
 
 class AstToCpgTests extends WordSpec with Matchers {
 
@@ -1000,6 +999,66 @@ class AstToCpgTests extends WordSpec with Matchers {
 
       val callArgs = call.expandArgument
       callArgs.check(1, x => x.value2[String](NodeKeys.CODE), "n")
+    }
+
+    "be correct for const_cast" in new Fixture(
+      """
+        |void foo() {
+        |  int y = const_cast<int>(n);
+        |  return;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.cast")
+      call.checkForSingle(NodeKeys.CODE, "const_cast<int>(n)")
+
+      val callArgs = call.expandArgument
+      callArgs.check(2, x => x.value2(NodeKeys.CODE), "int", "n")
+    }
+
+    "be correct for static_cast" in new Fixture(
+      """
+        |void foo() {
+        |  int y = static_cast<int>(n);
+        |  return;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.cast")
+      call.checkForSingle(NodeKeys.CODE, "static_cast<int>(n)")
+
+      val callArgs = call.expandArgument
+      callArgs.check(2, x => x.value2(NodeKeys.CODE), "int", "n")
+    }
+
+    "be correct for dynamic_cast" in new Fixture(
+      """
+        |void foo() {
+        |  int y = dynamic_cast<int>(n);
+        |  return;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.cast")
+      call.checkForSingle(NodeKeys.CODE, "dynamic_cast<int>(n)")
+
+      val callArgs = call.expandArgument
+      callArgs.check(2, x => x.value2(NodeKeys.CODE), "int", "n")
+    }
+
+    "be correct for reinterpret_cast" in new Fixture(
+      """
+        |void foo() {
+        |  int y = reinterpret_cast<int>(n);
+        |  return;
+        |}
+        |""".stripMargin
+    ) {
+      val call = getCall("<operator>.cast")
+      call.checkForSingle(NodeKeys.CODE, "reinterpret_cast<int>(n)")
+
+      val callArgs = call.expandArgument
+      callArgs.check(2, x => x.value2(NodeKeys.CODE), "int", "n")
     }
   }
 

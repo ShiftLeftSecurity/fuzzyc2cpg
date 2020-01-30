@@ -152,7 +152,10 @@ shift_expression: additive_expression ( ('<<'|'>>') shift_expression)?;
 additive_expression: multiplicative_expression (('+'| '-') additive_expression)?;
 multiplicative_expression: cast_expression ( ('*'| '/'| '%') multiplicative_expression)?;
 
+cpp_cast_identifier: 'const_cast' | 'static_cast' | 'dynamic_cast' | 'reinterpret_cast';
+
 cast_expression: ('(' cast_target ')' cast_expression)
+               | cpp_cast_identifier '<' cast_target '>' '(' cast_expression ')'
                | unary_expression
 ;
 
