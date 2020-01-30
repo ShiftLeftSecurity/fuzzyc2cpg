@@ -99,4 +99,36 @@ public class FunctionParserTest extends FunctionParserTestBase
 		assertEquals("(statements (statement (expr_statement (expr (assign_expr (conditional_expression (or_expression (and_expression (inclusive_or_expression (exclusive_or_expression (bit_and_expression (equality_expression (relational_expression (shift_expression (additive_expression (multiplicative_expression (cast_expression (unary_expression (delete_expression delete [ ] (identifier n))))))))))))))))) ;)))",
 					 output);
 	}
+
+	@Test
+	public void testCPPConstCast() {
+		String input = "int x = const_cast<int>(n);";
+		String output = generateParserOutput(input);
+		assertEquals("(statements (statement (simple_decl (var_decl (type_name (base_type int)) (init_declarator_list (init_declarator (declarator (identifier x)) = (initializer (assign_expr (conditional_expression (or_expression (and_expression (inclusive_or_expression (exclusive_or_expression (bit_and_expression (equality_expression (relational_expression (shift_expression (additive_expression (multiplicative_expression (cast_expression (cpp_cast_identifier const_cast) < (cast_target (type_name (base_type int))) > ( (cast_expression (unary_expression (postfix_expression (primary_expression (identifier n))))) )))))))))))))))) ;)))))",
+				output);
+	}
+
+	@Test
+	public void testCPPStaticCast() {
+		String input = "int x = static_cast<int>(n);";
+		String output = generateParserOutput(input);
+		assertEquals("(statements (statement (simple_decl (var_decl (type_name (base_type int)) (init_declarator_list (init_declarator (declarator (identifier x)) = (initializer (assign_expr (conditional_expression (or_expression (and_expression (inclusive_or_expression (exclusive_or_expression (bit_and_expression (equality_expression (relational_expression (shift_expression (additive_expression (multiplicative_expression (cast_expression (cpp_cast_identifier static_cast) < (cast_target (type_name (base_type int))) > ( (cast_expression (unary_expression (postfix_expression (primary_expression (identifier n))))) )))))))))))))))) ;)))))",
+				output);
+	}
+
+	@Test
+	public void testCPPDynamicCast() {
+		String input = "int x = dynamic_cast<int>(n);";
+		String output = generateParserOutput(input);
+		assertEquals("(statements (statement (simple_decl (var_decl (type_name (base_type int)) (init_declarator_list (init_declarator (declarator (identifier x)) = (initializer (assign_expr (conditional_expression (or_expression (and_expression (inclusive_or_expression (exclusive_or_expression (bit_and_expression (equality_expression (relational_expression (shift_expression (additive_expression (multiplicative_expression (cast_expression (cpp_cast_identifier dynamic_cast) < (cast_target (type_name (base_type int))) > ( (cast_expression (unary_expression (postfix_expression (primary_expression (identifier n))))) )))))))))))))))) ;)))))",
+				output);
+	}
+
+	@Test
+	public void testCPPReinterpretCast() {
+		String input = "int x = reinterpret_cast<int>(n);";
+		String output = generateParserOutput(input);
+		assertEquals("(statements (statement (simple_decl (var_decl (type_name (base_type int)) (init_declarator_list (init_declarator (declarator (identifier x)) = (initializer (assign_expr (conditional_expression (or_expression (and_expression (inclusive_or_expression (exclusive_or_expression (bit_and_expression (equality_expression (relational_expression (shift_expression (additive_expression (multiplicative_expression (cast_expression (cpp_cast_identifier reinterpret_cast) < (cast_target (type_name (base_type int))) > ( (cast_expression (unary_expression (postfix_expression (primary_expression (identifier n))))) )))))))))))))))) ;)))))",
+				output);
+	}
 }
