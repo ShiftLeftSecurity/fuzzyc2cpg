@@ -867,17 +867,9 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       .addProperty(NodeProperty.DISPATCH_TYPE, DispatchTypes.STATIC_DISPATCH.name())
       .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
       .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(Defines.anyTypeName))
-      .addProperty(NodeProperty.METHOD_INST_FULL_NAME, methodName)
+      .addProperty(NodeProperty.METHOD_FULL_NAME, methodName)
       .addCommons(astNode, context)
       .createNode(astNode)
-
-    adapter
-      .createNodeBuilder(NodeKind.METHOD_INST)
-      .addProperty(NodeProperty.NAME, methodName)
-      .addProperty(NodeProperty.FULL_NAME, methodName)
-      .addProperty(NodeProperty.SIGNATURE, "TODO assignment signature")
-      .addProperty(NodeProperty.METHOD_FULL_NAME, methodName)
-      .createNode()
 
     cpgNode
   }
