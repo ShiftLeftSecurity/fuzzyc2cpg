@@ -263,7 +263,7 @@ object FuzzyC2Cpg extends App {
                           defines: Set[String] = Set.empty,
                           undefines: Set[String] = Set.empty,
                           preprocessorExecutable: String = "./fuzzypp/bin/fuzzyppcli",
-                          overflowDb : Boolean = false) {
+                          overflowDb: Boolean = false) {
     lazy val usePreprocessor: Boolean =
       includeFiles.nonEmpty || includePaths.nonEmpty || defines.nonEmpty || undefines.nonEmpty
   }

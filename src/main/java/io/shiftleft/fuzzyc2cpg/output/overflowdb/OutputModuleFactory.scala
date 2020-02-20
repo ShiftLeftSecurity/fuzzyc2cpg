@@ -7,7 +7,7 @@ import io.shiftleft.proto.cpg.Cpg
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import org.slf4j.LoggerFactory
 
-class OutputModuleFactory(outputPath : String, queue : BlockingQueue[CpgStruct.Builder]) extends CpgOutputModuleFactory {
+class OutputModuleFactory(outputPath: String, queue: BlockingQueue[CpgStruct.Builder]) extends CpgOutputModuleFactory {
 
   private val logger = LoggerFactory.getLogger(getClass)
   private val writer = new OverflowDbWriter(outputPath, queue)
@@ -20,7 +20,7 @@ class OutputModuleFactory(outputPath : String, queue : BlockingQueue[CpgStruct.B
       val endMarker = Cpg.CpgStruct.newBuilder().addNode(Cpg.CpgStruct.Node.newBuilder().setKey(-1))
       queue.put(endMarker)
     } catch {
-      case _ : InterruptedException => logger.warn("Interrupted during persist operation")
+      case _: InterruptedException => logger.warn("Interrupted during persist operation")
     }
   }
 }
