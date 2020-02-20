@@ -1,7 +1,6 @@
 package io.shiftleft.fuzzyc2cpg
 
 import org.slf4j.LoggerFactory
-
 import io.shiftleft.codepropertygraph.generated.Languages
 import io.shiftleft.fuzzyc2cpg.Utils.{getGlobalNamespaceBlockFullName, newEdge, newNode, _}
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
@@ -11,8 +10,8 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
-
 import java.nio.file.{Files, Path}
+import java.util.concurrent.LinkedBlockingQueue
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -22,12 +21,6 @@ import scala.util.control.NonFatal
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   private val logger = LoggerFactory.getLogger(getClass)
-
-  def this(outputPath: String) = {
-    this(
-      new OutputModuleFactory(outputPath, true)
-        .asInstanceOf[CpgOutputModuleFactory])
-  }
 
   def runWithPreprocessorAndOutput(sourcePaths: Set[String],
                                    sourceFileExtensions: Set[String],
@@ -81,7 +74,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
     filenameToNodes.par.foreach(createCpgForCompilationUnit)
-    addFunctionDeclarations
+    addFunctionDeclarations()
     outputModuleFactory.persist()
   }
 
@@ -159,9 +152,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     val astVisitor =
       new AstVisitor(outputModuleFactory, cpg, namespaceBlock)
     driver.addObserver(astVisitor)
-    driver.setOutputModuleFactory(outputModuleFactory);
     driver.setCpg(cpg);
-    driver.setNamespaceBlock(namespaceBlock);
     driver.setFileNode(fileNode)
 
     try {
@@ -235,7 +226,16 @@ object FuzzyC2Cpg extends App {
 
   parseConfig.foreach { config =>
     try {
-      val fuzzyc = new FuzzyC2Cpg(config.outputPath)
+
+      val factory = if (!config.overflowDb) {
+        new OutputModuleFactory(config.outputPath, true)
+          .asInstanceOf[CpgOutputModuleFactory]
+      } else {
+        val queue = new LinkedBlockingQueue[CpgStruct.Builder]()
+        new io.shiftleft.fuzzyc2cpg.output.overflowdb.OutputModuleFactory(config.outputPath, queue)
+      }
+
+      val fuzzyc = new FuzzyC2Cpg(factory)
 
       if (config.usePreprocessor) {
         fuzzyc.runWithPreprocessorAndOutput(config.inputPaths,
@@ -262,7 +262,8 @@ object FuzzyC2Cpg extends App {
                           includePaths: Set[String] = Set.empty,
                           defines: Set[String] = Set.empty,
                           undefines: Set[String] = Set.empty,
-                          preprocessorExecutable: String = "./fuzzypp/bin/fuzzyppcli") {
+                          preprocessorExecutable: String = "./fuzzypp/bin/fuzzyppcli",
+                          overflowDb : Boolean = false) {
     lazy val usePreprocessor: Boolean =
       includeFiles.nonEmpty || includePaths.nonEmpty || defines.nonEmpty || undefines.nonEmpty
   }
@@ -307,6 +308,9 @@ object FuzzyC2Cpg extends App {
         .text("path to the preprocessor executable")
         .action((s, cfg) => cfg.copy(preprocessorExecutable = s))
       help("help").text("display this help message")
+      opt[Unit]("overflowdb")
+        .text("create overflowdb")
+        .action((_, cfg) => cfg.copy(overflowDb = true))
     }.parse(args, Config())
 
 }
