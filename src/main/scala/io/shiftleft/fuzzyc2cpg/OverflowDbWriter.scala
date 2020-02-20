@@ -37,7 +37,7 @@ class OverflowDbWriter(queue: BlockingQueue[CpgStruct], outputPath: String) exte
       }
 
     } catch {
-      case ex: InterruptedException => logger.warn("Interrupted OverflowDbWriter.")
+      case _: InterruptedException => logger.warn("Interrupted OverflowDbWriter.")
     } finally {
       val cpg = protoToCpg.build
       CpgLoader.createIndexes(cpg)
