@@ -11,7 +11,7 @@ class OutputModuleFactory(outputPath: String, queue: BlockingQueue[CpgStruct.Bui
 
   private val logger = LoggerFactory.getLogger(getClass)
   private val writer = new OverflowDbWriter(outputPath, queue)
-  new Thread(writer).run()
+  new Thread(writer).start()
 
   override def create(): CpgOutputModule = new OutputModule(queue)
 
