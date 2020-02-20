@@ -8,7 +8,7 @@ import io.shiftleft.overflowdb.{OdbConfig, OdbGraph}
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import org.slf4j.LoggerFactory
 
-class OverflowDbWriter(queue: BlockingQueue[CpgStruct], outputPath: String) extends Runnable {
+class OverflowDbWriter(queue: BlockingQueue[CpgStruct.Builder], outputPath: String) extends Runnable {
 
   private val logger = LoggerFactory.getLogger(getClass)
 

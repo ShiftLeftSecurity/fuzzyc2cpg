@@ -16,7 +16,7 @@ public class OutputModuleFactory implements CpgOutputModuleFactory {
 
   private final boolean writeToDisk;
   private final String outputFilename;
-  private final BlockingQueue<Cpg.CpgStruct> queue;
+  private final BlockingQueue<Cpg.CpgStruct.Builder> queue;
 
   public OutputModuleFactory(String outputFilename,
                              boolean writeToDisk) {
@@ -25,7 +25,7 @@ public class OutputModuleFactory implements CpgOutputModuleFactory {
     this.queue = new LinkedBlockingQueue<>();
   }
 
-  public BlockingQueue<Cpg.CpgStruct> getQueue() {
+  public BlockingQueue<Cpg.CpgStruct.Builder> getQueue() {
     return queue;
   }
 
@@ -50,10 +50,9 @@ public class OutputModuleFactory implements CpgOutputModuleFactory {
   public void persist() {
     if (writeToDisk) {
       try {
-        Cpg.CpgStruct endMarker =
+        Cpg.CpgStruct.Builder endMarker =
                 Cpg.CpgStruct.newBuilder()
-                        .addNode(Cpg.CpgStruct.Node.newBuilder().setKey(-1))
-                        .build();
+                        .addNode(Cpg.CpgStruct.Node.newBuilder().setKey(-1));
         queue.put(endMarker);
       } catch (InterruptedException e) {
         logger.warn("Interrupted during persist operation");

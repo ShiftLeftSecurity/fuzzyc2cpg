@@ -6,9 +6,9 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 import java.util.concurrent.BlockingQueue;
 
 public class OutputModule implements CpgOutputModule {
-  private final BlockingQueue<CpgStruct> queue;
+  private final BlockingQueue<CpgStruct.Builder> queue;
 
-  public OutputModule(BlockingQueue<CpgStruct> queue) {
+  public OutputModule(BlockingQueue<CpgStruct.Builder> queue) {
     this.queue = queue;
   }
 
@@ -24,7 +24,7 @@ public class OutputModule implements CpgOutputModule {
 
   @Override
   public void persistCpg(CpgStruct.Builder cpg) {
-    queue.add(cpg.build());
+    queue.add(cpg);
   }
 
 }
