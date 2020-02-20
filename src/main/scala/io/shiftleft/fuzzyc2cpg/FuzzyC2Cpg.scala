@@ -1,7 +1,6 @@
 package io.shiftleft.fuzzyc2cpg
 
 import org.slf4j.LoggerFactory
-
 import io.shiftleft.codepropertygraph.generated.Languages
 import io.shiftleft.fuzzyc2cpg.Utils.{getGlobalNamespaceBlockFullName, newEdge, newNode, _}
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
@@ -11,7 +10,6 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
-
 import java.nio.file.{Files, Path}
 
 import scala.collection.mutable
@@ -22,6 +20,14 @@ import scala.util.control.NonFatal
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   private val logger = LoggerFactory.getLogger(getClass)
+  private val queue = outputModuleFactory match {
+    case factory: OutputModuleFactory => factory.getQueue
+    case _                            => null
+  }
+  private val outputPath: String = outputModuleFactory match {
+    case factory: OutputModuleFactory => factory.getOutputFilename
+    case _                            => null
+  }
 
   def this(outputPath: String) = {
     this(
@@ -74,8 +80,10 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   }
 
   def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String]): Unit = {
-    val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
+    new Thread(new OverflowDbWriter(queue, outputPath)).start()
+
+    val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
     val filenameToNodes = createStructuralCpg(sourceFileNames)
 
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
@@ -256,7 +264,7 @@ object FuzzyC2Cpg extends App {
   }
 
   final case class Config(inputPaths: Set[String] = Set.empty,
-                          outputPath: String = "cpg.bin.zip",
+                          outputPath: String = "cpg.bin",
                           sourceFileExtensions: Set[String] = Set(".c", ".cc", ".cpp", ".h", ".hpp"),
                           includeFiles: Set[String] = Set.empty,
                           includePaths: Set[String] = Set.empty,

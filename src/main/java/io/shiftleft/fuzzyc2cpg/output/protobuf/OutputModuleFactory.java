@@ -3,35 +3,39 @@ package io.shiftleft.fuzzyc2cpg.output.protobuf;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.commons.io.FileUtils;
+import io.shiftleft.proto.cpg.Cpg;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OutputModuleFactory implements CpgOutputModuleFactory {
 
-  private final List<OutputModule> outputModules = new ArrayList<>();
+  private Logger logger = LoggerFactory.getLogger(getClass());
+
   private final boolean writeToDisk;
-  private final Path protoTempDir;
   private final String outputFilename;
+  private final BlockingQueue<Cpg.CpgStruct> queue;
 
   public OutputModuleFactory(String outputFilename,
-                             boolean writeToDisk) throws IOException {
+                             boolean writeToDisk) {
     this.writeToDisk = writeToDisk;
-    this.protoTempDir = Files.createTempDirectory("proto");
     this.outputFilename = outputFilename;
+    this.queue = new LinkedBlockingQueue<>();
+  }
+
+  public BlockingQueue<Cpg.CpgStruct> getQueue() {
+    return queue;
+  }
+
+  public String getOutputFilename() {
+    return outputFilename;
   }
 
   @Override
   public CpgOutputModule create() {
-    OutputModule outputModule = new OutputModule(writeToDisk, protoTempDir);
-    synchronized (this) {
-      outputModules.add(outputModule);
-    }
-    return outputModule;
+    return new OutputModule(queue);
   }
 
   /**
@@ -43,21 +47,17 @@ public class OutputModuleFactory implements CpgOutputModuleFactory {
    * one, we will combine individual proto files.
    * */
   @Override
-  public void persist() throws IOException {
+  public void persist() {
     if (writeToDisk) {
       try {
-        ThreadedZipper threadedZipper = new ThreadedZipper(protoTempDir, outputFilename);
-        threadedZipper.start();
-        // wait until the thread is finished
-        // if we don't wait, the output folder
-        // may be deleted and and we get null pointer
-        threadedZipper.join();
-      } catch (InterruptedException interruptedException) {
-        throw new IOException(interruptedException);
+        Cpg.CpgStruct endMarker =
+                Cpg.CpgStruct.newBuilder()
+                        .addNode(Cpg.CpgStruct.Node.newBuilder().setKey(-1))
+                        .build();
+        queue.put(endMarker);
+      } catch (InterruptedException e) {
+        logger.warn("Interrupted during persist operation");
       }
-    }
-    if (this.protoTempDir != null && Files.exists(this.protoTempDir)) {
-      FileUtils.deleteDirectory(this.protoTempDir.toFile());
     }
   }
 }
