@@ -86,7 +86,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   }
 
   private def addFunctionDeclarations(): Unit = {
-    FuzzyC2CpgCache.sortedSignatures.foreach { signature =>
+    FuzzyC2CpgCache.sortedSignatures.par.foreach { signature =>
       FuzzyC2CpgCache.getDeclarations(signature).foreach {
         case (outputIdentifier, bodyCpg) =>
           val outputModule = outputModuleFactory.create()
