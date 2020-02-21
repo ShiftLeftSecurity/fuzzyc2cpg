@@ -11,7 +11,8 @@ class OutputModuleFactory(outputPath: String, queue: BlockingQueue[CpgStruct.Bui
 
   private val logger = LoggerFactory.getLogger(getClass)
   private val writer = new OverflowDbWriter(outputPath, queue)
-  new Thread(writer).start()
+  val writerThread = new Thread(writer)
+  writerThread.start()
 
   override def create(): CpgOutputModule = new OutputModule(queue)
 
@@ -22,5 +23,6 @@ class OutputModuleFactory(outputPath: String, queue: BlockingQueue[CpgStruct.Bui
     } catch {
       case _: InterruptedException => logger.warn("Interrupted during persist operation")
     }
+    writerThread.join()
   }
 }
