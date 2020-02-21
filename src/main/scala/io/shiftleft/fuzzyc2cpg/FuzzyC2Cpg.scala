@@ -20,6 +20,10 @@ import scala.util.control.NonFatal
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
+  def this(outputPath: String) = {
+    this(new OutputModuleFactory(outputPath, true).asInstanceOf[CpgOutputModuleFactory])
+  }
+
   private val logger = LoggerFactory.getLogger(getClass)
 
   def runWithPreprocessorAndOutput(sourcePaths: Set[String],
