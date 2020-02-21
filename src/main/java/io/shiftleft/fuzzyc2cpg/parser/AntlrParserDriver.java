@@ -11,7 +11,6 @@ import java.util.Stack;
 import java.util.function.Consumer;
 
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
-import io.shiftleft.fuzzyc2cpg.output.protobuf.OutputModuleFactory;
 import io.shiftleft.proto.cpg.Cpg;
 import jdk.nashorn.internal.runtime.ParserException;
 import org.antlr.v4.runtime.*;
@@ -40,25 +39,15 @@ abstract public class AntlrParserDriver {
   private CommonParserContext context = null;
 
   private List<AntlrParserDriverObserver> observers = new ArrayList<>();
-  private CpgOutputModuleFactory outputModuleFactory;
   private Cpg.CpgStruct.Builder cpg;
-  private Cpg.CpgStruct.Node namespaceBlock;
   private Cpg.CpgStruct.Node fileNode;
 
   public AntlrParserDriver() {
     super();
   }
 
-  public void setOutputModuleFactory(CpgOutputModuleFactory factory) {
-    this.outputModuleFactory = factory;
-  }
-
   public void setCpg(Cpg.CpgStruct.Builder cpg) {
     this.cpg = cpg;
-  }
-
-  public void setNamespaceBlock(Cpg.CpgStruct.Node namespaceBlock) {
-    this.namespaceBlock = namespaceBlock;
   }
 
   public void setFileNode(Cpg.CpgStruct.Node fileNode) {
