@@ -709,12 +709,12 @@ class AstToCpgTests extends WordSpec with Matchers {
       memberFoo.checkForSingle(NodeKeys.CODE, "x")
 
       val typeDeclBar = typeDeclFoo.expandAst(NodeTypes.TYPE_DECL)
-      typeDeclBar.checkForSingle(NodeKeys.TYPE_DECL.FULL_NAME, "bar")
+      typeDeclBar.checkForSingle(NodeKeys.FULL_NAME, "bar")
       val memberBar = typeDeclBar.expandAst(NodeTypes.MEMBER)
       memberBar.checkForSingle(NodeKeys.CODE, "y")
 
       val typeDeclFoo2 = typeDeclBar.expandAst(NodeTypes.TYPE_DECL)
-      typeDeclFoo2.checkForSingle(NodeKeys.TYPE_DECL.FULL_NAME, "foo2")
+      typeDeclFoo2.checkForSingle(NodeKeys.FULL_NAME, "foo2")
       val memberFoo2 = typeDeclFoo2.expandAst(NodeTypes.MEMBER)
       memberFoo2.checkForSingle(NodeKeys.CODE, "z")
     }
