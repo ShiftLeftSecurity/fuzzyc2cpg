@@ -4,7 +4,7 @@ import java.util.concurrent.BlockingQueue
 
 import better.files.File
 import io.shiftleft.codepropertygraph.cpgloading.{CpgLoader, ProtoToCpg}
-import io.shiftleft.overflowdb.{OdbConfig, OdbGraph}
+import io.shiftleft.overflowdb.OdbConfig
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import org.slf4j.LoggerFactory
 
@@ -38,7 +38,7 @@ class OverflowDbWriter(outputPath: String, queue: BlockingQueue[CpgStruct.Builde
     } finally {
       val cpg = protoToCpg.build
       CpgLoader.createIndexes(cpg)
-      cpg.graph.asInstanceOf[OdbGraph].close()
+      cpg.graph.close()
     }
   }
 }
