@@ -1,5 +1,6 @@
 package io.shiftleft.fuzzyc2cpg
 
+import gremlin.scala.GraphAsScala
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.output.inmemory.OutputModuleFactory
 
@@ -13,6 +14,6 @@ case class CpgTestFixture(projectName: String) {
     inmemoryOutputFactory.getInternalGraph
   }
 
-  def V = cpg.scalaGraph.V
+  def V = cpg.graph.asScala.V
 
 }
