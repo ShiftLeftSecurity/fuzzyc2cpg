@@ -167,6 +167,10 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
         logger.warn("Complete exception: ", ex)
         return
       }
+      case ex: StackOverflowError => {
+        logger.warn("Cannot parse module: " + filename + ", skipping, StackOverflow")
+        return
+      }
     }
 
     val outputModule = outputModuleFactory.create()
