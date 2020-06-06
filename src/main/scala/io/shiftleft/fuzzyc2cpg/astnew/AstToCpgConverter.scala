@@ -530,7 +530,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   }
 
   override def visit(astThrow: ThrowStatement): Unit = {
-    val cpgThrow = newUnknownNode(astThrow)
+    val cpgThrow = newControlStructureNode(astThrow)
 
     addAstChild(cpgThrow)
 
