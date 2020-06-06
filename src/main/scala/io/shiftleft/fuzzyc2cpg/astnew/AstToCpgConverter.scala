@@ -686,7 +686,12 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   }
 
   override def visit(astLabel: Label): Unit = {
-    val cpgLabel = newUnknownNode(astLabel)
+    val cpgLabel = adapter
+      .createNodeBuilder(NodeKind.JUMP_TARGET)
+      .addProperty(NodeProperty.PARSER_TYPE_NAME, astLabel.getClass.getSimpleName)
+      .addProperty(NodeProperty.NAME, astLabel.getLabelName)
+      .addCommons(astLabel, context)
+      .createNode(astLabel)
     addAstChild(cpgLabel)
   }
 
