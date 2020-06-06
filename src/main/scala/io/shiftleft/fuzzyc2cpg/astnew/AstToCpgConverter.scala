@@ -401,21 +401,15 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   }
 
   override def visit(astBreak: BreakStatement): Unit = {
-    val cpgBreak = newUnknownNode(astBreak)
-
-    addAstChild(cpgBreak)
+    addAstChild(newControlStructureNode(astBreak))
   }
 
   override def visit(astContinue: ContinueStatement): Unit = {
-    val cpgContinue = newUnknownNode(astContinue)
-
-    addAstChild(cpgContinue)
+    addAstChild(newControlStructureNode(astContinue))
   }
 
   override def visit(astGoto: GotoStatement): Unit = {
-    val cpgGoto = newUnknownNode(astGoto)
-
-    addAstChild(cpgGoto)
+    addAstChild(newControlStructureNode(astGoto))
   }
 
   override def visit(astIdentifier: Identifier): Unit = {
@@ -536,7 +530,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   }
 
   override def visit(astThrow: ThrowStatement): Unit = {
-    val cpgThrow = newUnknownNode(astThrow)
+    val cpgThrow = newControlStructureNode(astThrow)
 
     addAstChild(cpgThrow)
 
