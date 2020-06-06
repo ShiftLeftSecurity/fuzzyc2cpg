@@ -126,6 +126,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
       case NodeKind.CONTROL_STRUCTURE   => Node.NodeType.CONTROL_STRUCTURE
       case NodeKind.UNKNOWN             => Node.NodeType.UNKNOWN
       case NodeKind.FIELD_IDENTIFIER    => Node.NodeType.FIELD_IDENTIFIER
+      case NodeKind.JUMP_TARGET         => Node.NodeType.JUMP_TARGET
     }
   }
 
