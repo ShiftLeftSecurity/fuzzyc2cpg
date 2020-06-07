@@ -4,7 +4,7 @@ import java.util.concurrent.BlockingQueue
 
 import better.files.File
 import io.shiftleft.codepropertygraph.cpgloading.{CpgLoader, ProtoToCpg}
-import io.shiftleft.overflowdb.OdbConfig
+import overflowdb.OdbConfig
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import org.slf4j.LoggerFactory
 

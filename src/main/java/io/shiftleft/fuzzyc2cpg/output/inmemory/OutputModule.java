@@ -3,7 +3,7 @@ package io.shiftleft.fuzzyc2cpg.output.inmemory;
 import io.shiftleft.codepropertygraph.Cpg;
 import io.shiftleft.codepropertygraph.cpgloading.ProtoCpgLoader;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
-import io.shiftleft.overflowdb.OdbConfig;
+import overflowdb.OdbConfig;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 
 import java.util.LinkedList;
