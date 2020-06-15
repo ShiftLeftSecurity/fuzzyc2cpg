@@ -135,6 +135,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     val cpgMethod = adapter
       .createNodeBuilder(NodeKind.METHOD)
       .addProperty(NodeProperty.NAME, astFunction.getName)
+      .addProperty(NodeProperty.CODE, astFunction.getEscapedCodeStr)
       .addProperty(NodeProperty.IS_EXTERNAL, value = false)
       .addProperty(NodeProperty.FULL_NAME, value = s"${astFunction.getName}")
       .addProperty(NodeProperty.LINE_NUMBER, astFunction.getLocation.startLine)
@@ -690,6 +691,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       .createNodeBuilder(NodeKind.JUMP_TARGET)
       .addProperty(NodeProperty.PARSER_TYPE_NAME, astLabel.getClass.getSimpleName)
       .addProperty(NodeProperty.NAME, astLabel.getLabelName)
+      .addProperty(NodeProperty.CODE, astLabel.getEscapedCodeStr)
       .addCommons(astLabel, context)
       .createNode(astLabel)
     addAstChild(cpgLabel)

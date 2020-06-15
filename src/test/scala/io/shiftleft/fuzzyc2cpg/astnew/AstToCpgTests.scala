@@ -879,6 +879,11 @@ class AstToCpgTests extends WordSpec with Matchers {
       callArgs.checkForSingle(NodeKeys.CODE, "int")
     }
 
+    "be correct for label" in new Fixture("foo() { label: }") {
+      val jumpTarget = getVertices("label", NodeTypes.JUMP_TARGET)
+      jumpTarget.checkForSingle(NodeKeys.CODE, "label:")
+    }
+
     "be correct for array indexing" in new Fixture(
       """
         |int head(int x[]) {
