@@ -19,6 +19,7 @@ class MethodHeaderTests extends WordSpec with Matchers {
       methods.head.value2(NodeKeys.COLUMN_NUMBER) shouldBe 0
       methods.head.value2(NodeKeys.LINE_NUMBER_END) shouldBe 3
       methods.head.value2(NodeKeys.COLUMN_NUMBER_END) shouldBe 0
+      methods.head.value2(NodeKeys.CODE) shouldBe "foo (int x,int y)"
     }
 
     "have correct METHOD_PARAMETER_IN nodes for method foo" in {
