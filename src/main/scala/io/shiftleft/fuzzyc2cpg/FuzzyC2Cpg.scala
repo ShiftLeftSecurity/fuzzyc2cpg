@@ -109,23 +109,28 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       cpg.addNode(globalNamespaceBlockNotInFileNode)
     }
 
+    def createNodesForFiles(cpg: CpgStruct.Builder): Set[(String, NodesForFile)] =
+      filenames.map { filename =>
+        val (fileNode, namespaceBlock) =  fileAndNamespaceGraph(filename, cpg)
+        filename -> NodesForFile(fileNode, namespaceBlock)
+      }
+
+    def fileAndNamespaceGraph(filename : String, cpg : CpgStruct.Builder) = {
+      val pathToFile = new java.io.File(filename).toPath
+      val fileNode = createFileNode(pathToFile)
+      val namespaceBlock = createNamespaceBlockNode(Some(pathToFile))
+      cpg.addNode(fileNode)
+      cpg.addNode(namespaceBlock)
+      cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
+      (fileNode, namespaceBlock)
+    }
+
     def createFileNode(pathToFile: Path): Node = {
       newNode(NodeType.FILE)
         .setKey(keyPool.next)
         .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.normalize.toString)
         .build()
     }
-
-    def createNodesForFiles(cpg: CpgStruct.Builder): Set[(String, NodesForFile)] =
-      filenames.map { filename =>
-        val pathToFile = new java.io.File(filename).toPath
-        val fileNode = createFileNode(pathToFile)
-        val namespaceBlock = createNamespaceBlockNode(Some(pathToFile))
-        cpg.addNode(fileNode)
-        cpg.addNode(namespaceBlock)
-        cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
-        filename -> NodesForFile(fileNode, namespaceBlock)
-      }
 
     def createNamespaceBlockNode(filePath: Option[Path]): Node = {
       newNode(NodeType.NAMESPACE_BLOCK)
