@@ -2,7 +2,6 @@ package io.shiftleft.fuzzyc2cpg.output.protobuf;
 
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

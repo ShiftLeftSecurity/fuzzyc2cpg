@@ -13,7 +13,6 @@ import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.LinkedBlockingQueue
 
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.CollectionConverters._
 import scala.util.control.NonFatal
@@ -134,7 +133,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     filenameToNodes
   }
 
-  case class NodesForFile(fileNode: CpgStruct.Node, namespaceBlockNode: CpgStruct.Node) {}
+  private case class NodesForFile(fileNode: CpgStruct.Node, namespaceBlockNode: CpgStruct.Node) {}
 
   private def createNamespaceBlockNode(filePath: Option[Path]): Node = {
     newNode(NodeType.NAMESPACE_BLOCK)
@@ -143,7 +142,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       .build
   }
 
-  def createCpgForCompilationUnit(filenameAndNodes: (String, NodesForFile)): Unit = {
+  private def createCpgForCompilationUnit(filenameAndNodes: (String, NodesForFile)): Unit = {
     val (filename, nodesForFile) = filenameAndNodes
     val (fileNode, namespaceBlock) = (nodesForFile.fileNode, nodesForFile.namespaceBlockNode)
     val cpg = CpgStruct.newBuilder
@@ -167,7 +166,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
         logger.warn("Complete exception: ", ex)
         return
       }
-      case ex: StackOverflowError => {
+      case _: StackOverflowError => {
         logger.warn("Cannot parse module: " + filename + ", skipping, StackOverflow")
         return
       }
@@ -178,52 +177,6 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       s"$filename types"
     )
     outputModule.persistCpg(cpg)
-  }
-
-}
-
-object FuzzyC2CpgCache {
-  private val functionDeclarations = new mutable.HashMap[String, mutable.ListBuffer[(String, CpgStruct.Builder)]]()
-
-  /**
-    * Unless `remove` has been called for `signature`, add (outputIdentifier, cpg)
-    * pair to the list declarations stored for `signature`.
-    * */
-  def add(signature: String, outputIdentifier: String, cpg: CpgStruct.Builder): Unit = {
-    functionDeclarations.synchronized {
-      if (functionDeclarations.contains(signature)) {
-        val declList = functionDeclarations(signature)
-        if (declList.nonEmpty) {
-          declList.append((outputIdentifier, cpg))
-        }
-      } else {
-        functionDeclarations.put(signature, mutable.ListBuffer((outputIdentifier, cpg)))
-      }
-    }
-  }
-
-  /**
-    * Register placeholder for `signature` to indicate that
-    * a function definition exists for this declaration, and
-    * therefore, no declaration should be written for functions
-    * with this signature.
-    * */
-  def remove(signature: String): Unit = {
-    functionDeclarations.synchronized {
-      functionDeclarations.remove(signature)
-    }
-  }
-
-  def sortedSignatures: List[String] = {
-    functionDeclarations.synchronized {
-      functionDeclarations.keySet.toList.sorted
-    }
-  }
-
-  def getDeclarations(signature: String): List[(String, CpgStruct.Builder)] = {
-    functionDeclarations.synchronized {
-      functionDeclarations(signature).toList
-    }
   }
 
 }

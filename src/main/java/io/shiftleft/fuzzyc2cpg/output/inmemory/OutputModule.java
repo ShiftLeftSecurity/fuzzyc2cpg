@@ -23,9 +23,7 @@ public class OutputModule implements CpgOutputModule {
   }
 
   @Override
-  public void setOutputIdentifier(String identifier) {
-
-  }
+  public void setOutputIdentifier(String identifier) { }
 
   @Override
   public void persistCpg(CpgStruct.Builder cpg) {
@@ -35,10 +33,6 @@ public class OutputModule implements CpgOutputModule {
   }
 
   public void persist() {
-    constructTinkerGraphFromCpg();
-  }
-
-  private void constructTinkerGraphFromCpg() {
     CpgStruct.Builder mergedBuilder = CpgStruct.newBuilder();
 
     cpgBuilders.forEach(builder -> {
@@ -48,7 +42,6 @@ public class OutputModule implements CpgOutputModule {
     List<CpgStruct> list = new LinkedList<>();
     list.add(mergedBuilder.build());
     cpg = ProtoCpgLoader.loadFromListOfProtos(list, OdbConfig.withoutOverflow());
-
   }
 
 }

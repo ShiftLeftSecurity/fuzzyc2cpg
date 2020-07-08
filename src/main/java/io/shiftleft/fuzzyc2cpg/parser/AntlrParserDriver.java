@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Stack;
 import java.util.function.Consumer;
 
-import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
 import io.shiftleft.proto.cpg.Cpg;
 import jdk.nashorn.internal.runtime.ParserException;
 import org.antlr.v4.runtime.*;
