@@ -14,7 +14,7 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Buil
   private var astToProtoMapping = Map.empty[AstNode, Node]
 
   override def createNodeBuilder(kind: NodeKind): Node.Builder = {
-    Node.newBuilder().setType(translateNodeKind(kind)).setKey(IdPool.getNextId)
+    Node.newBuilder().setType(translateNodeKind(kind)).setKey(IdPool.next)
   }
 
   override def createNode(nodeBuilder: Node.Builder): Node = {

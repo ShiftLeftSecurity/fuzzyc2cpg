@@ -39,7 +39,7 @@ object Utils {
     Node
       .newBuilder()
       .setType(nodeType)
-      .setKey(IdPool.getNextId)
+      .setKey(IdPool.next)
   }
 
   def newEdge(edgeType: Edge.EdgeType, dstNode: Node, srcNode: Node): Edge.Builder = {
