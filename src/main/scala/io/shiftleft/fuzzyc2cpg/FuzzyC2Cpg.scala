@@ -82,11 +82,11 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     outputModule.persistCpg(cpg)
 
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
-    // is in the same global namespace so the code below is correctly.
+    // is in the same global namespace so the code below is correct.
     sourceFileNames.zipWithIndex
       .map { case (filename, i) => (filename, keyPools(i + 1)) }
       .par
-      .foreach(createCpgForCompilationUnit)
+      .foreach { case (filename, keyPool) => createCpgForCompilationUnit(filename, keyPool) }
     addFunctionDeclarations()
     outputModuleFactory.persist()
   }
@@ -151,10 +151,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     addAnyTypeAndNamespaceBlock(cpg)
   }
 
-  case class NodesForFile(fileNode: CpgStruct.Node, namespaceBlockNode: CpgStruct.Node) {}
-
-  private def createCpgForCompilationUnit(filenameAndKeyPool: (String, KeyPool)): Unit = {
-    val (filename, keyPool) = filenameAndKeyPool
+  private def createCpgForCompilationUnit(filename: String, keyPool: KeyPool): Unit = {
     val (fileNode, namespaceBlock) = fileAndNamespaceGraph(filename, keyPool)
 
     // We call the module parser here and register the `astVisitor` to
