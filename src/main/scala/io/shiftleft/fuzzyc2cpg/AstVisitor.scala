@@ -12,11 +12,15 @@ import io.shiftleft.fuzzyc2cpg.astnew.AstToCpgConverter
 import io.shiftleft.fuzzyc2cpg.cfg.AstToCfgConverter
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver
+import io.shiftleft.passes.KeyPool
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import org.antlr.v4.runtime.ParserRuleContext
 
-class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgStruct.Builder, astParentNode: Node)
+class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
+                 structureCpg: CpgStruct.Builder,
+                 astParentNode: Node,
+                 keyPool: KeyPool)
     extends ASTNodeVisitor
     with AntlrParserDriverObserver {
   private var fileNameOption = Option.empty[String]
@@ -31,7 +35,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
     outputModule.setOutputIdentifier(outputIdentifier)
 
     val bodyCpg = CpgStruct.newBuilder()
-    val cpgAdapter = new ProtoCpgAdapter(bodyCpg)
+    val cpgAdapter = new ProtoCpgAdapter(bodyCpg, keyPool)
     val astToCpgConverter =
       new AstToCpgConverter(astParentNode, cpgAdapter)
     astToCpgConverter.convert(functionDef)
@@ -56,7 +60,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
     * Callback triggered for every class/struct
     * */
   override def visit(classDefStatement: ClassDefStatement): Unit = {
-    val cpgAdapter = new ProtoCpgAdapter(structureCpg)
+    val cpgAdapter = new ProtoCpgAdapter(structureCpg, keyPool)
     val astToCpgConverter =
       new AstToCpgConverter(astParentNode, cpgAdapter)
     astToCpgConverter.convert(classDefStatement)
@@ -66,7 +70,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory, structureCpg: CpgS
     * Callback triggered for every global identifier declaration
     * */
   override def visit(identifierDeclStmt: IdentifierDeclStatement): Unit = {
-    val cpgAdapter = new ProtoCpgAdapter(structureCpg)
+    val cpgAdapter = new ProtoCpgAdapter(structureCpg, keyPool)
     val astToCpgConverter =
       new AstToCpgConverter(astParentNode, cpgAdapter)
     astToCpgConverter.convert(identifierDeclStmt)

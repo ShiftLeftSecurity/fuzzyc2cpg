@@ -1,10 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.parser.modules;
 
-import java.util.Iterator;
 import java.util.List;
 
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
-import io.shiftleft.fuzzyc2cpg.parser.AstNodeFactory;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import io.shiftleft.fuzzyc2cpg.ModuleBaseListener;
