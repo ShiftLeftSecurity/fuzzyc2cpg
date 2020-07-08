@@ -98,6 +98,31 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     }
   }
 
+  def fileAndNamespaceGraph(filename: String, cpg: CpgStruct.Builder, keyPool : KeyPool) = {
+    val pathToFile = new java.io.File(filename).toPath
+    val fileNode = createFileNode(pathToFile, keyPool)
+    val namespaceBlock = createNamespaceBlockNode(Some(pathToFile), keyPool)
+    cpg.addNode(fileNode)
+    cpg.addNode(namespaceBlock)
+    cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
+    (fileNode, namespaceBlock)
+  }
+
+  def createFileNode(pathToFile: Path, keyPool : KeyPool): Node = {
+    newNode(NodeType.FILE)
+      .setKey(keyPool.next)
+      .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.normalize.toString)
+      .build()
+  }
+
+  def createNamespaceBlockNode(filePath: Option[Path], keyPool : KeyPool): Node = {
+    newNode(NodeType.NAMESPACE_BLOCK)
+      .setKey(keyPool.next)
+      .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
+      .addStringProperty(NodePropertyName.FULL_NAME, getGlobalNamespaceBlockFullName(filePath.map(_.toString)))
+      .build
+  }
+
   private def createStructuralCpg(filenames: Set[String], keyPool: KeyPool): Set[(String, NodesForFile)] = {
 
     def addMetaDataNode(cpg: CpgStruct.Builder): Unit = {
@@ -109,40 +134,16 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     }
 
     def addAnyTypeAndNamespaceBlock(cpg: CpgStruct.Builder): Unit = {
-      val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None)
+      val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None, keyPool)
       cpg.addNode(globalNamespaceBlockNotInFileNode)
     }
 
     def createNodesForFiles(cpg: CpgStruct.Builder): Set[(String, NodesForFile)] =
       filenames.map { filename =>
-        val (fileNode, namespaceBlock) = fileAndNamespaceGraph(filename, cpg)
+        val (fileNode, namespaceBlock) = fileAndNamespaceGraph(filename, cpg, keyPool)
         filename -> NodesForFile(fileNode, namespaceBlock)
       }
 
-    def fileAndNamespaceGraph(filename: String, cpg: CpgStruct.Builder) = {
-      val pathToFile = new java.io.File(filename).toPath
-      val fileNode = createFileNode(pathToFile)
-      val namespaceBlock = createNamespaceBlockNode(Some(pathToFile))
-      cpg.addNode(fileNode)
-      cpg.addNode(namespaceBlock)
-      cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
-      (fileNode, namespaceBlock)
-    }
-
-    def createFileNode(pathToFile: Path): Node = {
-      newNode(NodeType.FILE)
-        .setKey(keyPool.next)
-        .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.normalize.toString)
-        .build()
-    }
-
-    def createNamespaceBlockNode(filePath: Option[Path]): Node = {
-      newNode(NodeType.NAMESPACE_BLOCK)
-        .setKey(keyPool.next)
-        .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
-        .addStringProperty(NodePropertyName.FULL_NAME, getGlobalNamespaceBlockFullName(filePath.map(_.toString)))
-        .build
-    }
 
     val cpg = CpgStruct.newBuilder()
     addMetaDataNode(cpg)
