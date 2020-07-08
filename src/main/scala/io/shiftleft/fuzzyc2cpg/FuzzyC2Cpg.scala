@@ -13,7 +13,8 @@ import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.LinkedBlockingQueue
 
-import scala.collection.mutable
+import io.shiftleft.passes.KeyPool
+
 import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.CollectionConverters._
 import scala.util.control.NonFatal
@@ -73,7 +74,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String]): Unit = {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
-    val filenameToNodes = createStructuralCpg(sourceFileNames)
+    val filenameToNodes = createStructuralCpg(sourceFileNames, IdPool)
 
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
@@ -93,10 +94,11 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     }
   }
 
-  private def createStructuralCpg(filenames: Set[String]): Set[(String, NodesForFile)] = {
+  private def createStructuralCpg(filenames: Set[String], keyPool: KeyPool): Set[(String, NodesForFile)] = {
 
     def addMetaDataNode(cpg: CpgStruct.Builder): Unit = {
       val metaNode = newNode(NodeType.META_DATA)
+        .setKey(keyPool.next)
         .addStringProperty(NodePropertyName.LANGUAGE, Languages.C)
         .build
       cpg.addNode(metaNode)
@@ -109,6 +111,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
     def createFileNode(pathToFile: Path): Node = {
       newNode(NodeType.FILE)
+        .setKey(keyPool.next)
         .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.normalize.toString)
         .build()
     }
@@ -124,6 +127,14 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
         filename -> NodesForFile(fileNode, namespaceBlock)
       }
 
+    def createNamespaceBlockNode(filePath: Option[Path]): Node = {
+      newNode(NodeType.NAMESPACE_BLOCK)
+        .setKey(keyPool.next)
+        .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
+        .addStringProperty(NodePropertyName.FULL_NAME, getGlobalNamespaceBlockFullName(filePath.map(_.toString)))
+        .build
+    }
+
     val cpg = CpgStruct.newBuilder()
     addMetaDataNode(cpg)
     addAnyTypeAndNamespaceBlock(cpg)
@@ -134,16 +145,9 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     filenameToNodes
   }
 
-  case class NodesForFile(fileNode: CpgStruct.Node, namespaceBlockNode: CpgStruct.Node) {}
+  private case class NodesForFile(fileNode: CpgStruct.Node, namespaceBlockNode: CpgStruct.Node) {}
 
-  private def createNamespaceBlockNode(filePath: Option[Path]): Node = {
-    newNode(NodeType.NAMESPACE_BLOCK)
-      .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
-      .addStringProperty(NodePropertyName.FULL_NAME, getGlobalNamespaceBlockFullName(filePath.map(_.toString)))
-      .build
-  }
-
-  def createCpgForCompilationUnit(filenameAndNodes: (String, NodesForFile)): Unit = {
+  private def createCpgForCompilationUnit(filenameAndNodes: (String, NodesForFile)): Unit = {
     val (filename, nodesForFile) = filenameAndNodes
     val (fileNode, namespaceBlock) = (nodesForFile.fileNode, nodesForFile.namespaceBlockNode)
     val cpg = CpgStruct.newBuilder
@@ -153,10 +157,12 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     // will the invoked by `astVisitor` as we walk the tree
 
     val driver = new AntlrCModuleParserDriver()
+    val keyPool = IdPool
     val astVisitor =
-      new AstVisitor(outputModuleFactory, cpg, namespaceBlock)
+      new AstVisitor(outputModuleFactory, cpg, namespaceBlock, keyPool)
     driver.addObserver(astVisitor)
-    driver.setCpg(cpg);
+    driver.setCpg(cpg)
+    driver.setKeyPool(keyPool)
     driver.setFileNode(fileNode)
 
     try {
@@ -167,7 +173,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
         logger.warn("Complete exception: ", ex)
         return
       }
-      case ex: StackOverflowError => {
+      case _: StackOverflowError => {
         logger.warn("Cannot parse module: " + filename + ", skipping, StackOverflow")
         return
       }
@@ -178,52 +184,6 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       s"$filename types"
     )
     outputModule.persistCpg(cpg)
-  }
-
-}
-
-object FuzzyC2CpgCache {
-  private val functionDeclarations = new mutable.HashMap[String, mutable.ListBuffer[(String, CpgStruct.Builder)]]()
-
-  /**
-    * Unless `remove` has been called for `signature`, add (outputIdentifier, cpg)
-    * pair to the list declarations stored for `signature`.
-    * */
-  def add(signature: String, outputIdentifier: String, cpg: CpgStruct.Builder): Unit = {
-    functionDeclarations.synchronized {
-      if (functionDeclarations.contains(signature)) {
-        val declList = functionDeclarations(signature)
-        if (declList.nonEmpty) {
-          declList.append((outputIdentifier, cpg))
-        }
-      } else {
-        functionDeclarations.put(signature, mutable.ListBuffer((outputIdentifier, cpg)))
-      }
-    }
-  }
-
-  /**
-    * Register placeholder for `signature` to indicate that
-    * a function definition exists for this declaration, and
-    * therefore, no declaration should be written for functions
-    * with this signature.
-    * */
-  def remove(signature: String): Unit = {
-    functionDeclarations.synchronized {
-      functionDeclarations.remove(signature)
-    }
-  }
-
-  def sortedSignatures: List[String] = {
-    functionDeclarations.synchronized {
-      functionDeclarations.keySet.toList.sorted
-    }
-  }
-
-  def getDeclarations(signature: String): List[(String, CpgStruct.Builder)] = {
-    functionDeclarations.synchronized {
-      functionDeclarations(signature).toList
-    }
   }
 
 }

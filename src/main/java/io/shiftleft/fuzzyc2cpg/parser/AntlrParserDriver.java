@@ -4,13 +4,13 @@ import io.shiftleft.fuzzyc2cpg.Utils;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
+import io.shiftleft.passes.KeyPool;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 import java.util.function.Consumer;
 
-import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
 import io.shiftleft.proto.cpg.Cpg;
 import jdk.nashorn.internal.runtime.ParserException;
 import org.antlr.v4.runtime.*;
@@ -41,6 +41,7 @@ abstract public class AntlrParserDriver {
   private List<AntlrParserDriverObserver> observers = new ArrayList<>();
   private Cpg.CpgStruct.Builder cpg;
   private Cpg.CpgStruct.Node fileNode;
+  private KeyPool keyPool;
 
   public AntlrParserDriver() {
     super();
@@ -48,6 +49,10 @@ abstract public class AntlrParserDriver {
 
   public void setCpg(Cpg.CpgStruct.Builder cpg) {
     this.cpg = cpg;
+  }
+
+  public void setKeyPool(KeyPool keyPool) {
+    this.keyPool = keyPool;
   }
 
   public void setFileNode(Cpg.CpgStruct.Node fileNode) {
@@ -84,6 +89,7 @@ abstract public class AntlrParserDriver {
       // We can add to `CPG` here
 
       Cpg.CpgStruct.Node commentNode = Utils.newNode(Cpg.CpgStruct.Node.NodeType.COMMENT)
+              .setKey(keyPool.next())
               .addProperty(Cpg.CpgStruct.Node.Property.newBuilder()
                       .setName(Cpg.NodePropertyName.LINE_NUMBER)
                       .setValue(Cpg.PropertyValue.newBuilder().setIntValue(line)))

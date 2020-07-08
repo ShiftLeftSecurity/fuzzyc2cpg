@@ -1,20 +1,21 @@
 package io.shiftleft.fuzzyc2cpg.adapter
 
-import io.shiftleft.fuzzyc2cpg.IdPool
 import io.shiftleft.fuzzyc2cpg.Utils._
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeProperty.EdgeProperty
 import io.shiftleft.fuzzyc2cpg.adapter.NodeKind.NodeKind
 import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
+import io.shiftleft.passes.KeyPool
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 
-class ProtoCpgAdapter(targetCpg: CpgStruct.Builder) extends CpgAdapter[Node.Builder, Node, Edge.Builder, Edge] {
+class ProtoCpgAdapter(targetCpg: CpgStruct.Builder, keyPool: KeyPool)
+    extends CpgAdapter[Node.Builder, Node, Edge.Builder, Edge] {
   private var astToProtoMapping = Map.empty[AstNode, Node]
 
   override def createNodeBuilder(kind: NodeKind): Node.Builder = {
-    Node.newBuilder().setType(translateNodeKind(kind)).setKey(IdPool.getNextId)
+    Node.newBuilder().setType(translateNodeKind(kind)).setKey(keyPool.next)
   }
 
   override def createNode(nodeBuilder: Node.Builder): Node = {

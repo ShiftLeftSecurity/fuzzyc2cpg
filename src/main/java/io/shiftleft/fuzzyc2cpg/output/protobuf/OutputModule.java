@@ -17,12 +17,10 @@ import java.nio.file.Paths;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class OutputModule implements CpgOutputModule {
-  private Logger logger = LoggerFactory.getLogger(getClass());
-  private static String ProtoSuffix = ".bin";
+  private final Logger logger = LoggerFactory.getLogger(getClass());
 
   private final Path protoTempDir;
-
-  private boolean writeToDisk;
+  private final boolean writeToDisk;
 
   private String outputIdentifier;
 
@@ -94,6 +92,7 @@ public class OutputModule implements CpgOutputModule {
     hasher.putUnencodedChars(outputIdentifier);
     hasher.putInt(postfix);
 
-    return protoTempDir.toString() + File.separator + hasher.hash() + ProtoSuffix;
+    String protoSuffix = ".bin";
+    return protoTempDir.toString() + File.separator + hasher.hash() + protoSuffix;
   }
 }

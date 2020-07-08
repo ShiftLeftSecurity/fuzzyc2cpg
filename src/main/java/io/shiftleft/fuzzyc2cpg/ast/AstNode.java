@@ -1,6 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.ast;
 
-import io.shiftleft.fuzzyc2cpg.ast.expressions.Expression;
 import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor;
 
 import java.util.ArrayList;
@@ -119,10 +118,6 @@ public class AstNode {
     code = aCodeStr;
   }
 
-  public String getLocationString() {
-    return this.location.toString();
-  }
-
   public CodeLocation getLocation() {
     return this.location;
   }
@@ -135,19 +130,8 @@ public class AstNode {
     return this.getClass().getSimpleName();
   }
 
-  public String getFullTypeName() {
-    return this.getClass().getName();
-  }
-
 
   /* special methods */
-
-  public String getOperatorCode() {
-    if (Expression.class.isAssignableFrom(this.getClass())) {
-      return ((Expression) this).getOperator();
-    }
-    return null;
-  }
 
   public void accept(ASTNodeVisitor visitor) {
     visitor.visit(this);

@@ -1,6 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.ast.declarations;
 
-import io.shiftleft.fuzzyc2cpg.CommonParser;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.DummyIdentifierNode;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
