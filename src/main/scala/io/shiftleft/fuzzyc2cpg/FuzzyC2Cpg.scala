@@ -77,26 +77,19 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     val keyPools = KeyPools.obtain(sourceFileNames.size.toLong + 1)
     val cpg = CpgStruct.newBuilder()
     createStructuralCpg(keyPools.head, cpg)
-    val filenameToNodes = createNodesForFiles(sourceFileNames, cpg, keyPools.head)
     val outputModule = outputModuleFactory.create()
     outputModule.setOutputIdentifier("__structural__")
     outputModule.persistCpg(cpg)
 
     // TODO improve fuzzyc2cpg namespace support. Currently, everything
     // is in the same global namespace so the code below is correctly.
-    filenameToNodes.zipWithIndex
-      .map { case ((filename, nodesForFile), i) => (filename, nodesForFile, keyPools(i + 1)) }
+    sourceFileNames.zipWithIndex
+      .map { case (filename, i) => (filename, keyPools(i + 1)) }
       .par
       .foreach(createCpgForCompilationUnit)
     addFunctionDeclarations()
     outputModuleFactory.persist()
   }
-
-  def createNodesForFiles(filenames : Set[String], cpg: CpgStruct.Builder, keyPool : KeyPool): Set[(String, NodesForFile)] =
-    filenames.map { filename =>
-      val (fileNode, namespaceBlock) = fileAndNamespaceGraph(filename, cpg, keyPool)
-      filename -> NodesForFile(fileNode, namespaceBlock)
-    }
 
   private def addFunctionDeclarations(): Unit = {
     FuzzyC2CpgCache.sortedSignatures.par.foreach { signature =>
@@ -109,24 +102,29 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     }
   }
 
-  def fileAndNamespaceGraph(filename: String, cpg: CpgStruct.Builder, keyPool : KeyPool) = {
+  def fileAndNamespaceGraph(filename: String, keyPool: KeyPool): (Node, Node) = {
+    val cpg = CpgStruct.newBuilder()
+    val outputModule = outputModuleFactory.create()
+    outputModule.setOutputIdentifier(filename + " fileAndNamespace")
+
     val pathToFile = new java.io.File(filename).toPath
     val fileNode = createFileNode(pathToFile, keyPool)
     val namespaceBlock = createNamespaceBlockNode(Some(pathToFile), keyPool)
     cpg.addNode(fileNode)
     cpg.addNode(namespaceBlock)
     cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
+    outputModule.persistCpg(cpg)
     (fileNode, namespaceBlock)
   }
 
-  def createFileNode(pathToFile: Path, keyPool : KeyPool): Node = {
+  def createFileNode(pathToFile: Path, keyPool: KeyPool): Node = {
     newNode(NodeType.FILE)
       .setKey(keyPool.next)
       .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.normalize.toString)
       .build()
   }
 
-  def createNamespaceBlockNode(filePath: Option[Path], keyPool : KeyPool): Node = {
+  def createNamespaceBlockNode(filePath: Option[Path], keyPool: KeyPool): Node = {
     newNode(NodeType.NAMESPACE_BLOCK)
       .setKey(keyPool.next)
       .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
@@ -134,7 +132,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       .build
   }
 
-  private def createStructuralCpg(keyPool: KeyPool, cpg : CpgStruct.Builder): Unit = {
+  private def createStructuralCpg(keyPool: KeyPool, cpg: CpgStruct.Builder): Unit = {
 
     def addMetaDataNode(cpg: CpgStruct.Builder): Unit = {
       val metaNode = newNode(NodeType.META_DATA)
@@ -155,15 +153,15 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   case class NodesForFile(fileNode: CpgStruct.Node, namespaceBlockNode: CpgStruct.Node) {}
 
-  private def createCpgForCompilationUnit(filenameAndNodes: (String, NodesForFile, KeyPool)): Unit = {
-    val (filename, nodesForFile, keyPool) = filenameAndNodes
-    val (fileNode, namespaceBlock) = (nodesForFile.fileNode, nodesForFile.namespaceBlockNode)
-    val cpg = CpgStruct.newBuilder
+  private def createCpgForCompilationUnit(filenameAndKeyPool: (String, KeyPool)): Unit = {
+    val (filename, keyPool) = filenameAndKeyPool
+    val (fileNode, namespaceBlock) = fileAndNamespaceGraph(filename, keyPool)
 
     // We call the module parser here and register the `astVisitor` to
     // receive callbacks as we walk the tree. The method body parser
     // will the invoked by `astVisitor` as we walk the tree
 
+    val cpg = CpgStruct.newBuilder
     val driver = new AntlrCModuleParserDriver()
     val astVisitor =
       new AstVisitor(outputModuleFactory, cpg, namespaceBlock, keyPool)
