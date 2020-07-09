@@ -12,12 +12,14 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.LinkedBlockingQueue
-
 import io.shiftleft.passes.KeyPool
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.CollectionConverters._
 import scala.util.control.NonFatal
+
+case class Global(usedTypes: mutable.Set[String] = new mutable.HashSet[String])
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
@@ -74,22 +76,36 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String]): Unit = {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
+    val keyPools = KeyPools.obtain(sourceFileNames.size.toLong + 2)
 
-    val keyPools = KeyPools.obtain(sourceFileNames.size.toLong + 1)
-    val cpg = CpgStruct.newBuilder()
-    createStructuralCpg(keyPools.head, cpg)
+    val fileAndNamespaceKeyPool = keyPools.head
+    val typesKeyPool = keyPools(1)
+    val compilationUnitKeyPools = keyPools.slice(2, keyPools.size)
+
+    addFilesAndNamespaces(fileAndNamespaceKeyPool)
+    val global = addCompilationUnits(sourceFileNames, compilationUnitKeyPools)
+    addFunctionDeclarations(cache)
+    addTypeNodes(global.usedTypes, typesKeyPool)
+    outputModuleFactory.persist()
+  }
+
+  private def addFilesAndNamespaces(keyPool: KeyPool): Unit = {
+    val fileAndNamespaceCpg = CpgStruct.newBuilder()
+    createStructuralCpg(keyPool, fileAndNamespaceCpg)
     val outputModule = outputModuleFactory.create()
     outputModule.setOutputIdentifier("__structural__")
-    outputModule.persistCpg(cpg)
+    outputModule.persistCpg(fileAndNamespaceCpg)
+  }
 
-    // TODO improve fuzzyc2cpg namespace support. Currently, everything
-    // is in the same global namespace so the code below is correct.
+  // TODO improve fuzzyc2cpg namespace support. Currently, everything
+  // is in the same global namespace so the code below is correct.
+  private def addCompilationUnits(sourceFileNames: List[String], keyPools: List[KeyPool]): Global = {
+    val global = Global()
     sourceFileNames.zipWithIndex
-      .map { case (filename, i) => (filename, keyPools(i + 1)) }
+      .map { case (filename, i) => (filename, keyPools(i)) }
       .par
-      .foreach { case (filename, keyPool) => createCpgForCompilationUnit(filename, keyPool) }
-    addFunctionDeclarations(cache)
-    outputModuleFactory.persist()
+      .foreach { case (filename, keyPool) => createCpgForCompilationUnit(filename, keyPool, global) }
+    global
   }
 
   private def addFunctionDeclarations(cache: FuzzyC2CpgCache): Unit = {
@@ -103,7 +119,23 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     }
   }
 
-  def fileAndNamespaceGraph(filename: String, keyPool: KeyPool): (Node, Node) = {
+  private def addTypeNodes(usedTypes: mutable.Set[String], keyPool: KeyPool): Unit = {
+    val cpg = CpgStruct.newBuilder()
+    val outputModule = outputModuleFactory.create()
+    outputModule.setOutputIdentifier("__types__")
+    createTypeNodes(usedTypes, keyPool, cpg)
+    outputModule.persistCpg(cpg)
+  }
+
+  private def fileAndNamespaceGraph(filename: String, keyPool: KeyPool): (Node, Node) = {
+
+    def createFileNode(pathToFile: Path, keyPool: KeyPool): Node = {
+      newNode(NodeType.FILE)
+        .setKey(keyPool.next)
+        .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.normalize.toString)
+        .build()
+    }
+
     val cpg = CpgStruct.newBuilder()
     val outputModule = outputModuleFactory.create()
     outputModule.setOutputIdentifier(filename + " fileAndNamespace")
@@ -118,19 +150,25 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     (fileNode, namespaceBlock)
   }
 
-  def createFileNode(pathToFile: Path, keyPool: KeyPool): Node = {
-    newNode(NodeType.FILE)
-      .setKey(keyPool.next)
-      .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.normalize.toString)
-      .build()
-  }
-
-  def createNamespaceBlockNode(filePath: Option[Path], keyPool: KeyPool): Node = {
+  private def createNamespaceBlockNode(filePath: Option[Path], keyPool: KeyPool): Node = {
     newNode(NodeType.NAMESPACE_BLOCK)
       .setKey(keyPool.next)
       .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
       .addStringProperty(NodePropertyName.FULL_NAME, getGlobalNamespaceBlockFullName(filePath.map(_.toString)))
       .build
+  }
+
+  private def createTypeNodes(usedTypes: mutable.Set[String], keyPool: KeyPool, cpg: CpgStruct.Builder): Unit = {
+    usedTypes.toList.sorted
+      .foreach { typeName =>
+        val node = newNode(NodeType.TYPE)
+          .setKey(keyPool.next)
+          .addStringProperty(NodePropertyName.NAME, typeName)
+          .addStringProperty(NodePropertyName.FULL_NAME, typeName)
+          .addStringProperty(NodePropertyName.TYPE_DECL_FULL_NAME, typeName)
+          .build
+        cpg.addNode(node)
+      }
   }
 
   private def createStructuralCpg(keyPool: KeyPool, cpg: CpgStruct.Builder): Unit = {
@@ -152,7 +190,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     addAnyTypeAndNamespaceBlock(cpg)
   }
 
-  private def createCpgForCompilationUnit(filename: String, keyPool: KeyPool): Unit = {
+  private def createCpgForCompilationUnit(filename: String, keyPool: KeyPool, global: Global): Unit = {
     val (fileNode, namespaceBlock) = fileAndNamespaceGraph(filename, keyPool)
 
     // We call the module parser here and register the `astVisitor` to
@@ -162,7 +200,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     val cpg = CpgStruct.newBuilder
     val driver = new AntlrCModuleParserDriver()
     val astVisitor =
-      new AstVisitor(outputModuleFactory, cpg, namespaceBlock, keyPool, cache)
+      new AstVisitor(outputModuleFactory, cpg, namespaceBlock, keyPool, cache, global)
     driver.addObserver(astVisitor)
     driver.setCpg(cpg)
     driver.setKeyPool(keyPool)

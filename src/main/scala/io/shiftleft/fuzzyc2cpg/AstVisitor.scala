@@ -21,7 +21,8 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
                  structureCpg: CpgStruct.Builder,
                  astParentNode: Node,
                  keyPool: KeyPool,
-                 cache: FuzzyC2CpgCache)
+                 cache: FuzzyC2CpgCache,
+                 global: Global)
     extends ASTNodeVisitor
     with AntlrParserDriverObserver {
   private var fileNameOption = Option.empty[String]
@@ -38,7 +39,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
     val bodyCpg = CpgStruct.newBuilder()
     val cpgAdapter = new ProtoCpgAdapter(bodyCpg, keyPool)
     val astToCpgConverter =
-      new AstToCpgConverter(astParentNode, cpgAdapter)
+      new AstToCpgConverter(astParentNode, cpgAdapter, global)
     astToCpgConverter.convert(functionDef)
 
     val astToCfgConverter =
@@ -63,7 +64,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
   override def visit(classDefStatement: ClassDefStatement): Unit = {
     val cpgAdapter = new ProtoCpgAdapter(structureCpg, keyPool)
     val astToCpgConverter =
-      new AstToCpgConverter(astParentNode, cpgAdapter)
+      new AstToCpgConverter(astParentNode, cpgAdapter, global)
     astToCpgConverter.convert(classDefStatement)
   }
 
@@ -73,7 +74,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
   override def visit(identifierDeclStmt: IdentifierDeclStatement): Unit = {
     val cpgAdapter = new ProtoCpgAdapter(structureCpg, keyPool)
     val astToCpgConverter =
-      new AstToCpgConverter(astParentNode, cpgAdapter)
+      new AstToCpgConverter(astParentNode, cpgAdapter, global)
     astToCpgConverter.convert(identifierDeclStmt)
   }
 

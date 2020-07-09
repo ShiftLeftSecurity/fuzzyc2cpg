@@ -20,17 +20,13 @@ class StableOutputTests extends WordSpec with Matchers {
 
   "Nodes in test graph" should {
     "should be exactly the same on ten consecutive runs" in {
-      val nodes = List
+      List
         .range(0, 10)
         .map { _ =>
           createNodeStrings()
         }
         .distinct
-
-      nodes.foreach { n =>
-        println(n)
-        println("===")
-      }
+        .size shouldBe 1
     }
   }
 

@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg.astnew
 
 import scala.jdk.CollectionConverters._
 import io.shiftleft.codepropertygraph.generated.{EvaluationStrategies, Operators}
-import io.shiftleft.fuzzyc2cpg.Defines
+import io.shiftleft.fuzzyc2cpg.{Defines, Global}
 import io.shiftleft.fuzzyc2cpg.adapter.{CpgAdapter, EdgeKind, NodeKind, NodeProperty}
 import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.ast.AstNode
@@ -27,7 +27,8 @@ object AstToCpgConverter {
 
 class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
     cpgParent: NodeType,
-    adapter: CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType])
+    adapter: CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType],
+    global: Global)
     extends ASTNodeVisitor {
   import AstToCpgConverter._
 
@@ -35,7 +36,6 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   private val scope = new Scope[String, (NodeType, String), NodeType]()
   private var methodNode = Option.empty[NodeType]
   private var methodReturnNode = Option.empty[NodeType]
-  private var typeNames = Set.empty[String]
 
   pushContext(cpgParent, 1)
 
@@ -116,7 +116,6 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
 
   def convert(astNode: AstNode): Unit = {
     astNode.accept(this)
-    createTypeNodes()
   }
 
   override def visit(astFunction: FunctionDefBase): Unit = {
@@ -883,19 +882,8 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   }
 
   private def registerType(typeName: String): String = {
-    typeNames += typeName
+    global.usedTypes += typeName
     typeName
-  }
-
-  private def createTypeNodes(): Unit = {
-    typeNames.foreach { typeName =>
-      adapter
-        .createNodeBuilder(NodeKind.TYPE)
-        .addProperty(NodeProperty.NAME, typeName)
-        .addProperty(NodeProperty.FULL_NAME, typeName)
-        .addProperty(NodeProperty.TYPE_DECL_FULL_NAME, typeName)
-        .createNode()
-    }
   }
 
   // TODO Implement this method properly, the current implementation is just a
