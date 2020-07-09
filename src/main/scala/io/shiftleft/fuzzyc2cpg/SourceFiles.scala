@@ -8,7 +8,7 @@ object SourceFiles {
     * For a given array of input paths, determine all C/C++
     * source files by inspecting filename extensions.
     * */
-  def determine(inputPaths: Set[String], sourceFileExtensions: Set[String]): Set[String] = {
+  def determine(inputPaths: Set[String], sourceFileExtensions: Set[String]): List[String] = {
     def hasSourceFileExtension(file: File): Boolean =
       file.extension.exists(sourceFileExtensions.contains)
 
@@ -21,6 +21,6 @@ object SourceFiles {
       .flatMap(_.listRecursively.filter(hasSourceFileExtension))
       .map(_.toString)
 
-    matchingFiles ++ matchingFilesFromDirs
+    (matchingFiles ++ matchingFilesFromDirs).toList.sorted
   }
 }

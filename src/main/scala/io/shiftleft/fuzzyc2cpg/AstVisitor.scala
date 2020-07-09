@@ -18,12 +18,14 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import org.antlr.v4.runtime.ParserRuleContext
 
 class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
-                 structureCpg: CpgStruct.Builder,
                  astParentNode: Node,
-                 keyPool: KeyPool)
+                 keyPool: KeyPool,
+                 cache: FuzzyC2CpgCache,
+                 global: Global)
     extends ASTNodeVisitor
     with AntlrParserDriverObserver {
   private var fileNameOption = Option.empty[String]
+  private val structureCpg = CpgStruct.newBuilder()
 
   /**
     * Callback triggered for each function definition
@@ -37,7 +39,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
     val bodyCpg = CpgStruct.newBuilder()
     val cpgAdapter = new ProtoCpgAdapter(bodyCpg, keyPool)
     val astToCpgConverter =
-      new AstToCpgConverter(astParentNode, cpgAdapter)
+      new AstToCpgConverter(astParentNode, cpgAdapter, global)
     astToCpgConverter.convert(functionDef)
 
     val astToCfgConverter =
@@ -49,9 +51,9 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
       // corresponding definition, in which case the declaration will be
       // removed again and is never persisted. Persisting of declarations
       // happens after concurrent processing of compilation units.
-      FuzzyC2CpgCache.add(functionDef.getFunctionSignature(false), outputIdentifier, bodyCpg)
+      cache.add(functionDef.getFunctionSignature(false), outputIdentifier, bodyCpg)
     } else {
-      FuzzyC2CpgCache.remove(functionDef.getFunctionSignature(false))
+      cache.remove(functionDef.getFunctionSignature(false))
       outputModule.persistCpg(bodyCpg)
     }
   }
@@ -62,7 +64,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
   override def visit(classDefStatement: ClassDefStatement): Unit = {
     val cpgAdapter = new ProtoCpgAdapter(structureCpg, keyPool)
     val astToCpgConverter =
-      new AstToCpgConverter(astParentNode, cpgAdapter)
+      new AstToCpgConverter(astParentNode, cpgAdapter, global)
     astToCpgConverter.convert(classDefStatement)
   }
 
@@ -72,7 +74,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
   override def visit(identifierDeclStmt: IdentifierDeclStatement): Unit = {
     val cpgAdapter = new ProtoCpgAdapter(structureCpg, keyPool)
     val astToCpgConverter =
-      new AstToCpgConverter(astParentNode, cpgAdapter)
+      new AstToCpgConverter(astParentNode, cpgAdapter, global)
     astToCpgConverter.convert(identifierDeclStmt)
   }
 
@@ -84,7 +86,12 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
     fileNameOption = Some(filename)
   }
 
-  override def endOfUnit(ctx: ParserRuleContext, filename: String): Unit = {}
+  override def endOfUnit(ctx: ParserRuleContext, filename: String): Unit = {
+    val identifier = s"$filename types"
+    val outputModule = outputModuleFactory.create()
+    outputModule.setOutputIdentifier(identifier)
+    outputModule.persistCpg(structureCpg)
+  }
 
   override def processItem[T <: AstNode](node: T, builderStack: util.Stack[AstNodeBuilder[_ <: AstNode]]): Unit = {
     node.accept(this)

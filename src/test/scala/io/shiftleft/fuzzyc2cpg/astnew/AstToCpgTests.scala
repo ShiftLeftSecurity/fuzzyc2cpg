@@ -4,9 +4,8 @@ import gremlin.scala._
 import org.antlr.v4.runtime.{CharStreams, ParserRuleContext}
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
 import org.scalatest.{Matchers, WordSpec}
-
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
-import io.shiftleft.fuzzyc2cpg.ModuleLexer
+import io.shiftleft.fuzzyc2cpg.{Global, ModuleLexer}
 import io.shiftleft.fuzzyc2cpg.adapter.CpgAdapter
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeProperty.EdgeProperty
@@ -128,8 +127,9 @@ class AstToCpgTests extends WordSpec with Matchers {
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
 
+    val global = Global()
     nodes.foreach { node =>
-      val astToProtoConverter = new AstToCpgConverter(astParentNode, cpgAdapter)
+      val astToProtoConverter = new AstToCpgConverter(astParentNode, cpgAdapter, global)
       astToProtoConverter.convert(node)
     }
 
