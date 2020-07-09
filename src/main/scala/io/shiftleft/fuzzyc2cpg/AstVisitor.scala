@@ -34,7 +34,6 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
     val outputModule = outputModuleFactory.create()
     val outputIdentifier = s"${fileNameOption.get}${functionDef.getName}" +
       s"${functionDef.getLocation.startLine}${functionDef.getLocation.endLine}"
-    outputModule.setOutputIdentifier(outputIdentifier)
 
     val bodyCpg = CpgStruct.newBuilder()
     val cpgAdapter = new ProtoCpgAdapter(bodyCpg, keyPool)
@@ -54,7 +53,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
       cache.add(functionDef.getFunctionSignature(false), outputIdentifier, bodyCpg)
     } else {
       cache.remove(functionDef.getFunctionSignature(false))
-      outputModule.persistCpg(bodyCpg)
+      outputModule.persistCpg(bodyCpg, outputIdentifier)
     }
   }
 
@@ -89,8 +88,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
   override def endOfUnit(ctx: ParserRuleContext, filename: String): Unit = {
     val identifier = s"$filename types"
     val outputModule = outputModuleFactory.create()
-    outputModule.setOutputIdentifier(identifier)
-    outputModule.persistCpg(structureCpg)
+    outputModule.persistCpg(structureCpg, identifier)
   }
 
   override def processItem[T <: AstNode](node: T, builderStack: util.Stack[AstNodeBuilder[_ <: AstNode]]): Unit = {

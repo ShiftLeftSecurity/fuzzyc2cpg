@@ -7,8 +7,6 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct
 
 class OutputModule(queue: BlockingQueue[CpgStruct.Builder]) extends CpgOutputModule {
 
-  override def setOutputIdentifier(identifier: String): Unit = {}
-
-  override def persistCpg(cpg: CpgStruct.Builder): Unit = queue.add(cpg)
+  override def persistCpg(cpg: CpgStruct.Builder, identifier: String): Unit = queue.add(cpg)
 
 }

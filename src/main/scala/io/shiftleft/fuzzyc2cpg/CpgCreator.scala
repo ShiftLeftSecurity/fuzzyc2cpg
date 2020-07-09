@@ -53,10 +53,7 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
     val cpg = CpgStruct.newBuilder()
     addMetaDataNode(cpg)
     addAnyTypeAndNamespaceBlock(cpg)
-
-    val outputModule = outputModuleFactory.create()
-    outputModule.setOutputIdentifier("__structural__")
-    outputModule.persistCpg(cpg)
+    outputModuleFactory.create().persistCpg(cpg, "__structural__")
   }
 
   // TODO improve fuzzyc2cpg namespace support. Currently, everything
@@ -100,19 +97,15 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
     cache.sortedSignatures.par.foreach { signature =>
       cache.getDeclarations(signature).foreach {
         case (outputIdentifier, bodyCpg) =>
-          val outputModule = outputModuleFactory.create()
-          outputModule.setOutputIdentifier(outputIdentifier)
-          outputModule.persistCpg(bodyCpg)
+          outputModuleFactory.create().persistCpg(bodyCpg, outputIdentifier)
       }
     }
   }
 
   private def addTypeNodes(usedTypes: mutable.Set[String], keyPool: KeyPool): Unit = {
     val cpg = CpgStruct.newBuilder()
-    val outputModule = outputModuleFactory.create()
-    outputModule.setOutputIdentifier("__types__")
     createTypeNodes(usedTypes, keyPool, cpg)
-    outputModule.persistCpg(cpg)
+    outputModuleFactory.create().persistCpg(cpg, "__types__")
   }
 
   private def fileAndNamespaceGraph(filename: String, keyPool: KeyPool): (Node, Node) = {
@@ -125,8 +118,6 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
     }
 
     val cpg = CpgStruct.newBuilder()
-    val outputModule = outputModuleFactory.create()
-    outputModule.setOutputIdentifier(filename + " fileAndNamespace")
 
     val pathToFile = new java.io.File(filename).toPath
     val fileNode = createFileNode(pathToFile, keyPool)
@@ -134,7 +125,7 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
     cpg.addNode(fileNode)
     cpg.addNode(namespaceBlock)
     cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
-    outputModule.persistCpg(cpg)
+    outputModuleFactory.create().persistCpg(cpg, filename + " fileAndNamespace")
     (fileNode, namespaceBlock)
   }
 

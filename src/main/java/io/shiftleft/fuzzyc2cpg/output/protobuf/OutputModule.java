@@ -22,17 +22,10 @@ public class OutputModule implements CpgOutputModule {
   private final Path protoTempDir;
   private final boolean writeToDisk;
 
-  private String outputIdentifier;
-
   public OutputModule(boolean writeToDisk,
                       Path protoTempDir) {
     this.writeToDisk = writeToDisk;
     this.protoTempDir = protoTempDir;
-  }
-
-  @Override
-  public void setOutputIdentifier(String identifier) {
-    outputIdentifier = identifier;
   }
 
   /**
@@ -42,10 +35,10 @@ public class OutputModule implements CpgOutputModule {
    * */
 
   @Override
-  public void persistCpg(CpgStruct.Builder cpg) throws IOException {
+  public void persistCpg(CpgStruct.Builder cpg, String identifier) throws IOException {
     CpgStruct buildCpg = cpg.build();
     if (writeToDisk) {
-      String outputFilename = getOutputFileName();
+      String outputFilename = getOutputFileName(identifier);
       try (FileOutputStream outStream = new FileOutputStream(outputFilename)) {
         buildCpg.writeTo(outStream);
       }
@@ -58,14 +51,14 @@ public class OutputModule implements CpgOutputModule {
    * In case we have a hash collision, the resulting cpg part file names will not
    * be identical over different java2cpg runs.
    */
-  private String getOutputFileName() {
+  private String getOutputFileName(String outputIdentifier) {
     String outputFilename = null;
     int postfix = 0;
     boolean fileExists = true;
     int resolveAttemptCounter = 0;
 
     while (fileExists && resolveAttemptCounter < 10) {
-      outputFilename = generateOutputFilename(postfix);
+      outputFilename = generateOutputFilename(postfix, outputIdentifier);
       if (Files.exists(Paths.get(outputFilename))) {
         postfix = ThreadLocalRandom.current().nextInt(0, 100000);
 
@@ -85,7 +78,7 @@ public class OutputModule implements CpgOutputModule {
     return outputFilename;
   }
 
-  private String generateOutputFilename(int postfix) {
+  private String generateOutputFilename(int postfix, String outputIdentifier) {
     HashFunction hashFunction = Hashing.murmur3_128();
 
     Hasher hasher = hashFunction.newHasher();

@@ -23,10 +23,7 @@ public class OutputModule implements CpgOutputModule {
   }
 
   @Override
-  public void setOutputIdentifier(String identifier) { }
-
-  @Override
-  public void persistCpg(CpgStruct.Builder cpg) {
+  public void persistCpg(CpgStruct.Builder cpg, String identifier) {
     synchronized (cpgBuilders) {
       cpgBuilders.add(cpg);
     }
