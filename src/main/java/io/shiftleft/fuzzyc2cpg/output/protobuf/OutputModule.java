@@ -4,6 +4,9 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
+import io.shiftleft.fuzzyc2cpg.output.overflowdb.DiffGraphAndKeyPool;
+import io.shiftleft.passes.DiffGraph;
+import io.shiftleft.passes.KeyPool;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +46,13 @@ public class OutputModule implements CpgOutputModule {
         buildCpg.writeTo(outStream);
       }
     }
+  }
+
+  @Override
+  public void persistCpg(DiffGraph diffGraph, KeyPool keyPool, String identifier) throws IOException {
+    // TODO ... we would need to translate diffgraphs into CpgStruct here
+    // Biggest problem is that diffgraphs do not have ids on nodes. We would
+    // have to construct a custom KeyPool that returns the correct ids.
   }
 
   /**

@@ -3,6 +3,9 @@ package io.shiftleft.fuzzyc2cpg.output.inmemory;
 import io.shiftleft.codepropertygraph.Cpg;
 import io.shiftleft.codepropertygraph.cpgloading.ProtoCpgLoader;
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
+import io.shiftleft.passes.DiffGraph;
+import io.shiftleft.passes.KeyPool;
+import java.io.IOException;
 import overflowdb.OdbConfig;
 import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 
@@ -27,6 +30,11 @@ public class OutputModule implements CpgOutputModule {
     synchronized (cpgBuilders) {
       cpgBuilders.add(cpg);
     }
+  }
+
+  @Override
+  public void persistCpg(DiffGraph diffGraph, KeyPool keyPool, String identifier) throws IOException {
+    // TODO
   }
 
   public void persist() {

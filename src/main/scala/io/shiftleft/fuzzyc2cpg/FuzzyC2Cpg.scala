@@ -1,12 +1,14 @@
 package io.shiftleft.fuzzyc2cpg
 
 import org.slf4j.LoggerFactory
-
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.fuzzyc2cpg.output.protobuf.OutputModuleFactory
 import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import java.nio.file.Files
 import java.util.concurrent.LinkedBlockingQueue
+
+import io.shiftleft.fuzzyc2cpg.output.overflowdb.DiffGraphAndKeyPool
+import io.shiftleft.passes.DiffGraph
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -82,13 +84,13 @@ object FuzzyC2Cpg {
     parseConfig(args).foreach { config =>
       try {
 
-        val factory = if (!config.overflowDb) {
-          new OutputModuleFactory(config.outputPath, true)
-            .asInstanceOf[CpgOutputModuleFactory]
-        } else {
-          val queue = new LinkedBlockingQueue[CpgStruct.Builder]()
-          new io.shiftleft.fuzzyc2cpg.output.overflowdb.OutputModuleFactory(config.outputPath, queue)
-        }
+      val factory = if (!config.overflowDb) {
+        new OutputModuleFactory(config.outputPath, true)
+          .asInstanceOf[CpgOutputModuleFactory]
+      } else {
+        val queue = new LinkedBlockingQueue[Either[CpgStruct.Builder, DiffGraphAndKeyPool]]()
+        new io.shiftleft.fuzzyc2cpg.output.overflowdb.OutputModuleFactory(config.outputPath, queue)
+      }
 
         val fuzzyc = new FuzzyC2Cpg(factory)
 
