@@ -20,7 +20,8 @@ import org.antlr.v4.runtime.ParserRuleContext
 class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
                  structureCpg: CpgStruct.Builder,
                  astParentNode: Node,
-                 keyPool: KeyPool)
+                 keyPool: KeyPool,
+                 cache: FuzzyC2CpgCache)
     extends ASTNodeVisitor
     with AntlrParserDriverObserver {
   private var fileNameOption = Option.empty[String]
@@ -49,9 +50,9 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
       // corresponding definition, in which case the declaration will be
       // removed again and is never persisted. Persisting of declarations
       // happens after concurrent processing of compilation units.
-      FuzzyC2CpgCache.add(functionDef.getFunctionSignature(false), outputIdentifier, bodyCpg)
+      cache.add(functionDef.getFunctionSignature(false), outputIdentifier, bodyCpg)
     } else {
-      FuzzyC2CpgCache.remove(functionDef.getFunctionSignature(false))
+      cache.remove(functionDef.getFunctionSignature(false))
       outputModule.persistCpg(bodyCpg)
     }
   }

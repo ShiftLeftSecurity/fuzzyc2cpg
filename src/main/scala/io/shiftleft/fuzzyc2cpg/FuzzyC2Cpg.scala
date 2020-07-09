@@ -25,6 +25,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     this(new OutputModuleFactory(outputPath, true).asInstanceOf[CpgOutputModuleFactory])
   }
 
+  private val cache = new FuzzyC2CpgCache
   private val logger = LoggerFactory.getLogger(getClass)
 
   def runWithPreprocessorAndOutput(sourcePaths: Set[String],
@@ -87,13 +88,13 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       .map { case (filename, i) => (filename, keyPools(i + 1)) }
       .par
       .foreach { case (filename, keyPool) => createCpgForCompilationUnit(filename, keyPool) }
-    addFunctionDeclarations()
+    addFunctionDeclarations(cache)
     outputModuleFactory.persist()
   }
 
-  private def addFunctionDeclarations(): Unit = {
-    FuzzyC2CpgCache.sortedSignatures.par.foreach { signature =>
-      FuzzyC2CpgCache.getDeclarations(signature).foreach {
+  private def addFunctionDeclarations(cache: FuzzyC2CpgCache): Unit = {
+    cache.sortedSignatures.par.foreach { signature =>
+      cache.getDeclarations(signature).foreach {
         case (outputIdentifier, bodyCpg) =>
           val outputModule = outputModuleFactory.create()
           outputModule.setOutputIdentifier(outputIdentifier)
@@ -161,7 +162,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     val cpg = CpgStruct.newBuilder
     val driver = new AntlrCModuleParserDriver()
     val astVisitor =
-      new AstVisitor(outputModuleFactory, cpg, namespaceBlock, keyPool)
+      new AstVisitor(outputModuleFactory, cpg, namespaceBlock, keyPool, cache)
     driver.addObserver(astVisitor)
     driver.setCpg(cpg)
     driver.setKeyPool(keyPool)

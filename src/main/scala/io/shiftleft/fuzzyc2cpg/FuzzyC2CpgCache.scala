@@ -4,7 +4,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct
 
 import scala.collection.mutable
 
-object FuzzyC2CpgCache {
+class FuzzyC2CpgCache {
   private val functionDeclarations = new mutable.HashMap[String, mutable.ListBuffer[(String, CpgStruct.Builder)]]()
 
   /**
@@ -15,6 +15,10 @@ object FuzzyC2CpgCache {
     functionDeclarations.synchronized {
       if (functionDeclarations.contains(signature)) {
         val declList = functionDeclarations(signature)
+        // null is the placeholder that indicates that we've removed
+        // a function with this signature before, and hence, we do
+        // not need to add it again
+        if (declList == null) return
         if (declList.nonEmpty) {
           declList.append((outputIdentifier, cpg))
         }
@@ -32,19 +36,19 @@ object FuzzyC2CpgCache {
     * */
   def remove(signature: String): Unit = {
     functionDeclarations.synchronized {
-      functionDeclarations.remove(signature)
+      functionDeclarations.put(signature, null)
     }
   }
 
   def sortedSignatures: List[String] = {
     functionDeclarations.synchronized {
-      functionDeclarations.keySet.toList.sorted
+      functionDeclarations.filter(_._2 != null).keySet.toList.sorted
     }
   }
 
   def getDeclarations(signature: String): List[(String, CpgStruct.Builder)] = {
     functionDeclarations.synchronized {
-      functionDeclarations(signature).toList
+      functionDeclarations(signature).toList.filter(_._2 != null)
     }
   }
 
