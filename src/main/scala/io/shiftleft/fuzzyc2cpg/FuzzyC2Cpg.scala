@@ -76,16 +76,15 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
   def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String]): Unit = {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
-    val keyPools = KeyPools.obtain(sourceFileNames.size.toLong + 2)
 
-    val fileAndNamespaceKeyPool = keyPools.head
-    val typesKeyPool = keyPools(1)
-    val compilationUnitKeyPools = keyPools.slice(2, keyPools.size)
+    val keyPools = KeyPools.obtain(sourceFileNames.size.toLong + 1)
+    val globalKeyPool = keyPools.head
+    val compilationUnitKeyPools = keyPools.slice(1, keyPools.size)
 
-    addFilesAndNamespaces(fileAndNamespaceKeyPool)
+    addFilesAndNamespaces(globalKeyPool)
     val global = addCompilationUnits(sourceFileNames, compilationUnitKeyPools)
     addFunctionDeclarations(cache)
-    addTypeNodes(global.usedTypes, typesKeyPool)
+    addTypeNodes(global.usedTypes, globalKeyPool)
     outputModuleFactory.persist()
   }
 
