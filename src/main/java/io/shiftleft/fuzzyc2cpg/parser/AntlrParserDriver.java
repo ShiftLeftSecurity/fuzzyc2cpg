@@ -4,7 +4,10 @@ import io.shiftleft.fuzzyc2cpg.Utils;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
+import io.shiftleft.fuzzyc2cpg.output.CpgOutputModule;
+import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
 import io.shiftleft.passes.KeyPool;
+import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,16 +42,17 @@ abstract public class AntlrParserDriver {
   private CommonParserContext context = null;
 
   private List<AntlrParserDriverObserver> observers = new ArrayList<>();
-  private Cpg.CpgStruct.Builder cpg;
+  private Cpg.CpgStruct.Builder cpg = CpgStruct.newBuilder();
   private Cpg.CpgStruct.Node fileNode;
   private KeyPool keyPool;
+  private CpgOutputModuleFactory outputModuleFactory;
 
   public AntlrParserDriver() {
     super();
   }
 
-  public void setCpg(Cpg.CpgStruct.Builder cpg) {
-    this.cpg = cpg;
+  public void setOutputModuleFactory(CpgOutputModuleFactory factory) {
+    this.outputModuleFactory = factory;
   }
 
   public void setKeyPool(KeyPool keyPool) {
@@ -63,13 +67,19 @@ abstract public class AntlrParserDriver {
 
   public abstract Lexer createLexer(CharStream input);
 
-  public void parseAndWalkFile(String filename) throws ParserException {
+  public void parseAndWalkFile(String filename) throws ParserException, IOException {
     handleHiddenTokens(filename);
     TokenSubStream stream = createTokenStreamFromFile(filename);
     initializeContextWithFile(filename, stream);
 
     ParseTree tree = parseTokenStream(stream);
     walkTree(tree);
+
+    CpgOutputModule outputModule = outputModuleFactory.create();
+    outputModule.setOutputIdentifier(
+            filename + " driver"
+    );
+    outputModule.persistCpg(cpg);
   }
 
   private void handleHiddenTokens(String filename) {

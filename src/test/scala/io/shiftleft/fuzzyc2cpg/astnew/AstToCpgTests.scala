@@ -127,7 +127,7 @@ class AstToCpgTests extends WordSpec with Matchers {
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
 
-    val global = new Global()
+    val global = Global()
     nodes.foreach { node =>
       val astToProtoConverter = new AstToCpgConverter(astParentNode, cpgAdapter, global)
       astToProtoConverter.convert(node)

@@ -197,13 +197,12 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     // receive callbacks as we walk the tree. The method body parser
     // will the invoked by `astVisitor` as we walk the tree
 
-    val cpg = CpgStruct.newBuilder
     val driver = new AntlrCModuleParserDriver()
     val astVisitor =
-      new AstVisitor(outputModuleFactory, cpg, namespaceBlock, keyPool, cache, global)
+      new AstVisitor(outputModuleFactory, namespaceBlock, keyPool, cache, global)
     driver.addObserver(astVisitor)
-    driver.setCpg(cpg)
     driver.setKeyPool(keyPool)
+    driver.setOutputModuleFactory(outputModuleFactory)
     driver.setFileNode(fileNode)
 
     try {
@@ -212,19 +211,11 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       case ex: RuntimeException => {
         logger.warn("Cannot parse module: " + filename + ", skipping")
         logger.warn("Complete exception: ", ex)
-        return
       }
       case _: StackOverflowError => {
         logger.warn("Cannot parse module: " + filename + ", skipping, StackOverflow")
-        return
       }
     }
-
-    val outputModule = outputModuleFactory.create()
-    outputModule.setOutputIdentifier(
-      s"$filename types"
-    )
-    outputModule.persistCpg(cpg)
   }
 
 }
