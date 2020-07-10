@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory
 import scala.collection.parallel.CollectionConverters._
 import scala.collection.mutable
 
+case class Global(usedTypes: mutable.Set[String] = new mutable.HashSet[String])
+
 class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
 
   private val logger = LoggerFactory.getLogger(getClass)

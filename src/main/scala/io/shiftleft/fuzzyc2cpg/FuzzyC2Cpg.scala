@@ -7,12 +7,8 @@ import java.nio.file.Files
 import java.util.concurrent.LinkedBlockingQueue
 
 import io.shiftleft.fuzzyc2cpg.output.overflowdb.{DiffGraphAndKeyPool, OutputModuleFactory}
-
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
-
-case class Global(usedTypes: mutable.Set[String] = new mutable.HashSet[String])
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   import FuzzyC2Cpg.logger
