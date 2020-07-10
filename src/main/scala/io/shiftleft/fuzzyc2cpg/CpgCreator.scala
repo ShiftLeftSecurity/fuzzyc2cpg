@@ -40,23 +40,23 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
 
   private def addMetaDataAndPlaceholders(keyPool: KeyPool): Unit = {
 
-    def addMetaDataNode(cpg: CpgStruct.Builder): Unit = {
-      val metaNode = newNode(NodeType.META_DATA)
-        .setKey(keyPool.next)
-        .addStringProperty(NodePropertyName.LANGUAGE, Languages.C)
-        .build
-      cpg.addNode(metaNode)
+    def addMetaDataNode(diffGraph: DiffGraph.Builder): Unit = {
+      val metaNode = nodes.NewMetaData(language = Languages.C)
+      diffGraph.addNode(metaNode)
     }
 
-    def addAnyTypeAndNamespaceBlock(cpg: CpgStruct.Builder): Unit = {
-      val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None, keyPool)
-      cpg.addNode(globalNamespaceBlockNotInFileNode)
+    def addAnyTypeAndNamespaceBlock(diffGraph: DiffGraph.Builder): Unit = {
+      val node = nodes.NewNamespaceBlock(
+        name = Defines.globalNamespaceName,
+        fullName = getGlobalNamespaceBlockFullName(None)
+      )
+      diffGraph.addNode(node)
     }
 
-    val cpg = CpgStruct.newBuilder()
-    addMetaDataNode(cpg)
-    addAnyTypeAndNamespaceBlock(cpg)
-    outputModuleFactory.create().persistCpg(cpg)
+    val diffGraph = DiffGraph.newBuilder
+    addMetaDataNode(diffGraph)
+    addAnyTypeAndNamespaceBlock(diffGraph)
+    outputModuleFactory.create().persistCpg(diffGraph.build, keyPool)
   }
 
   // TODO improve fuzzyc2cpg namespace support. Currently, everything
