@@ -20,14 +20,14 @@ class OutputModule extends CpgOutputModule {
 
   def getInternalGraph: Cpg = new Cpg(protoToCpg.graph)
 
-  override def persistCpg(builder: CpgStruct.Builder, identifier: String): Unit = {
+  override def persistCpg(builder: CpgStruct.Builder): Unit = {
     cpgBuilders synchronized {
       cpgBuilders.addOne(Left(builder))
     }
   }
 
   @throws[IOException]
-  override def persistCpg(diffGraph: DiffGraph, keyPool: KeyPool, identifier: String): Unit = {
+  override def persistCpg(diffGraph: DiffGraph, keyPool: KeyPool): Unit = {
     cpgBuilders synchronized {
       cpgBuilders.addOne(Right(DiffGraphAndKeyPool(diffGraph, keyPool)))
     }

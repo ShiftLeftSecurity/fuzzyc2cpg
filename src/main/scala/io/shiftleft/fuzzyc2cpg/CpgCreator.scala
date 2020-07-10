@@ -21,7 +21,7 @@ case class Global(usedTypes: mutable.Set[String] = new mutable.HashSet[String])
 class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
 
   private val logger = LoggerFactory.getLogger(getClass)
-  private val cache = new FuzzyC2CpgCache
+  private val cache = new DeclarationCache
 
   def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String]): Unit = {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
@@ -55,7 +55,7 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
     val cpg = CpgStruct.newBuilder()
     addMetaDataNode(cpg)
     addAnyTypeAndNamespaceBlock(cpg)
-    outputModuleFactory.create().persistCpg(cpg, "__structural__")
+    outputModuleFactory.create().persistCpg(cpg)
   }
 
   // TODO improve fuzzyc2cpg namespace support. Currently, everything
@@ -95,11 +95,11 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
     }
   }
 
-  private def addFunctionDeclarations(cache: FuzzyC2CpgCache): Unit = {
+  private def addFunctionDeclarations(cache: DeclarationCache): Unit = {
     cache.sortedSignatures.par.foreach { signature =>
       cache.getDeclarations(signature).foreach {
-        case (outputIdentifier, bodyCpg) =>
-          outputModuleFactory.create().persistCpg(bodyCpg, outputIdentifier)
+        case (_, bodyCpg) =>
+          outputModuleFactory.create().persistCpg(bodyCpg)
       }
     }
   }
@@ -107,7 +107,7 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
   private def addTypeNodes(usedTypes: mutable.Set[String], keyPool: KeyPool): Unit = {
     val cpg = CpgStruct.newBuilder()
     createTypeNodes(usedTypes, keyPool, cpg)
-    outputModuleFactory.create().persistCpg(cpg, "__types__")
+    outputModuleFactory.create().persistCpg(cpg)
   }
 
   private def fileAndNamespaceGraph(filename: String, keyPool: KeyPool): (Node, Node) = {
@@ -127,7 +127,7 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
     cpg.addNode(fileNode)
     cpg.addNode(namespaceBlock)
     cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
-    outputModuleFactory.create().persistCpg(cpg, filename + " fileAndNamespace")
+    outputModuleFactory.create().persistCpg(cpg)
     (fileNode, namespaceBlock)
   }
 

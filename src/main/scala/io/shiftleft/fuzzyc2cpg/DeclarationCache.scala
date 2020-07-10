@@ -4,7 +4,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct
 
 import scala.collection.mutable
 
-class FuzzyC2CpgCache {
+class DeclarationCache {
   private val functionDeclarations = new mutable.HashMap[String, mutable.ListBuffer[(String, CpgStruct.Builder)]]()
 
   /**

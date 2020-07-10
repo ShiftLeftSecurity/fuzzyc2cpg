@@ -8,9 +8,9 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct
 
 class OutputModule(queue: BlockingQueue[Either[CpgStruct.Builder, DiffGraphAndKeyPool]]) extends CpgOutputModule {
 
-  override def persistCpg(cpg: CpgStruct.Builder, identifier: String): Unit = queue.add(Left(cpg))
+  override def persistCpg(cpg: CpgStruct.Builder): Unit = queue.add(Left(cpg))
 
-  override def persistCpg(diffGraph: DiffGraph, keyPool: KeyPool, identifier: String): Unit =
+  override def persistCpg(diffGraph: DiffGraph, keyPool: KeyPool): Unit =
     queue.add(Right(DiffGraphAndKeyPool(diffGraph, keyPool)))
 
 }

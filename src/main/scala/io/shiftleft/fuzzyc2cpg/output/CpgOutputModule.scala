@@ -16,9 +16,9 @@ trait CpgOutputModule {
     * @param cpg a CPG to be persisted (in memory or disk)
     */
   @throws[IOException]
-  def persistCpg(cpg: CpgStruct.Builder, identifier: String): Unit
+  def persistCpg(cpg: CpgStruct.Builder): Unit
 
   @throws[IOException]
-  def persistCpg(diffGraph: DiffGraph, keyPool: KeyPool, identifier: String): Unit
+  def persistCpg(diffGraph: DiffGraph, keyPool: KeyPool): Unit
 
 }

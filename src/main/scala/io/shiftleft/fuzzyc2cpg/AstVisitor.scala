@@ -20,7 +20,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
                  astParentNode: Node,
                  keyPool: KeyPool,
-                 cache: FuzzyC2CpgCache,
+                 cache: DeclarationCache,
                  global: Global)
     extends ASTNodeVisitor
     with AntlrParserDriverObserver {
@@ -53,7 +53,7 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
       cache.add(functionDef.getFunctionSignature(false), outputIdentifier, bodyCpg)
     } else {
       cache.remove(functionDef.getFunctionSignature(false))
-      outputModule.persistCpg(bodyCpg, outputIdentifier)
+      outputModule.persistCpg(bodyCpg)
     }
   }
 
@@ -86,9 +86,8 @@ class AstVisitor(outputModuleFactory: CpgOutputModuleFactory,
   }
 
   override def endOfUnit(ctx: ParserRuleContext, filename: String): Unit = {
-    val identifier = s"$filename types"
     val outputModule = outputModuleFactory.create()
-    outputModule.persistCpg(structureCpg, identifier)
+    outputModule.persistCpg(structureCpg)
   }
 
   override def processItem[T <: AstNode](node: T, builderStack: util.Stack[AstNodeBuilder[_ <: AstNode]]): Unit = {

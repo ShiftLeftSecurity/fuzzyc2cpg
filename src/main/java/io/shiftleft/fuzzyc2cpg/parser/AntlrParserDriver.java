@@ -75,7 +75,7 @@ abstract public class AntlrParserDriver {
     ParseTree tree = parseTokenStream(stream);
     walkTree(tree);
 
-    outputModuleFactory.create().persistCpg(cpg, filename + " driver");
+    outputModuleFactory.create().persistCpg(cpg);
   }
 
   private void handleHiddenTokens(String filename) {
