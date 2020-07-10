@@ -8,7 +8,6 @@ import java.nio.file.Files
 import java.util.concurrent.LinkedBlockingQueue
 
 import io.shiftleft.fuzzyc2cpg.output.overflowdb.DiffGraphAndKeyPool
-import io.shiftleft.passes.DiffGraph
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
