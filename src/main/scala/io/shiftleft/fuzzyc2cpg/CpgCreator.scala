@@ -3,7 +3,7 @@ package io.shiftleft.fuzzyc2cpg
 import java.nio.file.Path
 
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
-import io.shiftleft.passes.KeyPool
+import io.shiftleft.passes.{DiffGraph, KeyPool}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 import io.shiftleft.codepropertygraph.generated.Languages
 import io.shiftleft.fuzzyc2cpg.Utils.{getGlobalNamespaceBlockFullName, newEdge, newNode, _}
@@ -12,6 +12,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.slf4j.LoggerFactory
+import io.shiftleft.codepropertygraph.generated.nodes
 
 import scala.collection.parallel.CollectionConverters._
 import scala.collection.mutable
@@ -105,9 +106,22 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
   }
 
   private def addTypeNodes(usedTypes: mutable.Set[String], keyPool: KeyPool): Unit = {
-    val cpg = CpgStruct.newBuilder()
-    createTypeNodes(usedTypes, keyPool, cpg)
-    outputModuleFactory.create().persistCpg(cpg)
+
+    def createTypeNodes(usedTypes: mutable.Set[String], diffGraph: DiffGraph.Builder): Unit = {
+      usedTypes.toList.sorted
+        .foreach { typeName =>
+          val node = nodes.NewType(
+            name = typeName,
+            fullName = typeName,
+            typeDeclFullName = typeName
+          )
+          diffGraph.addNode(node)
+        }
+    }
+
+    val diffGraph = DiffGraph.newBuilder
+    createTypeNodes(usedTypes, diffGraph)
+    outputModuleFactory.create().persistCpg(diffGraph.build, keyPool)
   }
 
   private def fileAndNamespaceGraph(filename: String, keyPool: KeyPool): (Node, Node) = {
@@ -137,19 +151,6 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
       .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
       .addStringProperty(NodePropertyName.FULL_NAME, getGlobalNamespaceBlockFullName(filePath.map(_.toString)))
       .build
-  }
-
-  private def createTypeNodes(usedTypes: mutable.Set[String], keyPool: KeyPool, cpg: CpgStruct.Builder): Unit = {
-    usedTypes.toList.sorted
-      .foreach { typeName =>
-        val node = newNode(NodeType.TYPE)
-          .setKey(keyPool.next)
-          .addStringProperty(NodePropertyName.NAME, typeName)
-          .addStringProperty(NodePropertyName.FULL_NAME, typeName)
-          .addStringProperty(NodePropertyName.TYPE_DECL_FULL_NAME, typeName)
-          .build
-        cpg.addNode(node)
-      }
   }
 
 }
