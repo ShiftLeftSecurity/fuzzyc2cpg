@@ -61,7 +61,7 @@ trait CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType] {
 
   def createEdgeBuilder(dst: NodeType, src: NodeType, edgeKind: EdgeKind): EdgeBuilderType
 
-  def createEdge(edgeBuilder: EdgeBuilderType): EdgeType
+  def createEdge(edgeBuilder: EdgeBuilderType): Unit
 
   def addEdgeProperty(edgeBuilder: EdgeBuilderType, property: EdgeProperty, value: String): Unit
 

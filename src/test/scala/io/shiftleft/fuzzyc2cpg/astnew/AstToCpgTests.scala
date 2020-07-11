@@ -50,9 +50,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       src.addEdge(edgeKind.toString, dst)
     }
 
-    override def createEdge(edge: Edge): Edge = {
-      edge
-    }
+    override def createEdge(edge: Edge): Unit = {}
 
     // Not used in test with this adapter.
     override def addEdgeProperty(edgeBuilder: Edge, property: EdgeProperty, value: String): Unit = ???

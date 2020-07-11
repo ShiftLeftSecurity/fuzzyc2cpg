@@ -58,12 +58,9 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder, keyPool: KeyPool)
       .setSrc(src.getKey)
   }
 
-  override def createEdge(edgeBuilder: Edge.Builder): Edge = {
+  override def createEdge(edgeBuilder: Edge.Builder): Unit = {
     val edge = edgeBuilder.build
-
     targetCpg.addEdge(edge)
-
-    edge
   }
 
   override def addEdgeProperty(edgeBuilder: Edge.Builder, property: EdgeProperty, value: String): Unit = {

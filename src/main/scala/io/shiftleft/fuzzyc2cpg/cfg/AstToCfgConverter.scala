@@ -65,7 +65,7 @@ class AstToCfgConverter[NodeType, EdgeBuilderType, EdgeType](
       adapter.addEdgeProperty(edgeBuilder, property, value)
       edgeBuilder
     }
-    def createEdge(): EdgeType = {
+    def createEdge(): Unit = {
       adapter.createEdge(edgeBuilder)
     }
   }

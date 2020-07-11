@@ -101,7 +101,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   }
 
   private implicit class EdgeBuilderWrapper(edgeBuilder: EdgeBuilderType) {
-    def createEdge(): EdgeType = {
+    def createEdge(): Unit = {
       adapter.createEdge(edgeBuilder)
     }
   }

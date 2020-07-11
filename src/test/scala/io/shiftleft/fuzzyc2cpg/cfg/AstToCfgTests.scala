@@ -54,10 +54,9 @@ class AstToCfgTests extends WordSpec with Matchers {
       CfgNodeEdgePairBuilder(dst, src, null)
     }
 
-    override def createEdge(edgeBuilder: CfgNodeEdgePairBuilder): CfgNodeEdgePair = {
+    override def createEdge(edgeBuilder: CfgNodeEdgePairBuilder): Unit = {
       val newEdge = CfgNodeEdgePair(edgeBuilder.dstCfgNode, edgeBuilder.cfgEdgeType)
       edgeBuilder.srcCfgNode.successors = edgeBuilder.srcCfgNode.successors + newEdge
-      newEdge
     }
 
     override def addEdgeProperty(edgeBuilder: CfgNodeEdgePairBuilder, property: EdgeProperty, value: String): Unit = {
