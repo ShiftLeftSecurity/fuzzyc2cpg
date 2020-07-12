@@ -25,9 +25,9 @@ object AstToCpgConverter {
   private val logger = LoggerFactory.getLogger(getClass)
 }
 
-class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
+class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType](
     cpgParent: NodeType,
-    adapter: CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType],
+    adapter: CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType],
     global: Global)
     extends ASTNodeVisitor {
   import AstToCpgConverter._

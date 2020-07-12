@@ -44,7 +44,7 @@ object CaseEdge extends CfgEdgeType {
   override def toString: String = "CaseEdge"
 }
 
-trait CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType] {
+trait CpgAdapter[NodeBuilderType, NodeType, EdgeBuilderType] {
   def createNodeBuilder(kind: NodeKind): NodeBuilderType
 
   def createNode(nodeBuilder: NodeBuilderType): NodeType

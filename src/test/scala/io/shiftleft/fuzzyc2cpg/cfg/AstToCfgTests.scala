@@ -23,7 +23,7 @@ class AstToCfgTests extends WordSpec with Matchers {
     }
   }
 
-  private class GraphAdapter extends CpgAdapter[CfgNode, CfgNode, CfgNodeEdgePairBuilder, CfgNodeEdgePair] {
+  private class GraphAdapter extends CpgAdapter[CfgNode, CfgNode, CfgNodeEdgePairBuilder] {
     private var mapping = Map[AstNode, CfgNode]()
     var codeToCfgNode = Map[String, CfgNode]()
 

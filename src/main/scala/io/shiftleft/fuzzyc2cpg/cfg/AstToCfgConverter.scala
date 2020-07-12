@@ -30,10 +30,9 @@ object AstToCfgConverter {
   private val logger = LoggerFactory.getLogger(getClass)
 }
 
-class AstToCfgConverter[NodeType, EdgeBuilderType, EdgeType](
-    entryNode: NodeType,
-    exitNode: NodeType,
-    adapter: CpgAdapter[_, NodeType, EdgeBuilderType, EdgeType] = null)
+class AstToCfgConverter[NodeType, EdgeBuilderType](entryNode: NodeType,
+                                                   exitNode: NodeType,
+                                                   adapter: CpgAdapter[_, NodeType, EdgeBuilderType] = null)
     extends ASTNodeVisitor {
   import AstToCfgConverter._
 

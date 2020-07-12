@@ -11,7 +11,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.{Edge, Node}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 
 class ProtoCpgAdapter(targetCpg: CpgStruct.Builder, keyPool: KeyPool)
-    extends CpgAdapter[Node.Builder, Node, Edge.Builder, Edge] {
+    extends CpgAdapter[Node.Builder, Node, Edge.Builder] {
   private var astToProtoMapping = Map.empty[AstNode, Node]
 
   override def createNodeBuilder(kind: NodeKind): Node.Builder = {
@@ -20,17 +20,13 @@ class ProtoCpgAdapter(targetCpg: CpgStruct.Builder, keyPool: KeyPool)
 
   override def createNode(nodeBuilder: Node.Builder): Node = {
     val node = nodeBuilder.build
-
     targetCpg.addNode(nodeBuilder)
-
     node
   }
 
   override def createNode(nodeBuilder: Node.Builder, origAstNode: AstNode): Node = {
     val node = createNode(nodeBuilder)
-
     astToProtoMapping += origAstNode -> node
-
     node
   }
 

@@ -17,7 +17,7 @@ import io.shiftleft.fuzzyc2cpg.parser.{AntlrParserDriverObserver, TokenSubStream
 
 class AstToCpgTests extends WordSpec with Matchers {
 
-  private class GraphAdapter(graph: ScalaGraph) extends CpgAdapter[Vertex, Vertex, Edge, Edge] {
+  private class GraphAdapter(graph: ScalaGraph) extends CpgAdapter[Vertex, Vertex, Edge] {
     override def createNodeBuilder(kind: NodeKind): Vertex = {
       graph.addVertex(kind.toString)
     }
