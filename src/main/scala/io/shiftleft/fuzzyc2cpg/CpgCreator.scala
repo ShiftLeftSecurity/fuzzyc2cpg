@@ -5,7 +5,6 @@ import java.nio.file.Path
 import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
 import io.shiftleft.passes.{DiffGraph, KeyPool}
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
-import io.shiftleft.codepropertygraph.generated.Languages
 import io.shiftleft.fuzzyc2cpg.Utils.{getGlobalNamespaceBlockFullName, newEdge, newNode, _}
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
@@ -13,6 +12,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.slf4j.LoggerFactory
 import io.shiftleft.codepropertygraph.generated.nodes
+import io.shiftleft.fuzzyc2cpg.passes.MetaDataPass
 
 import scala.collection.parallel.CollectionConverters._
 import scala.collection.mutable
@@ -39,24 +39,9 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
   }
 
   private def addMetaDataAndPlaceholders(keyPool: KeyPool): Unit = {
-
-    def addMetaDataNode(diffGraph: DiffGraph.Builder): Unit = {
-      val metaNode = nodes.NewMetaData(language = Languages.C)
-      diffGraph.addNode(metaNode)
-    }
-
-    def addAnyTypeAndNamespaceBlock(diffGraph: DiffGraph.Builder): Unit = {
-      val node = nodes.NewNamespaceBlock(
-        name = Defines.globalNamespaceName,
-        fullName = getGlobalNamespaceBlockFullName(None)
-      )
-      diffGraph.addNode(node)
-    }
-
-    val diffGraph = DiffGraph.newBuilder
-    addMetaDataNode(diffGraph)
-    addAnyTypeAndNamespaceBlock(diffGraph)
-    outputModuleFactory.create().persistCpg(diffGraph.build, keyPool)
+    // TODO in the future, pass in the CPG here and call `createAndApply`
+    val passResult = new MetaDataPass(null, Some(keyPool)).run().next
+    outputModuleFactory.create().persistCpg(passResult, keyPool)
   }
 
   // TODO improve fuzzyc2cpg namespace support. Currently, everything
