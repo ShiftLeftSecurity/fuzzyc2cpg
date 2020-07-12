@@ -1,6 +1,6 @@
 package io.shiftleft.fuzzyc2cpg
 
-import io.shiftleft.passes.KeyPool
+import io.shiftleft.passes.{IntervalKeyPool, KeyPool}
 
 object KeyPools {
 
@@ -14,7 +14,7 @@ object KeyPools {
     List.range(0, nIntervals).map { i =>
       val first = i * intervalLen
       val last = first + intervalLen - 1
-      new KeyPool(first, last)
+      new IntervalKeyPool(first, last)
     }
   }
 
