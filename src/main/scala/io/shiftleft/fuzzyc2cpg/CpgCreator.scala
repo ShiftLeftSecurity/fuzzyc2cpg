@@ -125,7 +125,7 @@ class CpgCreator(outputModuleFactory: CpgOutputModuleFactory) {
     val namespaceBlock = createNamespaceBlockNode(Some(pathToFile), keyPool)
     cpg.addNode(fileNode)
     cpg.addNode(namespaceBlock)
-    cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
+    cpg.addEdge(newEdge(EdgeType.SOURCE_FILE, fileNode, namespaceBlock))
     outputModuleFactory.create().persistCpg(cpg)
     (fileNode, namespaceBlock)
   }

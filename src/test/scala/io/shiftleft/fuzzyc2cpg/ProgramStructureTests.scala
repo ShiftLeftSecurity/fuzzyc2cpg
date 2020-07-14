@@ -38,10 +38,10 @@ class ProgramStructureTests extends WordSpec with Matchers {
       fileName.head should endWith(path.toString)
     }
 
-    "contain AST edge from file node to namespace block" in {
+    "contain SOURCE_FILE edge from namespace block to file" in {
       val nodes = fixture.V
         .hasLabel(NodeType.FILE.toString)
-        .out("AST")
+        .in("SOURCE_FILE")
         .hasLabel(NodeType.NAMESPACE_BLOCK.toString)
         .l
       nodes.size shouldBe 1
