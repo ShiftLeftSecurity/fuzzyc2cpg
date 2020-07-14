@@ -12,7 +12,7 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.slf4j.LoggerFactory
 import io.shiftleft.codepropertygraph.generated.nodes
-import io.shiftleft.fuzzyc2cpg.passes.{FileAndNamespaceBlockPass, MetaDataPass}
+import io.shiftleft.fuzzyc2cpg.passes.MetaDataPass
 
 import scala.collection.parallel.CollectionConverters._
 import scala.collection.mutable
