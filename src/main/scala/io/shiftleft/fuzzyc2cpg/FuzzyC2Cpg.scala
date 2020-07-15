@@ -22,13 +22,13 @@ import scala.util.control.NonFatal
 case class Global(usedTypes: mutable.Set[String] = new mutable.HashSet[String])
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
+  import FuzzyC2Cpg.logger
 
   def this(outputPath: String) = {
     this(new OutputModuleFactory(outputPath, true).asInstanceOf[CpgOutputModuleFactory])
   }
 
   private val cache = new FuzzyC2CpgCache
-  private val logger = LoggerFactory.getLogger(getClass)
 
   def runWithPreprocessorAndOutput(sourcePaths: Set[String],
                                    sourceFileExtensions: Set[String],
@@ -222,7 +222,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
 object FuzzyC2Cpg extends App {
 
-  private val logger = LoggerFactory.getLogger(getClass)
+  private val logger = LoggerFactory.getLogger(classOf[FuzzyC2Cpg])
 
   parseConfig.foreach { config =>
     try {
@@ -269,7 +269,7 @@ object FuzzyC2Cpg extends App {
   }
 
   def parseConfig: Option[Config] =
-    new scopt.OptionParser[Config](getClass.getSimpleName) {
+    new scopt.OptionParser[Config](classOf[FuzzyC2Cpg].getSimpleName) {
       arg[String]("<input-dir>")
         .unbounded()
         .text("source directories containing C/C++ code")
