@@ -12,7 +12,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
   "Method AST layout" should {
 
     "be correct for empty method" in Fixture("void method(int x) { }") { cpg =>
-      cpg.method.astChildren.orderBy(_.order).l match {
+      cpg.method.astChildren.orderBy(_.order).orderBy(_.order).l match {
         case List(ret: nodes.MethodReturn, param: nodes.MethodParameterIn, _: nodes.Block) =>
           ret.typeFullName shouldBe "void"
           param.typeFullName shouldBe "int"
@@ -26,12 +26,12 @@ class AstCreationPassTests extends WordSpec with Matchers {
         |  int local = 1;
         |}
         |""".stripMargin) { cpg =>
-      cpg.method.name("method").block.astChildren.l match {
+      cpg.method.name("method").block.astChildren.orderBy(_.order).l match {
         case List(local: nodes.Local, call: nodes.Call) =>
           local.name shouldBe "local"
           local.typeFullName shouldBe "int"
           call.name shouldBe Operators.assignment
-          call.start.astChildren.l match {
+          call.start.astChildren.orderBy(_.order).l match {
             case List(identifier: nodes.Identifier, literal: nodes.Literal) =>
               identifier.name shouldBe "local"
               identifier.typeFullName shouldBe "int"
@@ -51,7 +51,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
               |void method(int x) {
               |  int local = x;
               |}""".stripMargin) { cpg =>
-        cpg.method.block.astChildren.assignments.source.l match {
+        cpg.method.block.astChildren.orderBy(_.order).assignments.source.l match {
           case List(identifier: nodes.Identifier) =>
             identifier.code shouldBe "x"
             identifier.typeFullName shouldBe "int"
@@ -66,6 +66,11 @@ class AstCreationPassTests extends WordSpec with Matchers {
               |void method(int x, int y) {
               |  int local = x, local2 = y;
               |}""".stripMargin) { cpg =>
+
+        // Note that `cpg.method.local` does not work
+        // because it depends on contains edges which
+        // are later created by the backend
+
         cpg.local.orderBy(_.order).l match {
           case List(local1, local2) =>
             local1.name shouldBe "local"
@@ -74,7 +79,30 @@ class AstCreationPassTests extends WordSpec with Matchers {
             local2.typeFullName shouldBe "int"
           case _ => fail
         }
+
+        cpg.assignment.orderBy(_.order).l match {
+          case List(a1, a2) =>
+            List(a1.target.code, a1.source.code) shouldBe List("local", "x")
+            List(a2.target.code, a2.source.code) shouldBe List("local2", "y")
+          case _ => fail
+        }
       }
+
+    "be correct for nested expression" in Fixture("""
+        |void method() {
+        |  int x;
+        |  int y;
+        |  int z;
+        |
+        |  x = y + z;
+        |}
+      """.stripMargin) { cpg =>
+      println(cpg.local.map(x => (x.code, x.order)).l)
+      cpg.local.orderBy(_.order).name.l shouldBe List("x", "y", "z")
+
+      cpg.assignment.source.isCall.argument.l match {}
+
+    }
 
   }
 

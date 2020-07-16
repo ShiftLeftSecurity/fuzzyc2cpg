@@ -8,14 +8,7 @@ import io.shiftleft.codepropertygraph.generated.nodes.NewNode
 import io.shiftleft.fuzzyc2cpg.adapter.{NodeKind, NodeProperty}
 import io.shiftleft.fuzzyc2cpg.{Defines, Global}
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
-import io.shiftleft.fuzzyc2cpg.ast.expressions.{
-  AssignmentExpression,
-  BinaryExpression,
-  Constant,
-  Expression,
-  Identifier,
-  InitializerList
-}
+import io.shiftleft.fuzzyc2cpg.ast.expressions.{AdditiveExpression, AndExpression, AssignmentExpression, BinaryExpression, BitAndExpression, Constant, EqualityExpression, ExclusiveOrExpression, Expression, Identifier, InclusiveOrExpression, InitializerList, MultiplicativeExpression, OrExpression, RelationalExpression, ShiftExpression}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.{FunctionDef, Parameter}
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
@@ -25,7 +18,6 @@ import io.shiftleft.passes.DiffGraph
 import io.shiftleft.proto.cpg.Cpg.{DispatchTypes, EvaluationStrategies}
 
 import scala.jdk.CollectionConverters._
-
 import scala.language.implicitConversions
 
 object AstCreator {}
@@ -216,10 +208,7 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
         diffGraph.addNode(local)
         val scopeParentNode =
           scope.addToScope(localName, (local, declTypeName))
-        // Here we on purpose do not use addAstChild because the LOCAL nodes
-        // are not really in the AST
-        // So do not be confused that the format still demands an AST edge.
-        diffGraph.addEdge(scopeParentNode, local, EdgeTypes.AST)
+        connectAstChild(local)
 
         val assignmentExpression = identifierDecl.getAssignment
         if (assignmentExpression != null) {
@@ -228,6 +217,75 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       }
     }
   }
+
+  override def visit(astAdd: AdditiveExpression): Unit = {
+    val operatorMethod = astAdd.getOperator match {
+      case "+" => Operators.addition
+      case "-" => Operators.subtraction
+    }
+
+    visitBinaryExpr(astAdd, operatorMethod)
+  }
+
+  override def visit(astMult: MultiplicativeExpression): Unit = {
+    val operatorMethod = astMult.getOperator match {
+      case "*" => Operators.multiplication
+      case "/" => Operators.division
+      case "%" => Operators.modulo
+    }
+
+    visitBinaryExpr(astMult, operatorMethod)
+  }
+
+  override def visit(astRelation: RelationalExpression): Unit = {
+    val operatorMethod = astRelation.getOperator match {
+      case "<"  => Operators.lessThan
+      case ">"  => Operators.greaterThan
+      case "<=" => Operators.lessEqualsThan
+      case ">=" => Operators.greaterEqualsThan
+    }
+
+    visitBinaryExpr(astRelation, operatorMethod)
+  }
+
+  override def visit(astShift: ShiftExpression): Unit = {
+    val operatorMethod = astShift.getOperator match {
+      case "<<" => Operators.shiftLeft
+      case ">>" => Operators.arithmeticShiftRight
+    }
+
+    visitBinaryExpr(astShift, operatorMethod)
+  }
+
+  override def visit(astEquality: EqualityExpression): Unit = {
+    val operatorMethod = astEquality.getOperator match {
+      case "==" => Operators.equals
+      case "!=" => Operators.notEquals
+    }
+
+    visitBinaryExpr(astEquality, operatorMethod)
+  }
+
+  override def visit(astBitAnd: BitAndExpression): Unit = {
+    visitBinaryExpr(astBitAnd, Operators.and)
+  }
+
+  override def visit(astInclOr: InclusiveOrExpression): Unit = {
+    visitBinaryExpr(astInclOr, Operators.or)
+  }
+
+  override def visit(astExclOr: ExclusiveOrExpression): Unit = {
+    visitBinaryExpr(astExclOr, Operators.or)
+  }
+
+  override def visit(astOr: OrExpression): Unit = {
+    visitBinaryExpr(astOr, Operators.logicalOr)
+  }
+
+  override def visit(astAnd: AndExpression): Unit = {
+    visitBinaryExpr(astAnd, Operators.logicalAnd)
+  }
+
 
   private def visitBinaryExpr(astBinaryExpr: BinaryExpression, operatorMethod: String): Unit = {
     val cpgBinaryExpr = createCallNode(astBinaryExpr, operatorMethod)
