@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.passes.compilationunit;
+package io.shiftleft.fuzzyc2cpg.passes.astcreation;
 
 import io.shiftleft.fuzzyc2cpg.ModuleBaseListener;
 import io.shiftleft.fuzzyc2cpg.ModuleParser;

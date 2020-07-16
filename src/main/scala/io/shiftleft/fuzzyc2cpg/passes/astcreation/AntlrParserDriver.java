@@ -1,21 +1,16 @@
-package io.shiftleft.fuzzyc2cpg.passes.compilationunit;
+package io.shiftleft.fuzzyc2cpg.passes.astcreation;
 
 import static org.antlr.v4.runtime.Token.EOF;
 
 import io.shiftleft.codepropertygraph.generated.EdgeTypes;
 import io.shiftleft.codepropertygraph.generated.nodes.NewComment;
-import io.shiftleft.fuzzyc2cpg.Utils;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
-import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory;
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver;
 import io.shiftleft.fuzzyc2cpg.parser.CommonParserContext;
 import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
 import io.shiftleft.passes.DiffGraph;
-import io.shiftleft.passes.KeyPool;
-import io.shiftleft.proto.cpg.Cpg;
-import io.shiftleft.proto.cpg.Cpg.CpgStruct;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +34,6 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import io.shiftleft.codepropertygraph.generated.nodes.File;
 import scala.Some;
-import scala.Tuple2;
 import scala.collection.immutable.List$;
 
 abstract public class AntlrParserDriver {
@@ -58,9 +52,8 @@ abstract public class AntlrParserDriver {
   private Parser antlrParser;
   private ParseTreeListener listener;
   private CommonParserContext context = null;
-
+  public DiffGraph.Builder cpg;
   private List<AntlrParserDriverObserver> observers = new ArrayList<>();
-  private DiffGraph.Builder cpg = DiffGraph.newBuilder();
   private File fileNode;
 
   public AntlrParserDriver() {
@@ -76,6 +69,7 @@ abstract public class AntlrParserDriver {
   public abstract Lexer createLexer(CharStream input);
 
   public DiffGraph.Builder parseAndWalkFile(String filename) throws ParserException, IOException {
+    cpg  = DiffGraph.newBuilder();
     handleHiddenTokens(filename);
     TokenSubStream stream = createTokenStreamFromFile(filename);
     initializeContextWithFile(filename, stream);
