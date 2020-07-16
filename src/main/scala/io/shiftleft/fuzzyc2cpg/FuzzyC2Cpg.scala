@@ -240,12 +240,12 @@ object FuzzyC2Cpg {
 
         if (config.usePreprocessor) {
           fuzzyc.runWithPreprocessorAndOutput(config.inputPaths,
-            config.sourceFileExtensions,
-            config.includeFiles,
-            config.includePaths,
-            config.defines,
-            config.undefines,
-            config.preprocessorExecutable)
+                                              config.sourceFileExtensions,
+                                              config.includeFiles,
+                                              config.includePaths,
+                                              config.defines,
+                                              config.undefines,
+                                              config.preprocessorExecutable)
         } else {
           fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions)
         }
