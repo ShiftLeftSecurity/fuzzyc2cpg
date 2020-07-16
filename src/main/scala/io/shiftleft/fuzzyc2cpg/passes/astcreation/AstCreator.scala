@@ -8,7 +8,14 @@ import io.shiftleft.codepropertygraph.generated.nodes.NewNode
 import io.shiftleft.fuzzyc2cpg.adapter.{NodeKind, NodeProperty}
 import io.shiftleft.fuzzyc2cpg.{Defines, Global}
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
-import io.shiftleft.fuzzyc2cpg.ast.expressions.{AssignmentExpression, BinaryExpression, Constant, Expression, Identifier, InitializerList}
+import io.shiftleft.fuzzyc2cpg.ast.expressions.{
+  AssignmentExpression,
+  BinaryExpression,
+  Constant,
+  Expression,
+  Identifier,
+  InitializerList
+}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.{FunctionDef, Parameter}
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}

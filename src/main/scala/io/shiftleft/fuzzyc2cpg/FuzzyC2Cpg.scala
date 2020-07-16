@@ -79,10 +79,10 @@ object FuzzyC2Cpg {
     parseConfig(args).foreach { config =>
       try {
 
-      val factory = {
-        val queue = new LinkedBlockingQueue[Either[CpgStruct.Builder, DiffGraphAndKeyPool]]()
-        new io.shiftleft.fuzzyc2cpg.output.overflowdb.OutputModuleFactory(config.outputPath, queue)
-      }
+        val factory = {
+          val queue = new LinkedBlockingQueue[Either[CpgStruct.Builder, DiffGraphAndKeyPool]]()
+          new io.shiftleft.fuzzyc2cpg.output.overflowdb.OutputModuleFactory(config.outputPath, queue)
+        }
 
         val fuzzyc = new FuzzyC2Cpg(factory)
 
