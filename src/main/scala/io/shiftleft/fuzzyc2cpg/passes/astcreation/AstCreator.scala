@@ -26,10 +26,15 @@ import io.shiftleft.proto.cpg.Cpg.{DispatchTypes, EvaluationStrategies}
 
 import scala.jdk.CollectionConverters._
 
+import scala.language.implicitConversions
+
 object AstCreator {}
 
 class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlock, global: Global)
     extends ASTNodeVisitor {
+
+  implicit def int2IntegerOpt(x: Option[Int]): Option[Integer] = x.map(java.lang.Integer.valueOf)
+  implicit def int2Integer(x : Int) : Integer = java.lang.Integer.valueOf(x)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -70,10 +75,10 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       code = astFunction.getEscapedCodeStr,
       isExternal = false,
       fullName = astFunction.getName,
-      lineNumber = location.startLine.map(x => new Integer(x)),
-      columnNumber = location.startPos.map(x => new Integer(x)),
-      lineNumberEnd = location.endLine.map(x => new Integer(x)),
-      columnNumberEnd = location.endPos.map(x => new Integer(x)),
+      lineNumber = location.startLine,
+      columnNumber = location.startPos,
+      lineNumberEnd = location.endLine,
+      columnNumberEnd = location.endPos,
       signature = signature,
     )
 
@@ -102,8 +107,8 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       code = "RET",
       evaluationStrategy = EvaluationStrategies.BY_VALUE.name(),
       typeFullName = registerType(returnType),
-      lineNumber = methodReturnLocation.startLine.map(x => new Integer(x)),
-      columnNumber = methodReturnLocation.startPos.map(x => new Integer(x))
+      lineNumber = methodReturnLocation.startLine,
+      columnNumber = methodReturnLocation.startPos
     )
 
     methodReturnNode = Some(methodReturn)
@@ -133,8 +138,8 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       order = astParameter.getChildNumber + 1,
       evaluationStrategy = EvaluationStrategies.BY_VALUE.name(),
       typeFullName = registerType(parameterType),
-      lineNumber = astParameter.getLocation.startLine.map(x => new Integer(x)),
-      columnNumber = astParameter.getLocation.startPos.map(x => new Integer(x))
+      lineNumber = astParameter.getLocation.startLine,
+      columnNumber = astParameter.getLocation.startPos
     )
     diffGraph.addNode(parameter)
     scope.addToScope(astParameter.getName, (parameter, parameterType))
@@ -248,8 +253,8 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
         code = astIdentifier.getEscapedCodeStr,
         order = context.childNum,
         argumentIndex = context.childNum,
-        lineNumber = astIdentifier.getLocation.startLine.map(x => new Integer(x)),
-        columnNumber = astIdentifier.getLocation.startPos.map(x => new Integer(x))
+        lineNumber = astIdentifier.getLocation.startLine,
+        columnNumber = astIdentifier.getLocation.startPos
       )
       diffGraph.addNode(cpgFieldIdentifier)
       connectAstChild(cpgFieldIdentifier)
@@ -270,8 +275,8 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       code = astIdentifier.getEscapedCodeStr,
       order = context.childNum,
       argumentIndex = context.childNum,
-      lineNumber = astIdentifier.getLocation.startLine.map(x => new Integer(x)),
-      columnNumber = astIdentifier.getLocation.startPos.map(x => new Integer(x))
+      lineNumber = astIdentifier.getLocation.startLine,
+      columnNumber = astIdentifier.getLocation.startPos
     )
     diffGraph.addNode(cpgIdentifier)
     connectAstChild(cpgIdentifier)
@@ -291,8 +296,8 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       code = astConstant.getEscapedCodeStr,
       order = context.childNum,
       argumentIndex = context.childNum,
-      lineNumber = astConstant.getLocation.startLine.map(x => new Integer(x)),
-      columnNumber = astConstant.getLocation.startPos.map(x => new Integer(x))
+      lineNumber = astConstant.getLocation.startLine,
+      columnNumber = astConstant.getLocation.startPos
     )
     diffGraph.addNode(cpgConstant)
     connectAstChild(cpgConstant)
@@ -314,8 +319,8 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       order = context.childNum,
       argumentIndex = context.childNum,
       typeFullName = registerType(Defines.anyTypeName),
-      lineNumber = expression.getLocation.startLine.map(x => new Integer(x)),
-      columnNumber = expression.getLocation.startPos.map(x => new Integer(x))
+      lineNumber = expression.getLocation.startLine,
+      columnNumber = expression.getLocation.startPos
     )
 
     diffGraph.addNode(cpgBlock)
@@ -364,8 +369,8 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       code = astNode.getEscapedCodeStr,
       order = context.childNum,
       argumentIndex = context.childNum,
-      lineNumber = astNode.getLocation.startLine.map(x => new Integer(x)),
-      columnNumber = astNode.getLocation.startPos.map(x => new Integer(x))
+      lineNumber = astNode.getLocation.startLine,
+      columnNumber = astNode.getLocation.startPos
     )
   }
 
@@ -415,8 +420,8 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
         order = context.childNum,
         argumentIndex = context.childNum,
         typeFullName = registerType(Defines.voidTypeName),
-        lineNumber = astBlock.getLocation.startLine.map(new Integer(_)),
-        columnNumber = astBlock.getLocation.startPos.map(new Integer(_))
+        lineNumber = astBlock.getLocation.startLine,
+        columnNumber = astBlock.getLocation.startPos
       )
       diffGraph.addNode(block)
       connectAstChild(block)
