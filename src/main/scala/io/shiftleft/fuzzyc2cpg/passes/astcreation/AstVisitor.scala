@@ -19,14 +19,17 @@ class AstVisitor(driver: AntlrCModuleParserDriver,
 
   var filenameOption: Option[String] = _
 
-  override def visit(functionDef: FunctionDef): Unit = {}
-
-  override def visit(classDefStatement: ClassDefStatement): Unit = {
-    val astToCpgConverter = new AstCreator(driver.cpg, astParentNode, global)
-    astToCpgConverter.convert(classDefStatement)
+  override def visit(functionDef: FunctionDef): Unit = {
+    new AstCreator(driver.cpg, astParentNode, global).convert(functionDef)
   }
 
-  override def visit(identifierDeclStmt: IdentifierDeclStatement): Unit = {}
+  override def visit(classDefStatement: ClassDefStatement): Unit = {
+    new AstCreator(driver.cpg, astParentNode, global).convert(classDefStatement)
+  }
+
+  override def visit(identifierDeclStmt: IdentifierDeclStatement): Unit = {
+    new AstCreator(driver.cpg, astParentNode, global).convert(identifierDeclStmt)
+  }
 
   override def begin(): Unit = {}
 

@@ -5,10 +5,50 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.passes.IntervalKeyPool
 import io.shiftleft.semanticcpg.language._
 import org.scalatest.{Matchers, WordSpec}
+import io.shiftleft.codepropertygraph.generated.{Operators, nodes}
 
 class AstCreationPassTests extends WordSpec with Matchers {
 
-  "CompilationUnitPass" should {
+  "Method AST layout" should {
+
+    "be correct for empty method" in Fixture("void method(int x) { }") { cpg =>
+      cpg.method.astChildren.l match {
+        case List(ret: nodes.MethodReturn, param: nodes.MethodParameterIn, _: nodes.Block) =>
+          ret.typeFullName shouldBe "void"
+          param.typeFullName shouldBe "int"
+          param.name shouldBe "x"
+        case _ => fail
+      }
+    }
+
+    "be correct for decl assignment" in Fixture("""
+        |void method() {
+        |  int local = 1;
+        |}
+        |""".stripMargin) { cpg =>
+      cpg.method.name("method").block.astChildren.l match {
+        case List(local: nodes.Local, call: nodes.Call) =>
+          local.name shouldBe "local"
+          local.typeFullName shouldBe "int"
+          call.name shouldBe Operators.assignment
+          call.start.astChildren.l match {
+            case List(identifier: nodes.Identifier, literal: nodes.Literal) =>
+              identifier.name shouldBe "local"
+              identifier.typeFullName shouldBe "int"
+              identifier.order shouldBe 1
+              identifier.argumentIndex shouldBe 1
+              literal.code shouldBe "1"
+              literal.typeFullName shouldBe "int"
+              literal.order shouldBe 2
+              literal.argumentIndex shouldBe 2
+          }
+        case _ => fail
+      }
+    }
+
+  }
+
+  "AstCreationPass" should {
 
     "create a node for the comment" in Fixture("// A comment\n") { cpg =>
       cpg.comment.code.l shouldBe List("// A comment\n")
