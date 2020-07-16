@@ -19,7 +19,6 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
         .asInstanceOf[CpgOutputModuleFactory])
   }
 
-  private val cache = new FuzzyC2CpgCache
   private val logger = LoggerFactory.getLogger(getClass)
 
   def runWithPreprocessorAndOutput(sourcePaths: Set[String],
