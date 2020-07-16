@@ -8,7 +8,24 @@ import io.shiftleft.codepropertygraph.generated.nodes.NewNode
 import io.shiftleft.fuzzyc2cpg.adapter.{NodeKind, NodeProperty}
 import io.shiftleft.fuzzyc2cpg.{Defines, Global}
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
-import io.shiftleft.fuzzyc2cpg.ast.expressions.{AdditiveExpression, AndExpression, AssignmentExpression, BinaryExpression, BitAndExpression, Constant, EqualityExpression, ExclusiveOrExpression, Expression, Identifier, InclusiveOrExpression, InitializerList, MultiplicativeExpression, OrExpression, RelationalExpression, ShiftExpression}
+import io.shiftleft.fuzzyc2cpg.ast.expressions.{
+  AdditiveExpression,
+  AndExpression,
+  AssignmentExpression,
+  BinaryExpression,
+  BitAndExpression,
+  Constant,
+  EqualityExpression,
+  ExclusiveOrExpression,
+  Expression,
+  Identifier,
+  InclusiveOrExpression,
+  InitializerList,
+  MultiplicativeExpression,
+  OrExpression,
+  RelationalExpression,
+  ShiftExpression
+}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.{FunctionDef, Parameter}
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
@@ -285,7 +302,6 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
   override def visit(astAnd: AndExpression): Unit = {
     visitBinaryExpr(astAnd, Operators.logicalAnd)
   }
-
 
   private def visitBinaryExpr(astBinaryExpr: BinaryExpression, operatorMethod: String): Unit = {
     val cpgBinaryExpr = createCallNode(astBinaryExpr, operatorMethod)

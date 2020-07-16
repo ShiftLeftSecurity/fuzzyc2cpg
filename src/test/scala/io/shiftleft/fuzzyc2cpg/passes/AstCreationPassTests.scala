@@ -66,7 +66,6 @@ class AstCreationPassTests extends WordSpec with Matchers {
               |void method(int x, int y) {
               |  int local = x, local2 = y;
               |}""".stripMargin) { cpg =>
-
         // Note that `cpg.method.local` does not work
         // because it depends on contains edges which
         // are later created by the backend
@@ -99,8 +98,6 @@ class AstCreationPassTests extends WordSpec with Matchers {
       """.stripMargin) { cpg =>
       println(cpg.local.map(x => (x.code, x.order)).l)
       cpg.local.orderBy(_.order).name.l shouldBe List("x", "y", "z")
-
-      cpg.assignment.source.isCall.argument.l match {}
 
     }
 
