@@ -175,6 +175,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
       .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(returnType))
       .addProperty(NodeProperty.LINE_NUMBER, methodReturnLocation.startLine)
       .addProperty(NodeProperty.COLUMN_NUMBER, methodReturnLocation.startPos)
+      .addProperty(NodeProperty.ORDER, context.childNum)
       .createNode()
 
     methodReturnNode = Some(cpgMethodReturn)
@@ -641,6 +642,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
           .addProperty(NodeProperty.CODE, localName)
           .addProperty(NodeProperty.NAME, localName)
           .addProperty(NodeProperty.TYPE_FULL_NAME, registerType(declTypeName))
+          .addProperty(NodeProperty.ORDER, context.childNum)
           .createNode(identifierDecl)
 
         val scopeParentNode =
