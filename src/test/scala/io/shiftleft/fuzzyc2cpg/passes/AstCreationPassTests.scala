@@ -26,7 +26,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
         |  int local = 1;
         |}
         |""".stripMargin) { cpg =>
-      cpg.method.name("method").block.astChildren.orderBy(_.order).l match {
+      cpg.method.name("method").block.astChildren.l match {
         case List(local: nodes.Local, call: nodes.Call) =>
           local.name shouldBe "local"
           local.typeFullName shouldBe "int"
@@ -51,7 +51,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
               |void method(int x) {
               |  int local = x;
               |}""".stripMargin) { cpg =>
-        cpg.method.block.astChildren.orderBy(_.order).assignments.source.l match {
+        cpg.method.block.astChildren.assignments.source.l match {
           case List(identifier: nodes.Identifier) =>
             identifier.code shouldBe "x"
             identifier.typeFullName shouldBe "int"
@@ -66,10 +66,12 @@ class AstCreationPassTests extends WordSpec with Matchers {
               |void method(int x, int y) {
               |  int local = x, local2 = y;
               |}""".stripMargin) { cpg =>
-        cpg.local.l match {
+        cpg.local.orderBy(_.order).l match {
           case List(local1, local2) =>
             local1.name shouldBe "local"
+            local1.typeFullName shouldBe "int"
             local2.name shouldBe "local2"
+            local2.typeFullName shouldBe "int"
           case _ => fail
         }
       }

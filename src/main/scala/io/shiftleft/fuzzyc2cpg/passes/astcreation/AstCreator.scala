@@ -34,7 +34,7 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
     extends ASTNodeVisitor {
 
   implicit def int2IntegerOpt(x: Option[Int]): Option[Integer] = x.map(java.lang.Integer.valueOf)
-  implicit def int2Integer(x : Int) : Integer = java.lang.Integer.valueOf(x)
+  implicit def int2Integer(x: Int): Integer = java.lang.Integer.valueOf(x)
 
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -210,13 +210,14 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
         val local = nodes.NewLocal(
           code = localName,
           name = localName,
-          typeFullName = registerType(declTypeName)
+          typeFullName = registerType(declTypeName),
+          order = context.childNum
         )
         diffGraph.addNode(local)
         val scopeParentNode =
           scope.addToScope(localName, (local, declTypeName))
         // Here we on purpose do not use addAstChild because the LOCAL nodes
-        // are not really in the AST (they also have no ORDER property).
+        // are not really in the AST
         // So do not be confused that the format still demands an AST edge.
         diffGraph.addEdge(scopeParentNode, local, EdgeTypes.AST)
 
