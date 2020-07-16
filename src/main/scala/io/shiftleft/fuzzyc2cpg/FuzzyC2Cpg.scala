@@ -220,38 +220,40 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
 
 }
 
-object FuzzyC2Cpg extends App {
+object FuzzyC2Cpg {
 
   private val logger = LoggerFactory.getLogger(classOf[FuzzyC2Cpg])
 
-  parseConfig.foreach { config =>
-    try {
+  def main(args: Array[String]): Unit = {
+    parseConfig(args).foreach { config =>
+      try {
 
-      val factory = if (!config.overflowDb) {
-        new OutputModuleFactory(config.outputPath, true)
-          .asInstanceOf[CpgOutputModuleFactory]
-      } else {
-        val queue = new LinkedBlockingQueue[CpgStruct.Builder]()
-        new io.shiftleft.fuzzyc2cpg.output.overflowdb.OutputModuleFactory(config.outputPath, queue)
+        val factory = if (!config.overflowDb) {
+          new OutputModuleFactory(config.outputPath, true)
+            .asInstanceOf[CpgOutputModuleFactory]
+        } else {
+          val queue = new LinkedBlockingQueue[CpgStruct.Builder]()
+          new io.shiftleft.fuzzyc2cpg.output.overflowdb.OutputModuleFactory(config.outputPath, queue)
+        }
+
+        val fuzzyc = new FuzzyC2Cpg(factory)
+
+        if (config.usePreprocessor) {
+          fuzzyc.runWithPreprocessorAndOutput(config.inputPaths,
+            config.sourceFileExtensions,
+            config.includeFiles,
+            config.includePaths,
+            config.defines,
+            config.undefines,
+            config.preprocessorExecutable)
+        } else {
+          fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions)
+        }
+
+      } catch {
+        case NonFatal(ex) =>
+          logger.error("Failed to generate CPG.", ex)
       }
-
-      val fuzzyc = new FuzzyC2Cpg(factory)
-
-      if (config.usePreprocessor) {
-        fuzzyc.runWithPreprocessorAndOutput(config.inputPaths,
-                                            config.sourceFileExtensions,
-                                            config.includeFiles,
-                                            config.includePaths,
-                                            config.defines,
-                                            config.undefines,
-                                            config.preprocessorExecutable)
-      } else {
-        fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions)
-      }
-
-    } catch {
-      case NonFatal(ex) =>
-        logger.error("Failed to generate CPG.", ex)
     }
   }
 
@@ -268,7 +270,7 @@ object FuzzyC2Cpg extends App {
       includeFiles.nonEmpty || includePaths.nonEmpty || defines.nonEmpty || undefines.nonEmpty
   }
 
-  def parseConfig: Option[Config] =
+  def parseConfig(args: Array[String]): Option[Config] =
     new scopt.OptionParser[Config](classOf[FuzzyC2Cpg].getSimpleName) {
       arg[String]("<input-dir>")
         .unbounded()
