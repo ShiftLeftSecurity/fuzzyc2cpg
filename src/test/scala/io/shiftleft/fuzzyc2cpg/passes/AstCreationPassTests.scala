@@ -12,7 +12,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
   "Method AST layout" should {
 
     "be correct for empty method" in Fixture("void method(int x) { }") { cpg =>
-      cpg.method.astChildren.l match {
+      cpg.method.astChildren.orderBy(_.order).l match {
         case List(ret: nodes.MethodReturn, param: nodes.MethodParameterIn, _: nodes.Block) =>
           ret.typeFullName shouldBe "void"
           param.typeFullName shouldBe "int"
@@ -26,7 +26,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
         |  int local = 1;
         |}
         |""".stripMargin) { cpg =>
-      cpg.method.name("method").block.astChildren.l match {
+      cpg.method.name("method").block.astChildren.orderBy(_.order).l match {
         case List(local: nodes.Local, call: nodes.Call) =>
           local.name shouldBe "local"
           local.typeFullName shouldBe "int"
@@ -45,6 +45,34 @@ class AstCreationPassTests extends WordSpec with Matchers {
         case _ => fail
       }
     }
+
+    "be correct for decl assignment with identifier on the right" in
+      Fixture("""
+              |void method(int x) {
+              |  int local = x;
+              |}""".stripMargin) { cpg =>
+        cpg.method.block.astChildren.orderBy(_.order).assignments.source.l match {
+          case List(identifier: nodes.Identifier) =>
+            identifier.code shouldBe "x"
+            identifier.typeFullName shouldBe "int"
+            identifier.order shouldBe 2
+            identifier.argumentIndex shouldBe 2
+          case _ => fail
+        }
+      }
+
+    "be correct for decl assignment of multiple locals" in
+      Fixture("""
+              |void method(int x, int y) {
+              |  int local = x, local2 = y;
+              |}""".stripMargin) { cpg =>
+        cpg.local.l match {
+          case List(local1, local2) =>
+            local1.name shouldBe "local"
+            local2.name shouldBe "local2"
+          case _ => fail
+        }
+      }
 
   }
 

@@ -5,13 +5,14 @@ import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import org.slf4j.LoggerFactory
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
 import io.shiftleft.codepropertygraph.generated.nodes.NewNode
-import io.shiftleft.fuzzyc2cpg.adapter.{EdgeKind, NodeKind, NodeProperty}
+import io.shiftleft.fuzzyc2cpg.adapter.{NodeKind, NodeProperty}
 import io.shiftleft.fuzzyc2cpg.{Defines, Global}
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
-import io.shiftleft.fuzzyc2cpg.ast.expressions.{AssignmentExpression, BinaryExpression, Constant, Identifier}
+import io.shiftleft.fuzzyc2cpg.ast.expressions.{AssignmentExpression, BinaryExpression, Constant, Expression, Identifier, InitializerList}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.{FunctionDef, Parameter}
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement
-import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Statement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
+import io.shiftleft.fuzzyc2cpg.astnew.AstToCpgConverter.logger
 import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.passes.DiffGraph
 import io.shiftleft.proto.cpg.Cpg.{DispatchTypes, EvaluationStrategies}
@@ -133,9 +134,38 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
     connectAstChild(parameter)
   }
 
+  override def visit(astAssignment: AssignmentExpression): Unit = {
+    val operatorMethod = astAssignment.getOperator match {
+      case "="   => Operators.assignment
+      case "*="  => Operators.assignmentMultiplication
+      case "/="  => Operators.assignmentDivision
+      case "%="  => Operators.assignmentDivision
+      case "+="  => Operators.assignmentPlus
+      case "-="  => Operators.assignmentMinus
+      case "<<=" => Operators.assignmentShiftLeft
+      case ">>=" => Operators.assignmentArithmeticShiftRight
+      case "&="  => Operators.assignmentAnd
+      case "^="  => Operators.assignmentXor
+      case "|="  => Operators.assignmentOr
+    }
+    visitBinaryExpr(astAssignment, operatorMethod)
+  }
+
   override def visit(astIdentifierDeclStmt: IdentifierDeclStatement): Unit = {
     astIdentifierDeclStmt.getIdentifierDeclList.asScala.foreach { identifierDecl =>
       identifierDecl.accept(this)
+    }
+  }
+
+  override def visit(astInitializerList: InitializerList): Unit = {
+    // TODO figure out how to represent.
+  }
+
+  override def visit(statement: Statement): Unit = {
+    if (statement.getChildCount != 0) {
+      throw new RuntimeException("Unhandled statement type: " + statement.getClass)
+    } else {
+      logger.debug("Parse error. Code: {}", statement.getEscapedCodeStr)
     }
   }
 
@@ -184,23 +214,6 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
         }
       }
     }
-  }
-
-  override def visit(astAssignment: AssignmentExpression): Unit = {
-    val operatorMethod = astAssignment.getOperator match {
-      case "="   => Operators.assignment
-      case "*="  => Operators.assignmentMultiplication
-      case "/="  => Operators.assignmentDivision
-      case "%="  => Operators.assignmentDivision
-      case "+="  => Operators.assignmentPlus
-      case "-="  => Operators.assignmentMinus
-      case "<<=" => Operators.assignmentShiftLeft
-      case ">>=" => Operators.assignmentArithmeticShiftRight
-      case "&="  => Operators.assignmentAnd
-      case "^="  => Operators.assignmentXor
-      case "|="  => Operators.assignmentOr
-    }
-    visitBinaryExpr(astAssignment, operatorMethod)
   }
 
   private def visitBinaryExpr(astBinaryExpr: BinaryExpression, operatorMethod: String): Unit = {
@@ -276,6 +289,40 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
     )
     diffGraph.addNode(cpgConstant)
     connectAstChild(cpgConstant)
+  }
+
+  override def visit(expression: Expression): Unit = {
+    // We only end up here for expressions chained by ','.
+    // Those expressions are then the children of the expression
+    // given as parameter.
+    val classOfExpression = expression.getClass
+    if (classOfExpression != classOf[Expression]) {
+      throw new RuntimeException(
+        s"Only direct instances of Expressions expected " +
+          s"but ${classOfExpression.getSimpleName} found")
+    }
+
+    val cpgBlock = nodes.NewBlock(
+      code = "",
+      order = context.childNum,
+      argumentIndex = context.childNum,
+      typeFullName = registerType(Defines.anyTypeName),
+      lineNumber = expression.getLocation.startLine.map(x => new Integer(x)),
+      columnNumber = expression.getLocation.startPos.map(x => new Integer(x))
+    )
+
+    diffGraph.addNode(cpgBlock)
+    connectAstChild(cpgBlock)
+    pushContext(cpgBlock, 1)
+    acceptChildren(expression)
+    popContext()
+  }
+
+  private def acceptChildren(node: AstNode, withArgEdges: Boolean = false): Unit = {
+    node.getChildIterator.forEachRemaining { child =>
+      context.addArgumentEdgeOnNextAstEdge = withArgEdges
+      child.accept(this)
+    }
   }
 
   // TODO Implement this method properly, the current implementation is just a
@@ -375,6 +422,10 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       popContext()
       scope.popScope()
     }
+  }
+
+  override def visit(statement: ExpressionStatement): Unit = {
+    Option(statement.getExpression).foreach(_.accept(this))
   }
 
   // Utilities
