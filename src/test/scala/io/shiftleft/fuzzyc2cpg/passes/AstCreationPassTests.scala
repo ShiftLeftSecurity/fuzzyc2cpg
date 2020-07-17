@@ -6,13 +6,14 @@ import io.shiftleft.passes.IntervalKeyPool
 import io.shiftleft.semanticcpg.language._
 import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.codepropertygraph.generated.{Operators, nodes}
+import scala.jdk.CollectionConverters._
 
 class AstCreationPassTests extends WordSpec with Matchers {
 
   "Method AST layout" should {
 
     "be correct for empty method" in Fixture("void method(int x) { }") { cpg =>
-      cpg.method.astChildren.orderBy(_.order).orderBy(_.order).l match {
+      cpg.method.name("method").astChildren.l match {
         case List(ret: nodes.MethodReturn, param: nodes.MethodParameterIn, _: nodes.Block) =>
           ret.typeFullName shouldBe "void"
           param.typeFullName shouldBe "int"
@@ -26,12 +27,12 @@ class AstCreationPassTests extends WordSpec with Matchers {
         |  int local = 1;
         |}
         |""".stripMargin) { cpg =>
-      cpg.method.name("method").block.astChildren.orderBy(_.order).l match {
+      cpg.method.name("method").block.astChildren.l match {
         case List(local: nodes.Local, call: nodes.Call) =>
           local.name shouldBe "local"
           local.typeFullName shouldBe "int"
           call.name shouldBe Operators.assignment
-          call.start.astChildren.orderBy(_.order).l match {
+          call.start.astChildren.l match {
             case List(identifier: nodes.Identifier, literal: nodes.Literal) =>
               identifier.name shouldBe "local"
               identifier.typeFullName shouldBe "int"
@@ -51,7 +52,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
               |void method(int x) {
               |  int local = x;
               |}""".stripMargin) { cpg =>
-        cpg.method.block.astChildren.orderBy(_.order).assignments.source.l match {
+        cpg.method.block.astChildren.assignments.source.l match {
           case List(identifier: nodes.Identifier) =>
             identifier.code shouldBe "x"
             identifier.typeFullName shouldBe "int"
@@ -66,9 +67,11 @@ class AstCreationPassTests extends WordSpec with Matchers {
               |void method(int x, int y) {
               |  int local = x, local2 = y;
               |}""".stripMargin) { cpg =>
+
         // Note that `cpg.method.local` does not work
-        // because it depends on contains edges which
-        // are later created by the backend
+        // because it depends on CONTAINS edges which
+        // are created by a backend pass in semanticcpg
+        // construction.
 
         cpg.local.orderBy(_.order).l match {
           case List(local1, local2) =>
@@ -96,27 +99,84 @@ class AstCreationPassTests extends WordSpec with Matchers {
         |  x = y + z;
         |}
       """.stripMargin) { cpg =>
-      println(cpg.local.map(x => (x.code, x.order)).l)
       cpg.local.orderBy(_.order).name.l shouldBe List("x", "y", "z")
 
-    }
-
-  }
-
-  "AstCreationPass" should {
-
-    "create a node for the comment" in Fixture("// A comment\n") { cpg =>
-      cpg.comment.code.l shouldBe List("// A comment\n")
-    }
-
-    "create a TYPE_DECL node for named struct" in Fixture("struct my_struct { };") { cpg =>
-      cpg.typeDecl.l match {
-        case typeDecl :: Nil =>
-          typeDecl.name shouldBe "my_struct"
-          typeDecl.fullName shouldBe "my_struct"
-          typeDecl.isExternal shouldBe false
+      cpg.method.assignments.l match {
+        case List(assignment) =>
+          assignment.target.code shouldBe "x"
+          assignment.source.start.isCall.name.l shouldBe List(Operators.addition)
+          assignment.source.start.astChildren.l match {
+            case List(id1: nodes.Identifier, id2: nodes.Identifier) =>
+              id1.order shouldBe 1
+              id1.code shouldBe "y"
+              id2.order shouldBe 2
+              id2.code shouldBe "z"
+          }
         case _ => fail
       }
+    }
+
+    "be correct for nested block" in Fixture("""
+        |void method() {
+        |  int x;
+        |  {
+        |    int y;
+        |  }
+        |}
+      """.stripMargin) { cpg =>
+      cpg.method.name("method").block.astChildren.l match {
+        case List(local: nodes.Local, innerBlock: nodes.Block) =>
+          local.name shouldBe "x"
+          innerBlock.start.astChildren.l match {
+            case List(localInBlock: nodes.Local) =>
+              localInBlock.name shouldBe "y"
+            case _ => fail
+          }
+        case _ => fail
+      }
+    }
+  }
+
+  "be correct for while-loop" in Fixture("""
+                                               |void method(int x) {
+                                               |  while (x < 1) {
+                                               |    x += 1;
+                                               |  }
+                                               |}
+      """.stripMargin) { cpg =>
+    cpg.method.name("method").block.astChildren.isControlStructure.l match {
+      case List(controlStruct: nodes.ControlStructure) =>
+        controlStruct.code shouldBe "while (x < 1)"
+        controlStruct.parserTypeName shouldBe "WhileStatement"
+        controlStruct._conditionOut().asScala.toList match {
+          case List(cndNode: nodes.Expression) =>
+            cndNode.code shouldBe "x < 1"
+          case _ => fail
+        }
+        controlStruct.start.whenTrue.assignments.code.l shouldBe List("x += 1")
+      case _ => fail
+    }
+  }
+
+  "be correct for if" in Fixture("""
+                                       |void method(int x) {
+                                       |  int y;
+                                       |  if (x > 0) {
+                                       |    y = 0;
+                                       |  }
+                                       |}
+      """.stripMargin) { cpg =>
+    cpg.method.name("method").controlStructure.l match {
+      case List(controlStruct: nodes.ControlStructure) =>
+        controlStruct.code shouldBe "if (x > 0)"
+        controlStruct.parserTypeName shouldBe "IfStatement"
+        controlStruct._conditionOut().asScala.toList match {
+          case List(cndNode: nodes.Expression) =>
+            cndNode.code shouldBe "x > 0"
+          case _ => fail
+        }
+        controlStruct.start.whenTrue.assignments.code.l shouldBe List("y = 0")
+      case _ => fail
     }
 
   }

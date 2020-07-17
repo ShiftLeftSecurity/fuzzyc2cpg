@@ -5,31 +5,55 @@ import io.shiftleft.fuzzyc2cpg.ast.walking.ASTNodeVisitor
 import org.slf4j.LoggerFactory
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
 import io.shiftleft.codepropertygraph.generated.nodes.NewNode
-import io.shiftleft.fuzzyc2cpg.adapter.{NodeKind, NodeProperty}
 import io.shiftleft.fuzzyc2cpg.{Defines, Global}
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
 import io.shiftleft.fuzzyc2cpg.ast.expressions.{
   AdditiveExpression,
   AndExpression,
+  Argument,
+  ArgumentList,
+  ArrayIndexing,
   AssignmentExpression,
   BinaryExpression,
   BitAndExpression,
+  CastExpression,
+  CastTarget,
+  Condition,
+  ConditionalExpression,
   Constant,
+  DeleteExpression,
   EqualityExpression,
   ExclusiveOrExpression,
   Expression,
+  ForInit,
   Identifier,
   InclusiveOrExpression,
   InitializerList,
+  MemberAccess,
   MultiplicativeExpression,
+  NewExpression,
   OrExpression,
+  PostIncDecOperationExpression,
+  PtrMemberAccess,
   RelationalExpression,
-  ShiftExpression
+  ShiftExpression,
+  SizeofOperand,
+  UnaryExpression
 }
+import io.shiftleft.fuzzyc2cpg.ast.functionDef.Template
+import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpression}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.{FunctionDef, Parameter}
-import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{CompoundStatement, Statement}
+import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label, Statement}
+import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.CatchList
+import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{
+  BreakStatement,
+  ContinueStatement,
+  GotoStatement,
+  ReturnStatement,
+  ThrowStatement
+}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
-import io.shiftleft.fuzzyc2cpg.astnew.AstToCpgConverter.logger
 import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.passes.DiffGraph
 import io.shiftleft.proto.cpg.Cpg.{DispatchTypes, EvaluationStrategies}
@@ -37,9 +61,9 @@ import io.shiftleft.proto.cpg.Cpg.{DispatchTypes, EvaluationStrategies}
 import scala.jdk.CollectionConverters._
 import scala.language.implicitConversions
 
-object AstCreator {}
-
-class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlock, global: Global)
+private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
+                                      namespaceBlock: nodes.NamespaceBlock,
+                                      global: Global)
     extends ASTNodeVisitor {
 
   implicit def int2IntegerOpt(x: Option[Int]): Option[Integer] = x.map(java.lang.Integer.valueOf)
@@ -47,12 +71,12 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  private var contextStack = List[Context]()
   private val scope = new Scope[String, (nodes.CpgNode, String), nodes.CpgNode]()
   private var methodNode = Option.empty[nodes.CpgNode]
   private var methodReturnNode = Option.empty[nodes.CpgNode]
 
-  private var contextStack = List[Context]()
-  pushContext(astParentNode, 1)
+  pushContext(namespaceBlock, 1)
 
   private class Context(val cpgParent: nodes.CpgNode,
                         var childNum: Int,
@@ -61,9 +85,20 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
                         var addConditionEdgeOnNextAstEdge: Boolean = false,
                         var addArgumentEdgeOnNextAstEdge: Boolean = false) {}
 
-  def convert(astNode: AstNode): Unit = {
-    astNode.accept(this)
+  private def pushContext(cpgParent: nodes.CpgNode,
+                          startChildNum: Int,
+                          parentIsClassDef: Boolean = false,
+                          parentIsMemberAccess: Boolean = false): Unit = {
+    contextStack = new Context(cpgParent, startChildNum, parentIsClassDef, parentIsMemberAccess) :: contextStack
   }
+
+  private def popContext(): Unit = contextStack = contextStack.tail
+  private def context: Context = contextStack.head
+
+  /**
+    * Entry point for AST construction
+    * */
+  def convert(astNode: AstNode): Unit = astNode.accept(this)
 
   override def visit(astFunction: FunctionDef): Unit = {
     val returnType = if (astFunction.getReturnType != null) {
@@ -92,8 +127,7 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
     )
 
     methodNode = Some(method)
-    diffGraph.addNode(method)
-    connectAstChild(method)
+    addAndConnectAsAstChild(method)
 
     pushContext(method, 1)
     scope.pushNewScope(method)
@@ -122,8 +156,7 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
 
     methodReturnNode = Some(methodReturn)
 
-    diffGraph.addNode(methodReturn)
-    connectAstChild(methodReturn)
+    addAndConnectAsAstChild(methodReturn)
 
     astFunction.getParameterList.asScala.foreach { parameter =>
       parameter.accept(this)
@@ -155,6 +188,19 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
     connectAstChild(parameter)
   }
 
+  override def visit(template: Template): Unit = {
+    // TODO (#60): Populate templated types in CPG.
+    logger.debug("NYI: Template parsing.")
+  }
+
+  override def visit(argument: Argument): Unit = {
+    argument.getExpression.accept(this)
+  }
+
+  override def visit(argumentList: ArgumentList): Unit = {
+    acceptChildren(argumentList, withArgEdges = true)
+  }
+
   override def visit(astAssignment: AssignmentExpression): Unit = {
     val operatorMethod = astAssignment.getOperator match {
       case "="   => Operators.assignment
@@ -170,69 +216,6 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
       case "|="  => Operators.assignmentOr
     }
     visitBinaryExpr(astAssignment, operatorMethod)
-  }
-
-  override def visit(astIdentifierDeclStmt: IdentifierDeclStatement): Unit = {
-    astIdentifierDeclStmt.getIdentifierDeclList.asScala.foreach { identifierDecl =>
-      identifierDecl.accept(this)
-    }
-  }
-
-  override def visit(astInitializerList: InitializerList): Unit = {
-    // TODO figure out how to represent.
-  }
-
-  override def visit(statement: Statement): Unit = {
-    if (statement.getChildCount != 0) {
-      throw new RuntimeException("Unhandled statement type: " + statement.getClass)
-    } else {
-      logger.debug("Parse error. Code: {}", statement.getEscapedCodeStr)
-    }
-  }
-
-  override def visit(identifierDecl: IdentifierDecl): Unit = {
-    val declTypeName = identifierDecl.getType.getEscapedCodeStr
-
-    if (identifierDecl.isTypedef) {
-      val aliasTypeDecl = nodes.NewTypeDecl(
-        name = identifierDecl.getName.getEscapedCodeStr,
-        fullName = identifierDecl.getName.getEscapedCodeStr,
-        isExternal = false,
-        aliasTypeFullName = Some(registerType(declTypeName))
-      )
-      diffGraph.addNode(aliasTypeDecl)
-      connectAstChild(aliasTypeDecl)
-    } else if (context.parentIsClassDef) {
-      val member =
-        nodes.NewMember(
-          code = identifierDecl.getEscapedCodeStr,
-          name = identifierDecl.getName.getEscapedCodeStr,
-          typeFullName = registerType(declTypeName)
-        )
-      diffGraph.addNode(member)
-      connectAstChild(member)
-    } else {
-      // We only process file level identifier declarations if they are typedefs.
-      // Everything else is ignored.
-      if (!scope.isEmpty) {
-        val localName = identifierDecl.getName.getEscapedCodeStr
-        val local = nodes.NewLocal(
-          code = localName,
-          name = localName,
-          typeFullName = registerType(declTypeName),
-          order = context.childNum
-        )
-        diffGraph.addNode(local)
-        val scopeParentNode =
-          scope.addToScope(localName, (local, declTypeName))
-        connectAstChild(local)
-
-        val assignmentExpression = identifierDecl.getAssignment
-        if (assignmentExpression != null) {
-          assignmentExpression.accept(this)
-        }
-      }
-    }
   }
 
   override def visit(astAdd: AdditiveExpression): Unit = {
@@ -303,20 +286,122 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
     visitBinaryExpr(astAnd, Operators.logicalAnd)
   }
 
-  private def visitBinaryExpr(astBinaryExpr: BinaryExpression, operatorMethod: String): Unit = {
-    val cpgBinaryExpr = createCallNode(astBinaryExpr, operatorMethod)
-    diffGraph.addNode(cpgBinaryExpr)
-    connectAstChild(cpgBinaryExpr)
+  override def visit(astUnary: UnaryExpression): Unit = {
+    Option(astUnary.getChild(0)) match {
+      case Some(_) =>
+        val operatorMethod = astUnary.getChild(0).getEscapedCodeStr match {
+          case "+"  => Operators.plus
+          case "-"  => Operators.minus
+          case "*"  => Operators.indirection
+          case "&"  => Operators.addressOf
+          case "~"  => Operators.not
+          case "!"  => Operators.logicalNot
+          case "++" => Operators.preIncrement
+          case "--" => Operators.preDecrement
+        }
 
-    pushContext(cpgBinaryExpr, 1)
+        val cpgUnary = createCallNode(astUnary, operatorMethod)
 
+        addAndConnectAsAstChild(cpgUnary)
+
+        pushContext(cpgUnary, 1)
+        context.addArgumentEdgeOnNextAstEdge = true
+        astUnary.getChild(1).accept(this)
+        popContext()
+      case None =>
+        // We get here for `new` expression.
+        val cpgNew = newUnknownNode(astUnary)
+        addAndConnectAsAstChild(cpgNew)
+    }
+  }
+
+  override def visit(astPostIncDecOp: PostIncDecOperationExpression): Unit = {
+    val operatorMethod = astPostIncDecOp.getChild(1).getEscapedCodeStr match {
+      case "++" => Operators.postIncrement
+      case "--" => Operators.postDecrement
+    }
+
+    val cpgPostIncDecOp = createCallNode(astPostIncDecOp, operatorMethod)
+
+    diffGraph.addNode(cpgPostIncDecOp)
+    connectAstChild(cpgPostIncDecOp)
+
+    pushContext(cpgPostIncDecOp, 1)
     context.addArgumentEdgeOnNextAstEdge = true
-    astBinaryExpr.getLeft.accept(this)
-
-    context.addArgumentEdgeOnNextAstEdge = true
-    astBinaryExpr.getRight.accept(this)
-
+    astPostIncDecOp.getChild(0).accept(this)
     popContext()
+  }
+
+  override def visit(astCall: CallExpression): Unit = {
+    val targetMethodName = astCall.getChild(0).getEscapedCodeStr
+    // TODO the DISPATCH_TYPE needs to depend on the type of the identifier which is "called".
+    // At the moment we use STATIC_DISPATCH also for calls of function pointers.
+    // When this is done we need to draw a RECEIVER edge for DYNAMIC_DISPATCH function pointer
+    // calls to the pointer expression.
+    val cpgCall = createCallNode(astCall, targetMethodName)
+
+    diffGraph.addNode(cpgCall)
+    connectAstChild(cpgCall)
+
+    pushContext(cpgCall, 1)
+    // Argument edges are added when visiting each individual argument.
+    astCall.getArgumentList.accept(this)
+    popContext()
+  }
+
+  override def visit(astNew: NewExpression): Unit = {
+    val call = createCallNode(astNew, "<operator>.new")
+
+    diffGraph.addNode(call)
+    connectAstChild(call)
+    pushContext(call, 1)
+    context.addArgumentEdgeOnNextAstEdge = true
+    astNew.getTargetClass.accept(this)
+    astNew.getArgumentList.accept(this)
+    popContext()
+  }
+
+  override def visit(astDelete: DeleteExpression): Unit = {
+    val call = createCallNode(astDelete, Operators.delete);
+
+    diffGraph.addNode(call)
+    connectAstChild(call)
+    pushContext(call, 1)
+    context.addArgumentEdgeOnNextAstEdge = true;
+    astDelete.getTarget.accept(this)
+    popContext()
+  }
+
+  override def visit(astConstant: Constant): Unit = {
+    val constantType = deriveConstantTypeFromCode(astConstant.getEscapedCodeStr)
+    val cpgConstant = nodes.NewLiteral(
+      typeFullName = registerType(constantType),
+      code = astConstant.getEscapedCodeStr,
+      order = context.childNum,
+      argumentIndex = context.childNum,
+      lineNumber = astConstant.getLocation.startLine,
+      columnNumber = astConstant.getLocation.startPos
+    )
+    diffGraph.addNode(cpgConstant)
+    connectAstChild(cpgConstant)
+  }
+
+  override def visit(astNode: BreakStatement): Unit = {
+    val node = newControlStructureNode(astNode)
+    diffGraph.addNode(node)
+    connectAstChild(node)
+  }
+
+  override def visit(astNode: ContinueStatement): Unit = {
+    val node = newControlStructureNode(astNode)
+    diffGraph.addNode(node)
+    connectAstChild(node)
+  }
+
+  override def visit(astNode: GotoStatement): Unit = {
+    val node = newControlStructureNode(astNode)
+    diffGraph.addNode(node)
+    connectAstChild(node)
   }
 
   override def visit(astIdentifier: Identifier): Unit = {
@@ -364,18 +449,29 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
 
   }
 
-  override def visit(astConstant: Constant): Unit = {
-    val constantType = deriveConstantTypeFromCode(astConstant.getEscapedCodeStr)
-    val cpgConstant = nodes.NewLiteral(
-      typeFullName = registerType(constantType),
-      code = astConstant.getEscapedCodeStr,
-      order = context.childNum,
-      argumentIndex = context.childNum,
-      lineNumber = astConstant.getLocation.startLine,
-      columnNumber = astConstant.getLocation.startPos
-    )
-    diffGraph.addNode(cpgConstant)
-    connectAstChild(cpgConstant)
+  override def visit(condition: Condition): Unit = {
+    //not called for ConditionalExpression, cf joern#91
+    context.addConditionEdgeOnNextAstEdge = true
+    condition.getExpression.accept(this)
+  }
+
+  override def visit(astConditionalExpr: ConditionalExpression): Unit = {
+    //this ought to be a ControlStructureNode, but we currently cannot handle that in the dataflow tracker
+    val cpgConditionalExpr = createCallNode(astConditionalExpr, "<operator>.conditionalExpression")
+    diffGraph.addNode(cpgConditionalExpr)
+    connectAstChild(cpgConditionalExpr)
+    val condition = astConditionalExpr.getChild(0).asInstanceOf[Condition]
+    val trueExpression = astConditionalExpr.getChild(1)
+    val falseExpression = astConditionalExpr.getChild(2)
+    // avoid setting context.addConditionEdgeOnNextAstEdge in this.visit(condition), cf joern#91
+    pushContext(cpgConditionalExpr, 1)
+    context.addArgumentEdgeOnNextAstEdge = true
+    condition.getExpression.accept(this)
+    context.addArgumentEdgeOnNextAstEdge = true
+    trueExpression.accept(this)
+    context.addArgumentEdgeOnNextAstEdge = true
+    falseExpression.accept(this)
+    popContext()
   }
 
   override def visit(expression: Expression): Unit = {
@@ -402,6 +498,316 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
     connectAstChild(cpgBlock)
     pushContext(cpgBlock, 1)
     acceptChildren(expression)
+    popContext()
+  }
+
+  override def visit(forInit: ForInit): Unit = {
+    acceptChildren(forInit)
+  }
+
+  override def visit(astBlockStarter: BlockStarter): Unit = {
+    val cpgBlockStarter = newControlStructureNode(astBlockStarter)
+    diffGraph.addNode(cpgBlockStarter)
+    connectAstChild(cpgBlockStarter)
+    pushContext(cpgBlockStarter, 1)
+
+    acceptChildren(astBlockStarter)
+
+    popContext()
+  }
+
+  override def visit(astCatchList: CatchList): Unit = {
+    val cpgCatchList = newUnknownNode(astCatchList)
+    diffGraph.addNode(cpgCatchList)
+    connectAstChild(cpgCatchList)
+
+    pushContext(cpgCatchList, 1)
+    astCatchList.asScala.foreach { catchElement =>
+      catchElement.accept(this)
+    }
+    popContext()
+  }
+
+  override def visit(astThrow: ThrowStatement): Unit = {
+    val cpgThrow = newControlStructureNode(astThrow)
+
+    addAndConnectAsAstChild(cpgThrow)
+
+    pushContext(cpgThrow, 1)
+    val throwExpression = astThrow.getThrowExpression
+    if (throwExpression != null) {
+      throwExpression.accept(this)
+    }
+    popContext()
+  }
+
+  override def visit(astIfStmt: IfStatement): Unit = {
+    val cpgIfStmt = newControlStructureNode(astIfStmt)
+    addAndConnectAsAstChild(cpgIfStmt)
+    pushContext(cpgIfStmt, 1)
+
+    astIfStmt.getCondition.accept(this)
+    astIfStmt.getStatement.accept(this)
+    val astElseStmt = astIfStmt.getElseNode
+    if (astElseStmt != null) {
+      astElseStmt.accept(this)
+    }
+    popContext()
+  }
+
+  override def visit(statement: ExpressionStatement): Unit = {
+    Option(statement.getExpression).foreach(_.accept(this))
+  }
+
+  override def visit(astBlock: CompoundStatement): Unit = {
+    if (context.parentIsClassDef) {
+      astBlock.getStatements.asScala.foreach { statement =>
+        statement.accept(this)
+      }
+    } else {
+      val block = nodes.NewBlock(
+        code = "",
+        order = context.childNum,
+        argumentIndex = context.childNum,
+        typeFullName = registerType(Defines.voidTypeName),
+        lineNumber = astBlock.getLocation.startLine,
+        columnNumber = astBlock.getLocation.startPos
+      )
+      diffGraph.addNode(block)
+      connectAstChild(block)
+
+      pushContext(block, 1)
+      scope.pushNewScope(block)
+      astBlock.getStatements.asScala.foreach { statement =>
+        statement.accept(this)
+      }
+      popContext()
+      scope.popScope()
+    }
+  }
+
+  override def visit(astNode: ReturnStatement): Unit = {
+    val cpgReturn = nodes.NewReturn(
+      code = astNode.getEscapedCodeStr,
+      order = context.childNum,
+      argumentIndex = context.childNum,
+      lineNumber = astNode.getLocation.startLine,
+      columnNumber = astNode.getLocation.startPos
+    )
+
+    addAndConnectAsAstChild(cpgReturn)
+
+    pushContext(cpgReturn, 1)
+    Option(astNode.getReturnExpression).foreach { returnExpr =>
+      context.addArgumentEdgeOnNextAstEdge = true
+      returnExpr.accept(this)
+    }
+    popContext()
+  }
+
+  override def visit(astIdentifierDeclStmt: IdentifierDeclStatement): Unit = {
+    astIdentifierDeclStmt.getIdentifierDeclList.asScala.foreach { identifierDecl =>
+      identifierDecl.accept(this)
+    }
+  }
+
+  override def visit(identifierDecl: IdentifierDecl): Unit = {
+    val declTypeName = identifierDecl.getType.getEscapedCodeStr
+
+    if (identifierDecl.isTypedef) {
+      val aliasTypeDecl = nodes.NewTypeDecl(
+        name = identifierDecl.getName.getEscapedCodeStr,
+        fullName = identifierDecl.getName.getEscapedCodeStr,
+        isExternal = false,
+        aliasTypeFullName = Some(registerType(declTypeName))
+      )
+      diffGraph.addNode(aliasTypeDecl)
+      connectAstChild(aliasTypeDecl)
+    } else if (context.parentIsClassDef) {
+      val member =
+        nodes.NewMember(
+          code = identifierDecl.getEscapedCodeStr,
+          name = identifierDecl.getName.getEscapedCodeStr,
+          typeFullName = registerType(declTypeName)
+        )
+      diffGraph.addNode(member)
+      connectAstChild(member)
+    } else {
+      // We only process file level identifier declarations if they are typedefs.
+      // Everything else is ignored.
+      if (!scope.isEmpty) {
+        val localName = identifierDecl.getName.getEscapedCodeStr
+        val local = nodes.NewLocal(
+          code = localName,
+          name = localName,
+          typeFullName = registerType(declTypeName),
+          order = context.childNum
+        )
+        diffGraph.addNode(local)
+        val scopeParentNode =
+          scope.addToScope(localName, (local, declTypeName))
+        connectAstChild(local)
+
+        val assignmentExpression = identifierDecl.getAssignment
+        if (assignmentExpression != null) {
+          assignmentExpression.accept(this)
+        }
+      }
+    }
+  }
+
+  override def visit(astSizeof: SizeofExpression): Unit = {
+    val cpgSizeof = createCallNode(astSizeof, Operators.sizeOf)
+
+    addAndConnectAsAstChild(cpgSizeof)
+
+    pushContext(cpgSizeof, 1)
+    // Child 0 is just the keyword 'sizeof' which at this point is duplicate
+    // information for us.
+    context.addArgumentEdgeOnNextAstEdge = true
+    astSizeof.getChild(1).accept(this)
+    popContext()
+  }
+
+  override def visit(astSizeofOperand: SizeofOperand): Unit = {
+    astSizeofOperand.getChildCount match {
+      case 0 =>
+        // Operand is a type.
+        val cpgTypeRef = newUnknownNode(astSizeofOperand)
+        addAndConnectAsAstChild(cpgTypeRef)
+      case 1 =>
+        // Operand is an expression.
+        astSizeofOperand.getChild(1).accept(this)
+    }
+  }
+
+  override def visit(astLabel: Label): Unit = {
+    val cpgLabel = nodes.NewJumpTarget(
+      parserTypeName = astLabel.getClass.getSimpleName,
+      name = astLabel.getLabelName,
+      code = astLabel.getEscapedCodeStr,
+      order = context.childNum,
+      argumentIndex = context.childNum,
+      lineNumber = astLabel.getLocation.startLine,
+      columnNumber = astLabel.getLocation.startPos
+    )
+    addAndConnectAsAstChild(cpgLabel)
+  }
+
+  override def visit(astArrayIndexing: ArrayIndexing): Unit = {
+    val cpgArrayIndexing =
+      createCallNode(astArrayIndexing, Operators.indirectIndexAccess)
+
+    addAndConnectAsAstChild(cpgArrayIndexing)
+
+    pushContext(cpgArrayIndexing, 1)
+    context.addArgumentEdgeOnNextAstEdge = true
+    astArrayIndexing.getArrayExpression.accept(this)
+    context.addArgumentEdgeOnNextAstEdge = true
+    astArrayIndexing.getIndexExpression.accept(this)
+    popContext()
+  }
+
+  override def visit(astCast: CastExpression): Unit = {
+    val cpgCast = createCallNode(astCast, Operators.cast)
+
+    addAndConnectAsAstChild(cpgCast)
+
+    pushContext(cpgCast, 1)
+    context.addArgumentEdgeOnNextAstEdge = true
+    astCast.getCastTarget.accept(this)
+    context.addArgumentEdgeOnNextAstEdge = true
+    astCast.getCastExpression.accept(this)
+    popContext()
+  }
+
+  override def visit(astMemberAccess: MemberAccess): Unit = {
+    val cpgMemberAccess =
+      createCallNode(astMemberAccess, Operators.fieldAccess)
+
+    addAndConnectAsAstChild(cpgMemberAccess)
+
+    pushContext(cpgMemberAccess, 1, parentIsMemberAccess = true)
+    acceptChildren(astMemberAccess, withArgEdges = true)
+    popContext()
+  }
+
+  override def visit(astPtrMemberAccess: PtrMemberAccess): Unit = {
+    val cpgPtrMemberAccess =
+      createCallNode(astPtrMemberAccess, Operators.indirectFieldAccess)
+
+    addAndConnectAsAstChild(cpgPtrMemberAccess)
+
+    pushContext(cpgPtrMemberAccess, 1, parentIsMemberAccess = true)
+    acceptChildren(astPtrMemberAccess, withArgEdges = true)
+    popContext()
+  }
+
+  override def visit(astCastTarget: CastTarget): Unit = {
+    val cpgCastTarget = newUnknownNode(astCastTarget)
+    addAndConnectAsAstChild(cpgCastTarget)
+  }
+
+  override def visit(astInitializerList: InitializerList): Unit = {
+    // TODO figure out how to represent.
+  }
+
+  override def visit(statement: Statement): Unit = {
+    if (statement.getChildCount != 0) {
+      throw new RuntimeException("Unhandled statement type: " + statement.getClass)
+    } else {
+      logger.debug("Parse error. Code: {}", statement.getEscapedCodeStr)
+    }
+  }
+
+  override def visit(astClassDef: ClassDefStatement): Unit = {
+    // TODO: currently NAME and FULL_NAME are the same, since
+    // the parser does not detect C++ namespaces. Change that,
+    // once the parser handles namespaces.
+    var name = astClassDef.identifier.toString
+    name = name.substring(1, name.length - 1)
+    val baseClassList = astClassDef.baseClasses.asScala.map { identifier =>
+      val baseClassName = identifier.toString
+      baseClassName.substring(1, baseClassName.length - 1)
+    }.toList
+
+    baseClassList.foreach(registerType)
+
+    val typeDecl = nodes.NewTypeDecl(
+      name = name,
+      fullName = name,
+      isExternal = false,
+      inheritsFromTypeFullName = baseClassList
+    )
+
+    diffGraph.addNode(typeDecl)
+    connectAstChild(typeDecl)
+
+    val templateParamList = astClassDef.getTemplateParameterList
+    if (templateParamList != null) {
+      templateParamList.asScala.foreach { template =>
+        template.accept(this)
+      }
+    }
+
+    pushContext(typeDecl, 1, parentIsClassDef = true)
+    astClassDef.content.accept(this)
+    popContext()
+  }
+
+  private def visitBinaryExpr(astBinaryExpr: BinaryExpression, operatorMethod: String): Unit = {
+    val cpgBinaryExpr = createCallNode(astBinaryExpr, operatorMethod)
+    diffGraph.addNode(cpgBinaryExpr)
+    connectAstChild(cpgBinaryExpr)
+
+    pushContext(cpgBinaryExpr, 1)
+
+    context.addArgumentEdgeOnNextAstEdge = true
+    astBinaryExpr.getLeft.accept(this)
+
+    context.addArgumentEdgeOnNextAstEdge = true
+    astBinaryExpr.getRight.accept(this)
+
     popContext()
   }
 
@@ -449,77 +855,14 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
     )
   }
 
-  override def visit(astClassDef: ClassDefStatement): Unit = {
-    // TODO: currently NAME and FULL_NAME are the same, since
-    // the parser does not detect C++ namespaces. Change that,
-    // once the parser handles namespaces.
-    var name = astClassDef.identifier.toString
-    name = name.substring(1, name.length - 1)
-    val baseClassList = astClassDef.baseClasses.asScala.map { identifier =>
-      val baseClassName = identifier.toString
-      baseClassName.substring(1, baseClassName.length - 1)
-    }.toList
-
-    baseClassList.foreach(registerType)
-
-    val typeDecl = nodes.NewTypeDecl(
-      name = name,
-      fullName = name,
-      isExternal = false,
-      inheritsFromTypeFullName = baseClassList
-    )
-
-    diffGraph.addNode(typeDecl)
-    connectAstChild(typeDecl)
-
-    val templateParamList = astClassDef.getTemplateParameterList
-    if (templateParamList != null) {
-      templateParamList.asScala.foreach { template =>
-        template.accept(this)
-      }
-    }
-
-    pushContext(typeDecl, 1, parentIsClassDef = true)
-    astClassDef.content.accept(this)
-    popContext()
-  }
-
-  override def visit(astBlock: CompoundStatement): Unit = {
-    if (context.parentIsClassDef) {
-      astBlock.getStatements.asScala.foreach { statement =>
-        statement.accept(this)
-      }
-    } else {
-      val block = nodes.NewBlock(
-        code = "",
-        order = context.childNum,
-        argumentIndex = context.childNum,
-        typeFullName = registerType(Defines.voidTypeName),
-        lineNumber = astBlock.getLocation.startLine,
-        columnNumber = astBlock.getLocation.startPos
-      )
-      diffGraph.addNode(block)
-      connectAstChild(block)
-
-      pushContext(block, 1)
-      scope.pushNewScope(block)
-      astBlock.getStatements.asScala.foreach { statement =>
-        statement.accept(this)
-      }
-      popContext()
-      scope.popScope()
-    }
-  }
-
-  override def visit(statement: ExpressionStatement): Unit = {
-    Option(statement.getExpression).foreach(_.accept(this))
-  }
-
-  // Utilities
-
   private def registerType(typeName: String): String = {
     global.usedTypes += typeName
     typeName
+  }
+
+  private def addAndConnectAsAstChild(node: NewNode): Unit = {
+    diffGraph.addNode(node)
+    connectAstChild(node)
   }
 
   private def connectAstChild(child: NewNode): Unit = {
@@ -536,19 +879,26 @@ class AstCreator(diffGraph: DiffGraph.Builder, astParentNode: nodes.NamespaceBlo
     }
   }
 
-  private def context: Context = {
-    contextStack.head
+  private def newUnknownNode(astNode: AstNode): nodes.NewUnknown = {
+    nodes.NewUnknown(
+      parserTypeName = astNode.getClass.getSimpleName,
+      code = astNode.getEscapedCodeStr,
+      order = context.childNum,
+      argumentIndex = context.childNum,
+      lineNumber = astNode.getLocation.startLine,
+      columnNumber = astNode.getLocation.startPos
+    )
   }
 
-  private def pushContext(cpgParent: nodes.CpgNode,
-                          startChildNum: Int,
-                          parentIsClassDef: Boolean = false,
-                          parentIsMemberAccess: Boolean = false): Unit = {
-    contextStack = new Context(cpgParent, startChildNum, parentIsClassDef, parentIsMemberAccess) :: contextStack
-  }
-
-  private def popContext(): Unit = {
-    contextStack = contextStack.tail
+  private def newControlStructureNode(astNode: AstNode): nodes.NewControlStructure = {
+    nodes.NewControlStructure(
+      parserTypeName = astNode.getClass.getSimpleName,
+      code = astNode.getEscapedCodeStr,
+      order = context.childNum,
+      argumentIndex = context.childNum,
+      lineNumber = astNode.getLocation.startLine,
+      columnNumber = astNode.getLocation.startPos
+    )
   }
 
 }
