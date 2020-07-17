@@ -11,6 +11,7 @@ libraryDependencies ++= Seq(
   "org.antlr"            %  "antlr4-runtime"           % antlrVersion,
   "io.shiftleft"         %% "codepropertygraph"        % cpgVersion,
   "io.shiftleft"         %% "codepropertygraph-protos" % cpgVersion,
+  "io.shiftleft"         %% "semanticcpg"              % cpgVersion,
 
   "commons-cli"          %  "commons-cli"              % "1.4",
   "com.github.pathikrit" %% "better-files"             % "3.8.0",
