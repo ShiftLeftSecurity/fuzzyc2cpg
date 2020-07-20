@@ -74,7 +74,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     }
   }
 
-  private def handleConditionalExpression(call: nodes.Call): List[AstNode] = {
+  private def handleConditionalExpression(call: nodes.Call): Unit = {
     val condition = call.argument(1)
     val trueExpression = call.argument(2)
     val falseExpression = call.argument(3)
@@ -87,10 +87,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     fringe = fromCond.setCfgEdgeType(FalseEdge)
     postOrderLeftToRightExpand(falseExpression)
     fringe = fringe.add(fromTrue)
-    List[nodes.AstNode]()
+    extendCfg(call)
   }
 
-  private def handleAndExpression(call: Call): List[AstNode] = {
+  private def handleAndExpression(call: Call): Unit = {
     val left = call.argument(1)
     val right = call.argument(2)
     postOrderLeftToRightExpand(left)
@@ -98,10 +98,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     fringe = fringe.setCfgEdgeType(TrueEdge)
     postOrderLeftToRightExpand(right)
     fringe = fringe.add(entry.setCfgEdgeType(FalseEdge))
-    List[nodes.AstNode]()
+    extendCfg(call)
   }
 
-  private def handleOrExpression(call: Call): List[AstNode] = {
+  private def handleOrExpression(call: Call): Unit = {
     val left = call.argument(1)
     val right = call.argument(2)
     postOrderLeftToRightExpand(left)
@@ -109,46 +109,40 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     fringe = fringe.setCfgEdgeType(FalseEdge)
     postOrderLeftToRightExpand(right)
     fringe = fringe.add(entry.setCfgEdgeType(TrueEdge))
-    List[nodes.AstNode]()
+    extendCfg(call)
   }
 
   private def postOrderLeftToRightExpand(node: nodes.AstNode): Unit = {
-    // Actions to take before expansion, including definition of
-    // the children to expand
 
-    val children = node match {
+    node match {
       case call: nodes.Call if call.name == Operators.conditional =>
         handleConditionalExpression(call)
       case call: nodes.Call if call.name == Operators.logicalAnd =>
         handleAndExpression(call)
       case call: nodes.Call if call.name == Operators.logicalOr =>
         handleOrExpression(call)
-      case n: nodes.AstNode =>
-        n.astChildren.l
-    }
-    children.foreach(postOrderLeftToRightExpand)
-
-    // Actions to take after expansion of children
-    node match {
       case call: nodes.Call =>
-        handleCall(call)
+        expandChildren(call)
+        extendCfg(call)
       case identifier: nodes.Identifier =>
         extendCfg(identifier)
       case literal: nodes.Literal =>
         extendCfg(literal)
       case actualRet: nodes.Return =>
+        expandChildren(actualRet)
         extendCfg(actualRet)
         fringe = Nil
         returns = actualRet :: returns
       case formalRet: nodes.MethodReturn =>
         extendCfg(formalRet)
-      case _ =>
+      case n: nodes.AstNode =>
+        expandChildren(n)
     }
-
   }
 
-  private def handleCall(call: nodes.Call): Unit = {
-    extendCfg(call)
+  private def expandChildren(node: nodes.AstNode): Unit = {
+    val children = node.astChildren.l
+    children.foreach(postOrderLeftToRightExpand)
   }
 
   private def extendCfg(dstNode: nodes.CfgNode): Unit = {
