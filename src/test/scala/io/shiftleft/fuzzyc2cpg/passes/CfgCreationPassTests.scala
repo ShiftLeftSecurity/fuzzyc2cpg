@@ -149,7 +149,6 @@ class CfgCreationPassTests extends WordSpec with Matchers {
     "be correct" in
       new CfgFixture("do { y = 2; } while (x < 1);") {
         succOf("func ()") shouldBe expected(("y", AlwaysEdge))
-        succOf("func ()") shouldBe expected(("y", AlwaysEdge))
         succOf("y") shouldBe expected(("2", AlwaysEdge))
         succOf("2") shouldBe expected(("y = 2", AlwaysEdge))
         succOf("y = 2") shouldBe expected(("x", AlwaysEdge))
