@@ -14,7 +14,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
 
     "be correct for empty method" in Fixture("void method(int x) { }") { cpg =>
       cpg.method.name("method").astChildren.l match {
-        case List(ret: nodes.MethodReturn, param: nodes.MethodParameterIn, _: nodes.Block) =>
+        case List(param: nodes.MethodParameterIn, _: nodes.Block, ret: nodes.MethodReturn) =>
           ret.typeFullName shouldBe "void"
           param.typeFullName shouldBe "int"
           param.name shouldBe "x"
@@ -67,7 +67,6 @@ class AstCreationPassTests extends WordSpec with Matchers {
               |void method(int x, int y) {
               |  int local = x, local2 = y;
               |}""".stripMargin) { cpg =>
-
         // Note that `cpg.method.local` does not work
         // because it depends on CONTAINS edges which
         // are created by a backend pass in semanticcpg

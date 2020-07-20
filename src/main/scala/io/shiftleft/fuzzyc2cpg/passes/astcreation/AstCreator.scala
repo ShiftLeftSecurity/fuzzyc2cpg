@@ -146,23 +146,24 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
         astFunction.getLocation
       }
 
-    val methodReturn = nodes.NewMethodReturn(
-      code = "RET",
-      evaluationStrategy = EvaluationStrategies.BY_VALUE.name(),
-      typeFullName = registerType(returnType),
-      lineNumber = methodReturnLocation.startLine,
-      columnNumber = methodReturnLocation.startPos
-    )
-
-    methodReturnNode = Some(methodReturn)
-
-    addAndConnectAsAstChild(methodReturn)
-
     astFunction.getParameterList.asScala.foreach { parameter =>
       parameter.accept(this)
     }
 
     astFunction.getContent.accept(this)
+
+    val methodReturn = nodes.NewMethodReturn(
+      code = "RET",
+      evaluationStrategy = EvaluationStrategies.BY_VALUE.name(),
+      typeFullName = registerType(returnType),
+      lineNumber = methodReturnLocation.startLine,
+      columnNumber = methodReturnLocation.startPos,
+      order = context.childNum
+    )
+
+    methodReturnNode = Some(methodReturn)
+
+    addAndConnectAsAstChild(methodReturn)
 
     scope.popScope()
     popContext()
@@ -457,7 +458,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
 
   override def visit(astConditionalExpr: ConditionalExpression): Unit = {
     //this ought to be a ControlStructureNode, but we currently cannot handle that in the dataflow tracker
-    val cpgConditionalExpr = createCallNode(astConditionalExpr, "<operator>.conditionalExpression")
+    val cpgConditionalExpr = createCallNode(astConditionalExpr, Operators.conditional)
     diffGraph.addNode(cpgConditionalExpr)
     connectAstChild(cpgConditionalExpr)
     val condition = astConditionalExpr.getChild(0).asInstanceOf[Condition]
