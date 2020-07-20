@@ -249,6 +249,24 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         node.code.split(" ").lastOption.map(x => x.slice(0, x.length - 1)).foreach { target =>
           gotos = (node, target) :: gotos
         }
+      case "IfStatement" =>
+        node.start.condition.foreach(postOrderLeftToRightExpand)
+        val conditionFringe = fringe
+        fringe = fringe.setCfgEdgeType(TrueEdge)
+        node.start.whenTrue.foreach(postOrderLeftToRightExpand)
+        node.start.whenFalse
+          .map { elseStatement =>
+            val ifBlockFringe = fringe
+            fringe = conditionFringe.setCfgEdgeType(FalseEdge)
+            postOrderLeftToRightExpand(elseStatement)
+            fringe = fringe.add(ifBlockFringe)
+          }
+          .headOption
+          .getOrElse {
+            fringe = fringe.add(conditionFringe.setCfgEdgeType(FalseEdge))
+          }
+      case "ElseStatement" =>
+        expandChildren(node)
       case _ =>
     }
   }
