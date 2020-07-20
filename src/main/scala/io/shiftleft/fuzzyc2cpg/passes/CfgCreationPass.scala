@@ -4,7 +4,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Call
 import io.shiftleft.passes.{DiffGraph, KeyPool, ParallelCpgPass}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
-import io.shiftleft.fuzzyc2cpg.adapter.{AlwaysEdge, CfgEdgeType, EdgeProperty, FalseEdge, TrueEdge}
+import io.shiftleft.fuzzyc2cpg.adapter.{AlwaysEdge, CaseEdge, CfgEdgeType, EdgeProperty, FalseEdge, TrueEdge}
 import io.shiftleft.fuzzyc2cpg.cfg.LayeredStack
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
@@ -267,6 +267,41 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
           }
       case "ElseStatement" =>
         expandChildren(node)
+      case "SwitchStatement" =>
+        node.start.condition.foreach(postOrderLeftToRightExpand)
+        val conditionFringe = fringe.setCfgEdgeType(CaseEdge)
+        fringe = Nil
+
+        // We can only push the break and case stacks after we processed the condition
+        // in order to allow for nested switches with no nodes CFG nodes in between
+        // an outer switch case label and the inner switch condition.
+        // This is ok because in C/C++ it is not allowed to have another switch
+        // statement in the condition of a switch statement.
+        breakStack.pushLayer()
+        caseStack.pushLayer()
+
+        node.start.whenTrue.foreach(postOrderLeftToRightExpand)
+        val switchFringe = fringe
+
+        caseStack.getTopElements.foreach {
+          case (caseNode, _) =>
+            fringe = conditionFringe
+            extendCfg(caseNode)
+        }
+
+        val hasDefaultCase = caseStack.getTopElements.exists {
+          case (_, isDefault) =>
+            isDefault
+        }
+
+        fringe = switchFringe.add(breakStack.getTopElements, AlwaysEdge)
+
+        if (!hasDefaultCase) {
+          fringe = fringe.add(conditionFringe)
+        }
+
+        breakStack.popLayer()
+        caseStack.popLayer()
       case _ =>
     }
   }
