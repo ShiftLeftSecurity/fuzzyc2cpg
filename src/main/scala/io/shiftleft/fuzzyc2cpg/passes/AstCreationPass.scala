@@ -54,13 +54,13 @@ class AstCreationPass(filenames: List[String], cpg: Cpg, keyPools: Option[Iterat
       Iterator(diffGraph.build)
     } catch {
       case ex: RuntimeException => {
-        println("Cannot parse module: " + filename + ", skipping")
-        println("Complete exception: ", ex)
+        logger.warn("Cannot parse module: " + filename + ", skipping")
+        logger.warn("Complete exception: ", ex)
         ex.printStackTrace()
         Iterator()
       }
       case _: StackOverflowError => {
-        println("Cannot parse module: " + filename + ", skipping, StackOverflow")
+        logger.warn("Cannot parse module: " + filename + ", skipping, StackOverflow")
         Iterator()
       }
     }
