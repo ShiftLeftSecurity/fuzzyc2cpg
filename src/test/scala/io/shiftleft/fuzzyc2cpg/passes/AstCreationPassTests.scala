@@ -14,7 +14,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
 
     "be correct for empty method" in Fixture("void method(int x) { }") { cpg =>
       cpg.method.name("method").astChildren.l match {
-        case List(ret: nodes.MethodReturn, param: nodes.MethodParameterIn, _: nodes.Block) =>
+        case List(param: nodes.MethodParameterIn, _: nodes.Block, ret: nodes.MethodReturn) =>
           ret.typeFullName shouldBe "void"
           param.typeFullName shouldBe "int"
           param.name shouldBe "x"
