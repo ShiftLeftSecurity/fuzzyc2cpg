@@ -122,3 +122,4 @@ developers := List(
 )
 publishTo := sonatypePublishToBundle.value
 Global / useGpg := false
+Global / onChangedBuildSource := ReloadOnSourceChanges
