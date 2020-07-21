@@ -6,7 +6,6 @@ import io.shiftleft.passes.IntervalKeyPool
 import io.shiftleft.semanticcpg.language._
 import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.codepropertygraph.generated.{Operators, nodes}
-import scala.jdk.CollectionConverters._
 
 class AstCreationPassTests extends WordSpec with Matchers {
 
@@ -147,8 +146,8 @@ class AstCreationPassTests extends WordSpec with Matchers {
       case List(controlStruct: nodes.ControlStructure) =>
         controlStruct.code shouldBe "while (x < 1)"
         controlStruct.parserTypeName shouldBe "WhileStatement"
-        controlStruct._conditionOut().asScala.toList match {
-          case List(cndNode: nodes.Expression) =>
+        controlStruct.start.condition.headOption match {
+          case Some(cndNode) =>
             cndNode.code shouldBe "x < 1"
           case _ => fail
         }
@@ -169,15 +168,77 @@ class AstCreationPassTests extends WordSpec with Matchers {
       case List(controlStruct: nodes.ControlStructure) =>
         controlStruct.code shouldBe "if (x > 0)"
         controlStruct.parserTypeName shouldBe "IfStatement"
-        controlStruct._conditionOut().asScala.toList match {
-          case List(cndNode: nodes.Expression) =>
+        // TODO improve query language: controlStruct.condition
+        controlStruct.start.condition.headOption match {
+          case Some(cndNode) =>
             cndNode.code shouldBe "x > 0"
           case _ => fail
+
         }
         controlStruct.start.whenTrue.assignments.code.l shouldBe List("y = 0")
       case _ => fail
     }
+  }
 
+  "be correct for if-else" in Fixture("""
+                                            |void method(int x) {
+                                            |  int y;
+                                            |  if (x > 0) {
+                                            |    y = 0;
+                                            |  } else {
+                                            |    y = 1;
+                                            |  }
+                                            |}
+      """.stripMargin) { cpg =>
+    cpg.method.name("method").controlStructure.l match {
+      case List(ifStmt, elseStmt) =>
+        ifStmt.parserTypeName shouldBe "IfStatement"
+        ifStmt.code shouldBe "if (x > 0)"
+        elseStmt.parserTypeName shouldBe "ElseStatement"
+        elseStmt.code shouldBe "else"
+
+        ifStmt.start.condition.headOption match {
+          case Some(cndNode) =>
+            cndNode.code shouldBe "x > 0"
+          case _ => fail
+        }
+
+        // TODO .start.whenTrue => .whenTrue
+        ifStmt.start.whenTrue.assignments
+          .map(x => (x.target.code, x.source.code))
+          .headOption shouldBe Some(("y", "0"))
+        ifStmt.start.whenFalse.assignments
+          .map(x => (x.target.code, x.source.code))
+          .headOption shouldBe Some(("y", "1"))
+      case _ => fail
+    }
+  }
+
+  "be correct for conditional expression" in Fixture("""
+      | void method() {
+      |   int x = (foo == 1) ? bar : 0;
+      | }
+      """.stripMargin) { cpg =>
+    // Just like we cannot use `cpg.method.local`,
+    // `cpg.method.call` will not work at this stage
+    // either because there are no CONTAINS edges
+
+    cpg.method.name("method").ast.isCall.name(Operators.conditional).headOption match {
+      case Some(call) =>
+        call.code shouldBe "(foo == 1) ? bar : 0"
+        // TODO call.start.argument => call.argument
+        call.start.argument.l match {
+          case List(condition, trueBranch, falseBranch) =>
+            condition.argumentIndex shouldBe 1
+            condition.code shouldBe "foo == 1"
+            trueBranch.argumentIndex shouldBe 2
+            trueBranch.code shouldBe "bar"
+            falseBranch.argumentIndex shouldBe 3
+            falseBranch.code shouldBe "0"
+          case _ => fail
+        }
+      case _ => fail
+    }
   }
 
 }
