@@ -14,7 +14,7 @@ class FileAndNamespaceBlockPassTests extends WordSpec with Matchers {
     val expectedFilenameFields = filenames.map(f => File(f).path.toAbsolutePath.toString)
     new FileAndNamespaceBlockPass(filenames, cpg).createAndApply()
 
-    "create one File node per file name" in {
+    "create one File node per file name with absolute path in `name`" in {
       cpg.file.name.toSet shouldBe expectedFilenameFields.toSet
     }
 

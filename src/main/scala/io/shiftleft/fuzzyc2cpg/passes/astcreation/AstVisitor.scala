@@ -52,7 +52,6 @@ class AntlrCModuleParserDriver() extends AntlrParserDriver() {
 
   override def parseTokenStreamImpl(tokens: TokenSubStream): ParseTree = {
     val parser = new ModuleParser(tokens)
-    setAntlrParser(parser)
     var tree: ModuleParser.CodeContext = null
     try {
       setSLLMode(parser)

@@ -6,7 +6,7 @@ import io.shiftleft.fuzzyc2cpg.Defines
 import io.shiftleft.fuzzyc2cpg.Utils.getGlobalNamespaceBlockFullName
 import io.shiftleft.passes.{CpgPass, DiffGraph, KeyPool}
 
-class MetaDataPass(cpg: Cpg, keyPool: Option[KeyPool] = None) extends CpgPass(cpg, keyPool = keyPool) {
+class CMetaDataPass(cpg: Cpg, keyPool: Option[KeyPool] = None) extends CpgPass(cpg, keyPool = keyPool) {
   override def run(): Iterator[DiffGraph] = {
     def addMetaDataNode(diffGraph: DiffGraph.Builder): Unit = {
       val metaNode = nodes.NewMetaData(language = Languages.C)
