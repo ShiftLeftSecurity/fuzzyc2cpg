@@ -1,8 +1,8 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
 import gremlin.scala._
+import io.shiftleft.OverflowDbTestInstance
 import org.antlr.v4.runtime.{CharStreams, ParserRuleContext}
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
 import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
 import io.shiftleft.fuzzyc2cpg.{Global, ModuleLexer}
@@ -14,6 +14,8 @@ import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.fuzzyc2cpg.parser.{AntlrParserDriverObserver, TokenSubStream}
+import overflowdb._
+import overflowdb.traversal._
 
 class AstToCpgTests extends WordSpec with Matchers {
 
@@ -122,7 +124,7 @@ class AstToCpgTests extends WordSpec with Matchers {
 
     driver.parseAndWalkTokenStream(tokens)
 
-    val graph: ScalaGraph = TinkerGraph.open()
+    val graph: ScalaGraph = OverflowDbTestInstance.create
     private val astParentNode = graph.addVertex("NAMESPACE_BLOCK")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
