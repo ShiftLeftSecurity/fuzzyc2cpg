@@ -218,7 +218,6 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       case "+" => Operators.addition
       case "-" => Operators.subtraction
     }
-
     visitBinaryExpr(astAdd, operatorMethod)
   }
 
@@ -228,7 +227,6 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       case "/" => Operators.division
       case "%" => Operators.modulo
     }
-
     visitBinaryExpr(astMult, operatorMethod)
   }
 
@@ -239,7 +237,6 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       case "<=" => Operators.lessEqualsThan
       case ">=" => Operators.greaterEqualsThan
     }
-
     visitBinaryExpr(astRelation, operatorMethod)
   }
 
@@ -248,7 +245,6 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       case "<<" => Operators.shiftLeft
       case ">>" => Operators.arithmeticShiftRight
     }
-
     visitBinaryExpr(astShift, operatorMethod)
   }
 
@@ -257,7 +253,6 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       case "==" => Operators.equals
       case "!=" => Operators.notEquals
     }
-
     visitBinaryExpr(astEquality, operatorMethod)
   }
 
@@ -295,7 +290,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
           case "--" => Operators.preDecrement
         }
 
-        val cpgUnary = createCallNode(astUnary, operatorMethod)
+        val cpgUnary = newCallNode(astUnary, operatorMethod)
 
         addAndConnectAsAstChild(cpgUnary)
 
@@ -316,7 +311,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       case "--" => Operators.postDecrement
     }
 
-    val cpgPostIncDecOp = createCallNode(astPostIncDecOp, operatorMethod)
+    val cpgPostIncDecOp = newCallNode(astPostIncDecOp, operatorMethod)
 
     diffGraph.addNode(cpgPostIncDecOp)
     connectAstChild(cpgPostIncDecOp)
@@ -333,7 +328,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
     // At the moment we use STATIC_DISPATCH also for calls of function pointers.
     // When this is done we need to draw a RECEIVER edge for DYNAMIC_DISPATCH function pointer
     // calls to the pointer expression.
-    val cpgCall = createCallNode(astCall, targetMethodName)
+    val cpgCall = newCallNode(astCall, targetMethodName)
 
     diffGraph.addNode(cpgCall)
     connectAstChild(cpgCall)
@@ -345,7 +340,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
   }
 
   override def visit(astNew: NewExpression): Unit = {
-    val call = createCallNode(astNew, "<operator>.new")
+    val call = newCallNode(astNew, "<operator>.new")
 
     diffGraph.addNode(call)
     connectAstChild(call)
@@ -357,7 +352,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
   }
 
   override def visit(astDelete: DeleteExpression): Unit = {
-    val call = createCallNode(astDelete, Operators.delete);
+    val call = newCallNode(astDelete, Operators.delete);
 
     diffGraph.addNode(call)
     connectAstChild(call)
@@ -452,7 +447,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
 
   override def visit(astConditionalExpr: ConditionalExpression): Unit = {
     //this ought to be a ControlStructureNode, but we currently cannot handle that in the dataflow tracker
-    val cpgConditionalExpr = createCallNode(astConditionalExpr, Operators.conditional)
+    val cpgConditionalExpr = newCallNode(astConditionalExpr, Operators.conditional)
     diffGraph.addNode(cpgConditionalExpr)
     connectAstChild(cpgConditionalExpr)
     val condition = astConditionalExpr.getChild(0).asInstanceOf[Condition]
@@ -674,7 +669,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
   }
 
   override def visit(astSizeof: SizeofExpression): Unit = {
-    val cpgSizeof = createCallNode(astSizeof, Operators.sizeOf)
+    val cpgSizeof = newCallNode(astSizeof, Operators.sizeOf)
 
     addAndConnectAsAstChild(cpgSizeof)
 
@@ -713,7 +708,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
 
   override def visit(astArrayIndexing: ArrayIndexing): Unit = {
     val cpgArrayIndexing =
-      createCallNode(astArrayIndexing, Operators.indirectIndexAccess)
+      newCallNode(astArrayIndexing, Operators.indirectIndexAccess)
 
     addAndConnectAsAstChild(cpgArrayIndexing)
 
@@ -726,7 +721,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
   }
 
   override def visit(astCast: CastExpression): Unit = {
-    val cpgCast = createCallNode(astCast, Operators.cast)
+    val cpgCast = newCallNode(astCast, Operators.cast)
 
     addAndConnectAsAstChild(cpgCast)
 
@@ -740,7 +735,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
 
   override def visit(astMemberAccess: MemberAccess): Unit = {
     val cpgMemberAccess =
-      createCallNode(astMemberAccess, Operators.fieldAccess)
+      newCallNode(astMemberAccess, Operators.fieldAccess)
 
     addAndConnectAsAstChild(cpgMemberAccess)
 
@@ -751,7 +746,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
 
   override def visit(astPtrMemberAccess: PtrMemberAccess): Unit = {
     val cpgPtrMemberAccess =
-      createCallNode(astPtrMemberAccess, Operators.indirectFieldAccess)
+      newCallNode(astPtrMemberAccess, Operators.indirectFieldAccess)
 
     addAndConnectAsAstChild(cpgPtrMemberAccess)
 
@@ -813,7 +808,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
   }
 
   private def visitBinaryExpr(astBinaryExpr: BinaryExpression, operatorMethod: String): Unit = {
-    val cpgBinaryExpr = createCallNode(astBinaryExpr, operatorMethod)
+    val cpgBinaryExpr = newCallNode(astBinaryExpr, operatorMethod)
     diffGraph.addNode(cpgBinaryExpr)
     connectAstChild(cpgBinaryExpr)
 
@@ -857,21 +852,6 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
     }
   }
 
-  private def createCallNode(astNode: AstNode, methodName: String): nodes.NewCall = {
-    nodes.NewCall(
-      name = methodName,
-      dispatchType = DispatchTypes.STATIC_DISPATCH.name(),
-      signature = "TODO assignment signature",
-      typeFullName = registerType(Defines.anyTypeName),
-      methodFullName = methodName,
-      code = astNode.getEscapedCodeStr,
-      order = context.childNum,
-      argumentIndex = context.childNum,
-      lineNumber = astNode.getLocation.startLine,
-      columnNumber = astNode.getLocation.startPos
-    )
-  }
-
   private def registerType(typeName: String): String = {
     global.usedTypes += typeName
     typeName
@@ -894,6 +874,21 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       diffGraph.addEdge(context.cpgParent, child, EdgeTypes.ARGUMENT)
       context.addArgumentEdgeOnNextAstEdge = false
     }
+  }
+
+  private def newCallNode(astNode: AstNode, methodName: String): nodes.NewCall = {
+    nodes.NewCall(
+      name = methodName,
+      dispatchType = DispatchTypes.STATIC_DISPATCH.name(),
+      signature = "TODO assignment signature",
+      typeFullName = registerType(Defines.anyTypeName),
+      methodFullName = methodName,
+      code = astNode.getEscapedCodeStr,
+      order = context.childNum,
+      argumentIndex = context.childNum,
+      lineNumber = astNode.getLocation.startLine,
+      columnNumber = astNode.getLocation.startPos
+    )
   }
 
   private def newUnknownNode(astNode: AstNode): nodes.NewUnknown = {
