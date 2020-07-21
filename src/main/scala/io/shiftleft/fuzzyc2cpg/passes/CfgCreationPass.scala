@@ -241,7 +241,44 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         breakStack.popLayer()
         continueStack.popLayer()
       case "ForStatement" =>
-      // TODO - not enough information from parser
+        breakStack.pushLayer()
+        continueStack.pushLayer()
+
+        val children = node.astChildren.l
+        val initExprOption = children.find(_.order == 1)
+        val conditionOption = children.find(_.order == 2)
+        val loopExprOption = children.find(_.order == 3)
+        val statementOption = children.find(_.order == 4)
+
+        initExprOption.foreach(postOrderLeftToRightExpand)
+
+        markerStack = None :: markerStack
+        val conditionFringe =
+          conditionOption match {
+            case Some(condition) =>
+              postOrderLeftToRightExpand(condition)
+              val storedFringe = fringe
+              fringe = fringe.setCfgEdgeType(TrueEdge)
+              storedFringe
+            case None => Nil
+          }
+
+        statementOption.foreach(postOrderLeftToRightExpand)
+
+        fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
+
+        loopExprOption.foreach(postOrderLeftToRightExpand)
+
+        markerStack.head.foreach(extendCfg)
+
+        fringe = conditionFringe
+          .setCfgEdgeType(FalseEdge)
+          .add(breakStack.getTopElements, AlwaysEdge)
+
+        markerStack = markerStack.tail
+        breakStack.popLayer()
+        continueStack.popLayer()
+
       case "GotoStatement" =>
         extendCfg(node)
         fringe = Nil
