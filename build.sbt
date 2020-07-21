@@ -3,7 +3,7 @@ organization := "io.shiftleft"
 scalaVersion := "2.13.1"
 enablePlugins(GitVersioning)
 
-val cpgVersion = "0.11.314"
+val cpgVersion = "0.11.329"
 val antlrVersion = "4.7.2"
 
 libraryDependencies ++= Seq(
@@ -20,7 +20,6 @@ libraryDependencies ++= Seq(
   "com.novocode"         %  "junit-interface"          % "0.11"  % Test,
   "junit"                %  "junit"                    % "4.12"  % Test,
   "org.scalatest"        %% "scalatest"                % "3.0.8" % Test,
-  "org.apache.tinkerpop" %  "tinkergraph-gremlin"      % "3.4.3" % Test,
 )
 
 excludeDependencies ++= Seq(
@@ -122,3 +121,4 @@ developers := List(
 )
 publishTo := sonatypePublishToBundle.value
 Global / useGpg := false
+Global / onChangedBuildSource := ReloadOnSourceChanges

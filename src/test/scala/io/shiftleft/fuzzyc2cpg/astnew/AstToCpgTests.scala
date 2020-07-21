@@ -1,10 +1,9 @@
 package io.shiftleft.fuzzyc2cpg.astnew
 
-import gremlin.scala._
+import io.shiftleft.OverflowDbTestInstance
 import org.antlr.v4.runtime.{CharStreams, ParserRuleContext}
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
 import org.scalatest.{Matchers, WordSpec}
-import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
+import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeKeysOdb, NodeTypes, Operators}
 import io.shiftleft.fuzzyc2cpg.{Global, ModuleLexer}
 import io.shiftleft.fuzzyc2cpg.adapter.CpgAdapter
 import io.shiftleft.fuzzyc2cpg.adapter.EdgeKind.EdgeKind
@@ -14,53 +13,55 @@ import io.shiftleft.fuzzyc2cpg.adapter.NodeProperty.NodeProperty
 import io.shiftleft.fuzzyc2cpg.ast.{AstNode, AstNodeBuilder}
 import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
 import io.shiftleft.fuzzyc2cpg.parser.{AntlrParserDriverObserver, TokenSubStream}
+import overflowdb._
+import overflowdb.traversal._
 
 class AstToCpgTests extends WordSpec with Matchers {
 
-  private class GraphAdapter(graph: ScalaGraph) extends CpgAdapter[Vertex, Vertex, Edge, Edge] {
-    override def createNodeBuilder(kind: NodeKind): Vertex = {
-      graph.addVertex(kind.toString)
+  private class GraphAdapter(graph: OdbGraph) extends CpgAdapter[Node, Node, OdbEdge, OdbEdge] {
+    override def createNodeBuilder(kind: NodeKind): Node = {
+      graph.addNode(kind.toString)
     }
 
-    override def createNode(vertex: Vertex, origAstNode: AstNode): Vertex = {
+    override def createNode(vertex: Node, origAstNode: AstNode): Node = {
       vertex
     }
 
-    override def createNode(vertex: Vertex): Vertex = {
+    override def createNode(vertex: Node): Node = {
       vertex
     }
 
-    override def addNodeProperty(vertex: Vertex, property: NodeProperty, value: String): Unit = {
+    override def addNodeProperty(vertex: Node, property: NodeProperty, value: String): Unit = {
       vertex.property(property.toString, value)
     }
 
-    override def addNodeProperty(vertex: Vertex, property: NodeProperty, value: Int): Unit = {
+    override def addNodeProperty(vertex: Node, property: NodeProperty, value: Int): Unit = {
       vertex.property(property.toString, value)
     }
 
-    override def addNodeProperty(vertex: Vertex, property: NodeProperty, value: Boolean): Unit = {
+    override def addNodeProperty(vertex: Node, property: NodeProperty, value: Boolean): Unit = {
       vertex.property(property.toString, value)
     }
 
-    override def addNodeProperty(vertex: Vertex, property: NodeProperty, value: List[String]): Unit = {
+    override def addNodeProperty(vertex: Node, property: NodeProperty, value: List[String]): Unit = {
       vertex.property(property.toString, value)
     }
 
-    override def createEdgeBuilder(dst: Vertex, src: Vertex, edgeKind: EdgeKind): Edge = {
-      src.addEdge(edgeKind.toString, dst)
+    override def createEdgeBuilder(dst: Node, src: Node, edgeKind: EdgeKind): OdbEdge = {
+      src.addEdge2(edgeKind.toString, dst)
     }
 
-    override def createEdge(edge: Edge): Edge = {
+    override def createEdge(edge: OdbEdge): OdbEdge = {
       edge
     }
 
     // Not used in test with this adapter.
-    override def addEdgeProperty(edgeBuilder: Edge, property: EdgeProperty, value: String): Unit = ???
-    override def mapNode(astNode: AstNode): Vertex = ???
+    override def addEdgeProperty(edgeBuilder: OdbEdge, property: EdgeProperty, value: String): Unit = ???
+    override def mapNode(astNode: AstNode): Node = ???
   }
 
-  private implicit class VertexListWrapper(vertexList: List[Vertex]) {
-    def expandAst(filterLabels: String*): List[Vertex] = {
+  private implicit class VertexListWrapper(vertexList: List[Node]) {
+    def expandAst(filterLabels: String*): List[Node] = {
       if (filterLabels.nonEmpty) {
         vertexList.flatMap(_.start.out(EdgeTypes.AST).hasLabel(filterLabels.head, filterLabels.tail: _*).l)
       } else {
@@ -68,26 +69,26 @@ class AstToCpgTests extends WordSpec with Matchers {
       }
     }
 
-    def expandCondition: List[Vertex] =
+    def expandCondition: List[Node] =
       vertexList.flatMap(_.start.out(EdgeTypes.CONDITION).l)
 
-    def expandArgument: List[Vertex] =
+    def expandArgument: List[Node] =
       vertexList.flatMap(_.start.out(EdgeTypes.ARGUMENT).l)
 
-    def filterOrder(order: Int): List[Vertex] = {
-      vertexList.filter(_.value2(NodeKeys.ORDER) == order)
+    def filterOrder(order: Int): List[Node] = {
+      vertexList.filter(_.property(NodeKeysOdb.ORDER) == order)
     }
 
-    def checkForSingle[T](propertyName: Key[T], value: T): Unit = {
+    def checkForSingle[T](propertyName: PropertyKey[T], value: T): Unit = {
       vertexList.size shouldBe 1
-      vertexList.head.value2(propertyName) shouldBe value
+      vertexList.head.property(propertyName) shouldBe value
     }
 
     def checkForSingle(): Unit = {
       vertexList.size shouldBe 1
     }
 
-    def check[A](count: Int, mapFunc: Vertex => A, expectations: A*): Unit = {
+    def check[A](count: Int, mapFunc: Node => A, expectations: A*): Unit = {
       vertexList.size shouldBe count
       vertexList.map(mapFunc).toSet shouldBe expectations.toSet
     }
@@ -122,8 +123,8 @@ class AstToCpgTests extends WordSpec with Matchers {
 
     driver.parseAndWalkTokenStream(tokens)
 
-    val graph: ScalaGraph = TinkerGraph.open()
-    private val astParentNode = graph.addVertex("NAMESPACE_BLOCK")
+    val graph: OdbGraph = OverflowDbTestInstance.create
+    private val astParentNode = graph.addNode("NAMESPACE_BLOCK")
     protected val astParent = List(astParentNode)
     private val cpgAdapter = new GraphAdapter(graph)
 
@@ -133,20 +134,17 @@ class AstToCpgTests extends WordSpec with Matchers {
       astToProtoConverter.convert(node)
     }
 
-    def getMethod(name: String): List[Vertex] =
+    def getMethod(name: String): List[Node] =
       getVertices(name, NodeTypes.METHOD)
 
-    def getTypeDecl(name: String): List[Vertex] =
+    def getTypeDecl(name: String): List[Node] =
       getVertices(name, NodeTypes.TYPE_DECL)
 
-    def getCall(name: String): List[Vertex] =
+    def getCall(name: String): List[Node] =
       getVertices(name, NodeTypes.CALL)
 
-    def getVertices(name: String, nodeType: String): List[Vertex] = {
-      val result = graph.V
-        .hasLabel(nodeType)
-        .has(NodeKeys.NAME -> name)
-        .l
+    def getVertices(name: String, nodeType: String): List[Node] = {
+      val result = graph.nodes(nodeType).has(NodeKeysOdb.NAME -> name).toList
 
       result.size shouldBe 1
       result
@@ -163,11 +161,11 @@ class AstToCpgTests extends WordSpec with Matchers {
 
       method
         .expandAst(NodeTypes.METHOD_RETURN)
-        .checkForSingle(NodeKeys.TYPE_FULL_NAME, "void")
+        .checkForSingle(NodeKeysOdb.TYPE_FULL_NAME, "void")
 
       method
         .expandAst(NodeTypes.METHOD_PARAMETER_IN)
-        .checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
+        .checkForSingle(NodeKeysOdb.TYPE_FULL_NAME, "int")
     }
 
     "be correct for decl assignment" in new Fixture("""
@@ -180,21 +178,21 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val local = block.expandAst(NodeTypes.LOCAL)
-      local.checkForSingle(NodeKeys.NAME, "local")
-      local.checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
+      local.checkForSingle(NodeKeysOdb.NAME, "local")
+      local.checkForSingle(NodeKeysOdb.TYPE_FULL_NAME, "int")
 
       val assignment = block.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
+      assignment.checkForSingle(NodeKeysOdb.NAME, Operators.assignment)
 
       val arguments = assignment.expandAst()
       arguments.check(
         2,
         arg =>
           (arg.label,
-           arg.value2(NodeKeys.CODE),
-           arg.value2(NodeKeys.TYPE_FULL_NAME),
-           arg.value2(NodeKeys.ORDER),
-           arg.value2(NodeKeys.ARGUMENT_INDEX)),
+           arg.property(NodeKeysOdb.CODE),
+           arg.property(NodeKeysOdb.TYPE_FULL_NAME),
+           arg.property(NodeKeysOdb.ORDER),
+           arg.property(NodeKeysOdb.ARGUMENT_INDEX)),
         expectations = (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
         (NodeTypes.LITERAL, "1", "int", 2, 2)
       )
@@ -210,21 +208,21 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val local = block.expandAst(NodeTypes.LOCAL)
-      local.checkForSingle(NodeKeys.NAME, "local")
-      local.checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
+      local.checkForSingle(NodeKeysOdb.NAME, "local")
+      local.checkForSingle(NodeKeysOdb.TYPE_FULL_NAME, "int")
 
       val assignment = block.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
+      assignment.checkForSingle(NodeKeysOdb.NAME, Operators.assignment)
 
       val arguments = assignment.expandAst()
       arguments.check(
         2,
         arg =>
           (arg.label,
-           arg.value2(NodeKeys.CODE),
-           arg.value2(NodeKeys.TYPE_FULL_NAME),
-           arg.value2(NodeKeys.ORDER),
-           arg.value2(NodeKeys.ARGUMENT_INDEX)),
+           arg.property(NodeKeysOdb.CODE),
+           arg.property(NodeKeysOdb.TYPE_FULL_NAME),
+           arg.property(NodeKeysOdb.ORDER),
+           arg.property(NodeKeysOdb.ARGUMENT_INDEX)),
         expectations = (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
         (NodeTypes.IDENTIFIER, "x", "int", 2, 2)
       )
@@ -243,39 +241,39 @@ class AstToCpgTests extends WordSpec with Matchers {
         .expandAst(NodeTypes.LOCAL)
         .check(
           2,
-          local => (local.label, local.value2(NodeKeys.CODE), local.value2(NodeKeys.TYPE_FULL_NAME)),
+          local => (local.label, local.property(NodeKeysOdb.CODE), local.property(NodeKeysOdb.TYPE_FULL_NAME)),
           expectations = (NodeTypes.LOCAL, "local", "int"),
           (NodeTypes.LOCAL, "local2", "int")
         )
 
       val assignment1 = block.expandAst(NodeTypes.CALL).filterOrder(1)
-      assignment1.checkForSingle(NodeKeys.NAME, Operators.assignment)
+      assignment1.checkForSingle(NodeKeysOdb.NAME, Operators.assignment)
 
       val arguments1 = assignment1.expandAst()
       arguments1.check(
         2,
         arg =>
           (arg.label,
-           arg.value2(NodeKeys.CODE),
-           arg.value2(NodeKeys.TYPE_FULL_NAME),
-           arg.value2(NodeKeys.ORDER),
-           arg.value2(NodeKeys.ARGUMENT_INDEX)),
+           arg.property(NodeKeysOdb.CODE),
+           arg.property(NodeKeysOdb.TYPE_FULL_NAME),
+           arg.property(NodeKeysOdb.ORDER),
+           arg.property(NodeKeysOdb.ARGUMENT_INDEX)),
         expectations = (NodeTypes.IDENTIFIER, "local", "int", 1, 1),
         (NodeTypes.IDENTIFIER, "x", "int", 2, 2)
       )
 
       val assignment2 = block.expandAst(NodeTypes.CALL).filterOrder(2)
-      assignment2.checkForSingle(NodeKeys.NAME, Operators.assignment)
+      assignment2.checkForSingle(NodeKeysOdb.NAME, Operators.assignment)
 
       val arguments2 = assignment2.expandAst()
       arguments2.check(
         2,
         arg =>
           (arg.label,
-           arg.value2(NodeKeys.CODE),
-           arg.value2(NodeKeys.TYPE_FULL_NAME),
-           arg.value2(NodeKeys.ORDER),
-           arg.value2(NodeKeys.ARGUMENT_INDEX)),
+           arg.property(NodeKeysOdb.CODE),
+           arg.property(NodeKeysOdb.TYPE_FULL_NAME),
+           arg.property(NodeKeysOdb.ORDER),
+           arg.property(NodeKeysOdb.ARGUMENT_INDEX)),
         expectations = (NodeTypes.IDENTIFIER, "local2", "int", 1, 1),
         (NodeTypes.IDENTIFIER, "y", "int", 2, 2)
       )
@@ -294,18 +292,18 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val locals = block.expandAst(NodeTypes.LOCAL)
-      locals.check(3, local => local.value2(NodeKeys.NAME), expectations = "x", "y", "z")
+      locals.check(3, local => local.property(NodeKeysOdb.NAME), expectations = "x", "y", "z")
 
       val assignment = block.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
+      assignment.checkForSingle(NodeKeysOdb.NAME, Operators.assignment)
 
       val rightHandSide = assignment.expandAst(NodeTypes.CALL).filterOrder(2)
-      rightHandSide.checkForSingle(NodeKeys.NAME, Operators.addition)
+      rightHandSide.checkForSingle(NodeKeysOdb.NAME, Operators.addition)
 
       val arguments = rightHandSide.expandAst()
       arguments.check(
         2,
-        arg => (arg.label, arg.value2(NodeKeys.CODE), arg.value2(NodeKeys.ORDER), arg.value2(NodeKeys.ARGUMENT_INDEX)),
+        arg => (arg.label, arg.property(NodeKeysOdb.CODE), arg.property(NodeKeysOdb.ORDER), arg.property(NodeKeysOdb.ARGUMENT_INDEX)),
         expectations = (NodeTypes.IDENTIFIER, "y", 1, 1),
         (NodeTypes.IDENTIFIER, "z", 2, 2)
       )
@@ -323,12 +321,12 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val locals = block.expandAst(NodeTypes.LOCAL)
-      locals.checkForSingle(NodeKeys.NAME, "x")
+      locals.checkForSingle(NodeKeysOdb.NAME, "x")
 
       val nestedBlock = block.expandAst(NodeTypes.BLOCK)
       nestedBlock.checkForSingle()
       val nestedLocals = nestedBlock.expandAst(NodeTypes.LOCAL)
-      nestedLocals.checkForSingle(NodeKeys.NAME, "y")
+      nestedLocals.checkForSingle(NodeKeysOdb.NAME, "y")
     }
 
     "be correct for while-loop" in new Fixture("""
@@ -343,20 +341,20 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val whileStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
-      whileStmt.check(1, _.value2(NodeKeys.CODE), expectations = "while (x < 1)")
-      whileStmt.check(1, whileStmt => whileStmt.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "WhileStatement")
+      whileStmt.check(1, _.property(NodeKeysOdb.CODE), expectations = "while (x < 1)")
+      whileStmt.check(1, whileStmt => whileStmt.property(NodeKeysOdb.PARSER_TYPE_NAME), expectations = "WhileStatement")
 
       val condition = whileStmt.expandCondition
-      condition.checkForSingle(NodeKeys.CODE, "x < 1")
+      condition.checkForSingle(NodeKeysOdb.CODE, "x < 1")
 
       val lessThan = whileStmt.expandAst(NodeTypes.CALL)
-      lessThan.checkForSingle(NodeKeys.NAME, Operators.lessThan)
+      lessThan.checkForSingle(NodeKeysOdb.NAME, Operators.lessThan)
 
       val whileBlock = whileStmt.expandAst(NodeTypes.BLOCK)
       whileBlock.checkForSingle()
 
       val assignPlus = whileBlock.expandAst(NodeTypes.CALL)
-      assignPlus.filterOrder(1).checkForSingle(NodeKeys.NAME, Operators.assignmentPlus)
+      assignPlus.filterOrder(1).checkForSingle(NodeKeysOdb.NAME, Operators.assignmentPlus)
     }
 
     "be correct for if" in new Fixture("""
@@ -371,19 +369,19 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
-      ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
+      ifStmt.check(1, _.property(NodeKeysOdb.PARSER_TYPE_NAME), expectations = "IfStatement")
 
       val condition = ifStmt.expandCondition
-      condition.checkForSingle(NodeKeys.CODE, "x > 0")
+      condition.checkForSingle(NodeKeysOdb.CODE, "x > 0")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
-      greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
+      greaterThan.checkForSingle(NodeKeysOdb.NAME, Operators.greaterThan)
 
       val ifBlock = ifStmt.expandAst(NodeTypes.BLOCK)
       ifBlock.checkForSingle()
 
       val assignment = ifBlock.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
+      assignment.checkForSingle(NodeKeysOdb.NAME, Operators.assignment)
     }
 
     "be correct for if-else" in new Fixture("""
@@ -400,29 +398,29 @@ class AstToCpgTests extends WordSpec with Matchers {
       val block = method.expandAst(NodeTypes.BLOCK)
       block.checkForSingle()
       val ifStmt = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
-      ifStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "IfStatement")
+      ifStmt.check(1, _.property(NodeKeysOdb.PARSER_TYPE_NAME), expectations = "IfStatement")
 
       val condition = ifStmt.expandCondition
-      condition.checkForSingle(NodeKeys.CODE, "x > 0")
+      condition.checkForSingle(NodeKeysOdb.CODE, "x > 0")
 
       val greaterThan = ifStmt.expandAst(NodeTypes.CALL)
-      greaterThan.checkForSingle(NodeKeys.NAME, Operators.greaterThan)
+      greaterThan.checkForSingle(NodeKeysOdb.NAME, Operators.greaterThan)
 
       val ifBlock = ifStmt.expandAst(NodeTypes.BLOCK)
       ifBlock.checkForSingle()
 
       val assignment = ifBlock.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
+      assignment.checkForSingle(NodeKeysOdb.NAME, Operators.assignment)
 
       val elseStmt = ifStmt.expandAst(NodeTypes.CONTROL_STRUCTURE)
-      elseStmt.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ElseStatement")
-      elseStmt.check(1, _.value2(NodeKeys.CODE), "else")
+      elseStmt.check(1, _.property(NodeKeysOdb.PARSER_TYPE_NAME), expectations = "ElseStatement")
+      elseStmt.check(1, _.property(NodeKeysOdb.CODE), "else")
 
       val elseBlock = elseStmt.expandAst(NodeTypes.BLOCK)
       elseBlock.checkForSingle()
 
       val assignmentInElse = elseBlock.expandAst(NodeTypes.CALL)
-      assignmentInElse.checkForSingle(NodeKeys.NAME, Operators.assignment)
+      assignmentInElse.checkForSingle(NodeKeysOdb.NAME, Operators.assignment)
     }
 
     "be correct for conditional expression" in new Fixture(
@@ -437,11 +435,11 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
       val call = block.expandAst(NodeTypes.CALL)
       val conditionalExpr = call.expandAst(NodeTypes.CALL) //formerly control structure
-      conditionalExpr.check(1, _.value2(NodeKeys.CODE), expectations = "(foo == 1) ? bar : 0")
-      conditionalExpr.check(1, _.value2(NodeKeys.NAME), expectations = "<operator>.conditionalExpression")
+      conditionalExpr.check(1, _.property(NodeKeysOdb.CODE), expectations = "(foo == 1) ? bar : 0")
+      conditionalExpr.check(1, _.property(NodeKeysOdb.NAME), expectations = "<operator>.conditionalExpression")
       val params = conditionalExpr.expandAst()
       params.check(3,
-                   arg => (arg.value2(NodeKeys.ARGUMENT_INDEX), arg.value2(NodeKeys.CODE)),
+                   arg => (arg.property(NodeKeysOdb.ARGUMENT_INDEX), arg.property(NodeKeysOdb.CODE)),
                    expectations = (1, "foo == 1"),
                    (2, "bar"),
                    (3, "0"))
@@ -459,23 +457,23 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val forLoop = block.expandAst(NodeTypes.CONTROL_STRUCTURE)
-      forLoop.check(1, _.value2(NodeKeys.PARSER_TYPE_NAME), expectations = "ForStatement")
-      forLoop.check(1, _.value2(NodeKeys.CODE), expectations = "for ( x = 0, y = 0; x < 1; x += 1)")
+      forLoop.check(1, _.property(NodeKeysOdb.PARSER_TYPE_NAME), expectations = "ForStatement")
+      forLoop.check(1, _.property(NodeKeysOdb.CODE), expectations = "for ( x = 0, y = 0; x < 1; x += 1)")
 
       val conditionNode = forLoop.expandCondition
-      conditionNode.checkForSingle(NodeKeys.CODE, "x < 1")
+      conditionNode.checkForSingle(NodeKeysOdb.CODE, "x < 1")
 
       val initBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(1)
       initBlock.checkForSingle()
 
       val assignments = initBlock.expandAst(NodeTypes.CALL)
-      assignments.check(2, _.value2(NodeKeys.NAME), expectations = Operators.assignment)
+      assignments.check(2, _.property(NodeKeysOdb.NAME), expectations = Operators.assignment)
 
       val condition = forLoop.expandAst(NodeTypes.CALL).filterOrder(2)
-      condition.checkForSingle(NodeKeys.NAME, Operators.lessThan)
+      condition.checkForSingle(NodeKeysOdb.NAME, Operators.lessThan)
 
       val increment = forLoop.expandAst(NodeTypes.CALL).filterOrder(3)
-      increment.checkForSingle(NodeKeys.NAME, Operators.assignmentPlus)
+      increment.checkForSingle(NodeKeysOdb.NAME, Operators.assignmentPlus)
 
       val forBlock = forLoop.expandAst(NodeTypes.BLOCK).filterOrder(4)
       forBlock.checkForSingle()
@@ -491,10 +489,10 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val plusCall = block.expandAst(NodeTypes.CALL)
-      plusCall.checkForSingle(NodeKeys.NAME, Operators.plus)
+      plusCall.checkForSingle(NodeKeysOdb.NAME, Operators.plus)
 
       val identifierX = plusCall.expandAst(NodeTypes.IDENTIFIER)
-      identifierX.checkForSingle(NodeKeys.NAME, "x")
+      identifierX.checkForSingle(NodeKeysOdb.NAME, "x")
     }
 
     "be correct for unary expression '++'" in new Fixture("""
@@ -507,10 +505,10 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val plusCall = block.expandAst(NodeTypes.CALL)
-      plusCall.checkForSingle(NodeKeys.NAME, Operators.preIncrement)
+      plusCall.checkForSingle(NodeKeysOdb.NAME, Operators.preIncrement)
 
       val identifierX = plusCall.expandAst(NodeTypes.IDENTIFIER)
-      identifierX.checkForSingle(NodeKeys.NAME, "x")
+      identifierX.checkForSingle(NodeKeysOdb.NAME, "x")
     }
 
     "be correct for call expression" in new Fixture("""
@@ -523,10 +521,10 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val call = block.expandAst(NodeTypes.CALL)
-      call.checkForSingle(NodeKeys.NAME, "foo")
+      call.checkForSingle(NodeKeysOdb.NAME, "foo")
 
       val argumentX = call.expandAst(NodeTypes.IDENTIFIER)
-      argumentX.checkForSingle(NodeKeys.NAME, "x")
+      argumentX.checkForSingle(NodeKeysOdb.NAME, "x")
     }
 
     "be correct for pointer call expression" in new Fixture("""
@@ -545,16 +543,16 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val fieldAccess = block.expandAst(NodeTypes.CALL)
-      fieldAccess.checkForSingle(NodeKeys.NAME, Operators.fieldAccess)
+      fieldAccess.checkForSingle(NodeKeysOdb.NAME, Operators.fieldAccess)
 
       val arguments = fieldAccess.expandAst(NodeTypes.IDENTIFIER)
       arguments.check(1, arg => {
-        (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+        (arg.property(NodeKeysOdb.NAME), arg.property(NodeKeysOdb.ARGUMENT_INDEX))
       }, expectations = ("x", 1))
       fieldAccess
         .expandAst(NodeTypes.FIELD_IDENTIFIER)
         .check(1, arg => {
-          (arg.value2(NodeKeys.CODE), arg.value2(NodeKeys.CANONICAL_NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+          (arg.property(NodeKeysOdb.CODE), arg.property(NodeKeysOdb.CANONICAL_NAME), arg.property(NodeKeysOdb.ARGUMENT_INDEX))
         }, expectations = ("a", "a", 2))
 
     }
@@ -569,16 +567,16 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val fieldAccess = block.expandAst(NodeTypes.CALL)
-      fieldAccess.checkForSingle(NodeKeys.NAME, Operators.indirectFieldAccess)
+      fieldAccess.checkForSingle(NodeKeysOdb.NAME, Operators.indirectFieldAccess)
 
       val arguments = fieldAccess.expandAst(NodeTypes.IDENTIFIER)
       arguments.check(1, arg => {
-        (arg.value2(NodeKeys.NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+        (arg.property(NodeKeysOdb.NAME), arg.property(NodeKeysOdb.ARGUMENT_INDEX))
       }, expectations = ("x", 1))
       fieldAccess
         .expandAst(NodeTypes.FIELD_IDENTIFIER)
         .check(1, arg => {
-          (arg.value2(NodeKeys.CODE), arg.value2(NodeKeys.CANONICAL_NAME), arg.value2(NodeKeys.ARGUMENT_INDEX))
+          (arg.property(NodeKeysOdb.CODE), arg.property(NodeKeysOdb.CANONICAL_NAME), arg.property(NodeKeysOdb.ARGUMENT_INDEX))
         }, expectations = ("a", "a", 2))
     }
 
@@ -595,11 +593,11 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val sizeof = block.expandAst(NodeTypes.CALL)
-      sizeof.checkForSingle(NodeKeys.NAME, Operators.sizeOf)
+      sizeof.checkForSingle(NodeKeysOdb.NAME, Operators.sizeOf)
 
       val arguments = sizeof.expandAst(NodeTypes.IDENTIFIER)
-      arguments.checkForSingle(NodeKeys.NAME, "a")
-      arguments.checkForSingle(NodeKeys.ARGUMENT_INDEX, new Integer(1))
+      arguments.checkForSingle(NodeKeysOdb.NAME, "a")
+      arguments.checkForSingle(NodeKeysOdb.ARGUMENT_INDEX, new Integer(1))
     }
 
     "be correct for sizeof operator on identifier without brackets" in new Fixture(
@@ -615,11 +613,11 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val sizeof = block.expandAst(NodeTypes.CALL)
-      sizeof.checkForSingle(NodeKeys.NAME, Operators.sizeOf)
+      sizeof.checkForSingle(NodeKeysOdb.NAME, Operators.sizeOf)
 
       val arguments = sizeof.expandAst(NodeTypes.IDENTIFIER)
-      arguments.checkForSingle(NodeKeys.NAME, "a")
-      arguments.checkForSingle(NodeKeys.ARGUMENT_INDEX, new Integer(1))
+      arguments.checkForSingle(NodeKeysOdb.NAME, "a")
+      arguments.checkForSingle(NodeKeysOdb.ARGUMENT_INDEX, new Integer(1))
     }
 
     "be correct for sizeof operator on type" in new Fixture(
@@ -634,14 +632,14 @@ class AstToCpgTests extends WordSpec with Matchers {
       block.checkForSingle()
 
       val sizeof = block.expandAst(NodeTypes.CALL)
-      sizeof.checkForSingle(NodeKeys.NAME, Operators.sizeOf)
+      sizeof.checkForSingle(NodeKeysOdb.NAME, Operators.sizeOf)
 
       // For us it is undecidable whether "int" is a type or an Identifier
       // Thus the implementation always goes for Identifier which we encode
       // here in the tests.
       val arguments = sizeof.expandAst(NodeTypes.IDENTIFIER)
-      arguments.checkForSingle(NodeKeys.NAME, "int")
-      arguments.checkForSingle(NodeKeys.ARGUMENT_INDEX, new Integer(1))
+      arguments.checkForSingle(NodeKeysOdb.NAME, "int")
+      arguments.checkForSingle(NodeKeysOdb.ARGUMENT_INDEX, new Integer(1))
     }
   }
 
@@ -674,9 +672,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       val typeDecl = getTypeDecl("foo")
       typeDecl.checkForSingle()
       val member = typeDecl.expandAst(NodeTypes.MEMBER)
-      member.checkForSingle(NodeKeys.CODE, "x")
-      member.checkForSingle(NodeKeys.NAME, "x")
-      member.checkForSingle(NodeKeys.TYPE_FULL_NAME, "int")
+      member.checkForSingle(NodeKeysOdb.CODE, "x")
+      member.checkForSingle(NodeKeysOdb.NAME, "x")
+      member.checkForSingle(NodeKeysOdb.TYPE_FULL_NAME, "int")
     }
 
     "be correct for named struct with multiple fields" in new Fixture("""
@@ -689,7 +687,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       val typeDecl = getTypeDecl("foo")
       typeDecl.checkForSingle()
       val member = typeDecl.expandAst(NodeTypes.MEMBER)
-      member.check(3, member => member.value2(NodeKeys.CODE), expectations = "x", "y", "z")
+      member.check(3, member => member.property(NodeKeysOdb.CODE), expectations = "x", "y", "z")
     }
 
     "be correct for named struct with nested struct" in new Fixture("""
@@ -706,17 +704,17 @@ class AstToCpgTests extends WordSpec with Matchers {
       val typeDeclFoo = getTypeDecl("foo")
       typeDeclFoo.checkForSingle()
       val memberFoo = typeDeclFoo.expandAst(NodeTypes.MEMBER)
-      memberFoo.checkForSingle(NodeKeys.CODE, "x")
+      memberFoo.checkForSingle(NodeKeysOdb.CODE, "x")
 
       val typeDeclBar = typeDeclFoo.expandAst(NodeTypes.TYPE_DECL)
-      typeDeclBar.checkForSingle(NodeKeys.FULL_NAME, "bar")
+      typeDeclBar.checkForSingle(NodeKeysOdb.FULL_NAME, "bar")
       val memberBar = typeDeclBar.expandAst(NodeTypes.MEMBER)
-      memberBar.checkForSingle(NodeKeys.CODE, "y")
+      memberBar.checkForSingle(NodeKeysOdb.CODE, "y")
 
       val typeDeclFoo2 = typeDeclBar.expandAst(NodeTypes.TYPE_DECL)
-      typeDeclFoo2.checkForSingle(NodeKeys.FULL_NAME, "foo2")
+      typeDeclFoo2.checkForSingle(NodeKeysOdb.FULL_NAME, "foo2")
       val memberFoo2 = typeDeclFoo2.expandAst(NodeTypes.MEMBER)
-      memberFoo2.checkForSingle(NodeKeys.CODE, "z")
+      memberFoo2.checkForSingle(NodeKeysOdb.CODE, "z")
     }
 
     "be correct for typedef" in new Fixture(
@@ -727,8 +725,8 @@ class AstToCpgTests extends WordSpec with Matchers {
     ) {
       val aliasTypeDecl = getTypeDecl("abc")
 
-      aliasTypeDecl.checkForSingle(NodeKeys.FULL_NAME, "abc")
-      aliasTypeDecl.checkForSingle(NodeKeys.ALIAS_TYPE_FULL_NAME, "foo")
+      aliasTypeDecl.checkForSingle(NodeKeysOdb.FULL_NAME, "abc")
+      aliasTypeDecl.checkForSingle(NodeKeysOdb.ALIAS_TYPE_FULL_NAME, "foo")
     }
 
     "be correct for single inheritance" in new Fixture(
@@ -780,7 +778,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       call.checkForSingle()
 
       val args = call.expandArgument
-      args.checkForSingle(NodeKeys.CODE, "x")
+      args.checkForSingle(NodeKeysOdb.CODE, "x")
     }
 
     "be correct for method returns" in new Fixture(
@@ -800,7 +798,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       methodReturn.checkForSingle()
 
       val args = methodReturn.expandArgument
-      args.checkForSingle(NodeKeys.CODE, "x * 2")
+      args.checkForSingle(NodeKeysOdb.CODE, "x * 2")
     }
 
     "be correct for binary method calls" in new Fixture(
@@ -814,7 +812,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       call.checkForSingle()
 
       val callArgs = call.expandArgument
-      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "2")
+      callArgs.check(2, x => x.property(NodeKeysOdb.CODE), "x", "2")
     }
 
     "be correct for unary method calls" in new Fixture(
@@ -828,7 +826,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       call.checkForSingle()
 
       val callArgs = call.expandArgument
-      callArgs.checkForSingle(NodeKeys.CODE, "b")
+      callArgs.checkForSingle(NodeKeysOdb.CODE, "b")
     }
 
     "be correct for post increment method calls" in new Fixture(
@@ -843,12 +841,12 @@ class AstToCpgTests extends WordSpec with Matchers {
       val call = getCall("<operator>.postIncrement")
       call.checkForSingle()
       val callArgs = call.expandArgument
-      callArgs.checkForSingle(NodeKeys.CODE, "x")
+      callArgs.checkForSingle(NodeKeysOdb.CODE, "x")
 
       val callDec = getCall("<operator>.postDecrement")
       callDec.checkForSingle()
       val callArgsDec = callDec.expandArgument
-      callArgsDec.checkForSingle(NodeKeys.CODE, "x")
+      callArgsDec.checkForSingle(NodeKeysOdb.CODE, "x")
     }
 
     "be correct for conditional expressions containing calls" in new Fixture(
@@ -862,7 +860,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       call.checkForSingle()
 
       val callArgs = call.expandArgument
-      callArgs.check(3, x => x.value2[String](NodeKeys.CODE), "x > 0", "x", "-x")
+      callArgs.check(3, x => x.property(NodeKeysOdb.CODE), "x > 0", "x", "-x")
     }
 
     "be correct for sizeof expressions" in new Fixture(
@@ -876,12 +874,12 @@ class AstToCpgTests extends WordSpec with Matchers {
       call.checkForSingle()
 
       val callArgs = call.expandArgument
-      callArgs.checkForSingle(NodeKeys.CODE, "int")
+      callArgs.checkForSingle(NodeKeysOdb.CODE, "int")
     }
 
     "be correct for label" in new Fixture("foo() { label: }") {
       val jumpTarget = getVertices("label", NodeTypes.JUMP_TARGET)
-      jumpTarget.checkForSingle(NodeKeys.CODE, "label:")
+      jumpTarget.checkForSingle(NodeKeysOdb.CODE, "label:")
     }
 
     "be correct for array indexing" in new Fixture(
@@ -895,7 +893,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       call.checkForSingle()
 
       val callArgs = call.expandArgument
-      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "0")
+      callArgs.check(2, x => x.property(NodeKeysOdb.CODE), "x", "0")
     }
 
     "be correct for type casts" in new Fixture(
@@ -909,7 +907,7 @@ class AstToCpgTests extends WordSpec with Matchers {
       call.checkForSingle()
 
       val callArgs = call.expandArgument
-      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "int", "x")
+      callArgs.check(2, x => x.property(NodeKeysOdb.CODE), "int", "x")
     }
 
     "be correct for member accesses" in new Fixture(
@@ -923,10 +921,10 @@ class AstToCpgTests extends WordSpec with Matchers {
       call.checkForSingle()
 
       val callArgs = call.expandArgument
-      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "count")
+      callArgs.check(2, x => x.property(NodeKeysOdb.CODE), "x", "count")
       callArgs.check(2, x => x.label(), NodeTypes.IDENTIFIER, NodeTypes.FIELD_IDENTIFIER)
       callArgs.check(2, x => {
-        if (x.label() == NodeTypes.FIELD_IDENTIFIER) { x.value2[String](NodeKeys.CANONICAL_NAME) } else { "" }
+        if (x.label() == NodeTypes.FIELD_IDENTIFIER) { x.property(NodeKeysOdb.CANONICAL_NAME) } else { "" }
       }, "", "count")
     }
 
@@ -941,10 +939,10 @@ class AstToCpgTests extends WordSpec with Matchers {
       call.checkForSingle()
 
       val callArgs = call.expandArgument
-      callArgs.check(2, x => x.value2[String](NodeKeys.CODE), "x", "count")
+      callArgs.check(2, x => x.property(NodeKeysOdb.CODE), "x", "count")
       callArgs.check(2, x => x.label(), NodeTypes.IDENTIFIER, NodeTypes.FIELD_IDENTIFIER)
       callArgs.check(2, x => {
-        if (x.label() == NodeTypes.FIELD_IDENTIFIER) { x.value2[String](NodeKeys.CANONICAL_NAME) } else { "" }
+        if (x.label() == NodeTypes.FIELD_IDENTIFIER) { x.property(NodeKeysOdb.CANONICAL_NAME) } else { "" }
       }, "", "count")
     }
 
@@ -957,10 +955,10 @@ class AstToCpgTests extends WordSpec with Matchers {
         |""".stripMargin
     ) {
       val call = getCall("<operator>.new")
-      call.checkForSingle(NodeKeys.CODE, "new int[n]")
+      call.checkForSingle(NodeKeysOdb.CODE, "new int[n]")
 
       val callArgs = call.expandArgument
-      callArgs.check(1, x => x.value2[String](NodeKeys.CODE), "int")
+      callArgs.check(1, x => x.property(NodeKeysOdb.CODE), "int")
     }
 
     "be correct for 'new' object" in new Fixture(
@@ -972,10 +970,10 @@ class AstToCpgTests extends WordSpec with Matchers {
         |""".stripMargin
     ) {
       val call = getCall("<operator>.new")
-      call.checkForSingle(NodeKeys.CODE, "new Foo(n, 42)")
+      call.checkForSingle(NodeKeysOdb.CODE, "new Foo(n, 42)")
 
       val callArgs = call.expandArgument
-      callArgs.check(1, x => x.value2[String](NodeKeys.CODE), "Foo")
+      callArgs.check(1, x => x.property(NodeKeysOdb.CODE), "Foo")
     }
 
     "be correct for simple 'delete'" in new Fixture(
@@ -986,10 +984,10 @@ class AstToCpgTests extends WordSpec with Matchers {
         |""".stripMargin
     ) {
       val call = getCall("<operator>.delete")
-      call.checkForSingle(NodeKeys.CODE, "delete n")
+      call.checkForSingle(NodeKeysOdb.CODE, "delete n")
 
       val callArgs = call.expandArgument
-      callArgs.check(1, x => x.value2[String](NodeKeys.CODE), "n")
+      callArgs.check(1, x => x.property(NodeKeysOdb.CODE), "n")
     }
 
     "be correct for array 'delete'" in new Fixture(
@@ -1000,10 +998,10 @@ class AstToCpgTests extends WordSpec with Matchers {
         |""".stripMargin
     ) {
       val call = getCall("<operator>.delete")
-      call.checkForSingle(NodeKeys.CODE, "delete[] n")
+      call.checkForSingle(NodeKeysOdb.CODE, "delete[] n")
 
       val callArgs = call.expandArgument
-      callArgs.check(1, x => x.value2[String](NodeKeys.CODE), "n")
+      callArgs.check(1, x => x.property(NodeKeysOdb.CODE), "n")
     }
 
     "be correct for const_cast" in new Fixture(
@@ -1015,10 +1013,10 @@ class AstToCpgTests extends WordSpec with Matchers {
         |""".stripMargin
     ) {
       val call = getCall("<operator>.cast")
-      call.checkForSingle(NodeKeys.CODE, "const_cast<int>(n)")
+      call.checkForSingle(NodeKeysOdb.CODE, "const_cast<int>(n)")
 
       val callArgs = call.expandArgument
-      callArgs.check(2, x => x.value2(NodeKeys.CODE), "int", "n")
+      callArgs.check(2, x => x.property(NodeKeysOdb.CODE), "int", "n")
     }
 
     "be correct for static_cast" in new Fixture(
@@ -1030,10 +1028,10 @@ class AstToCpgTests extends WordSpec with Matchers {
         |""".stripMargin
     ) {
       val call = getCall("<operator>.cast")
-      call.checkForSingle(NodeKeys.CODE, "static_cast<int>(n)")
+      call.checkForSingle(NodeKeysOdb.CODE, "static_cast<int>(n)")
 
       val callArgs = call.expandArgument
-      callArgs.check(2, x => x.value2(NodeKeys.CODE), "int", "n")
+      callArgs.check(2, x => x.property(NodeKeysOdb.CODE), "int", "n")
     }
 
     "be correct for dynamic_cast" in new Fixture(
@@ -1045,10 +1043,10 @@ class AstToCpgTests extends WordSpec with Matchers {
         |""".stripMargin
     ) {
       val call = getCall("<operator>.cast")
-      call.checkForSingle(NodeKeys.CODE, "dynamic_cast<int>(n)")
+      call.checkForSingle(NodeKeysOdb.CODE, "dynamic_cast<int>(n)")
 
       val callArgs = call.expandArgument
-      callArgs.check(2, x => x.value2(NodeKeys.CODE), "int", "n")
+      callArgs.check(2, x => x.property(NodeKeysOdb.CODE), "int", "n")
     }
 
     "be correct for reinterpret_cast" in new Fixture(
@@ -1060,10 +1058,10 @@ class AstToCpgTests extends WordSpec with Matchers {
         |""".stripMargin
     ) {
       val call = getCall("<operator>.cast")
-      call.checkForSingle(NodeKeys.CODE, "reinterpret_cast<int>(n)")
+      call.checkForSingle(NodeKeysOdb.CODE, "reinterpret_cast<int>(n)")
 
       val callArgs = call.expandArgument
-      callArgs.check(2, x => x.value2(NodeKeys.CODE), "int", "n")
+      callArgs.check(2, x => x.property(NodeKeysOdb.CODE), "int", "n")
     }
   }
 
@@ -1079,13 +1077,13 @@ class AstToCpgTests extends WordSpec with Matchers {
         | }
       """.stripMargin) {
       val method = getMethod("method")
-      method.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 6)
+      method.checkForSingle(NodeKeysOdb.LINE_NUMBER, 6: Integer)
 
       val block = method.expandAst(NodeTypes.BLOCK)
 
       val assignment = block.expandAst(NodeTypes.CALL)
-      assignment.checkForSingle(NodeKeys.NAME, Operators.assignment)
-      assignment.checkForSingle[Integer](NodeKeys.LINE_NUMBER, 8)
+      assignment.checkForSingle(NodeKeysOdb.NAME, Operators.assignment)
+      assignment.checkForSingle(NodeKeysOdb.LINE_NUMBER, 8: Integer)
     }
   }
 }
