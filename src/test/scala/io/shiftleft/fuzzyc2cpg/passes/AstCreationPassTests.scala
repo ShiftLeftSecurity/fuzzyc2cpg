@@ -1,17 +1,11 @@
 package io.shiftleft.fuzzyc2cpg.passes
 
-import java.util.NoSuchElementException
-
 import better.files.File
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.passes.IntervalKeyPool
 import io.shiftleft.semanticcpg.language._
 import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.codepropertygraph.generated.{Operators, nodes}
-import io.shiftleft.semanticcpg.layers.{LayerCreatorContext, Scpg}
-import io.shiftleft.semanticcpg.passes.containsedges.ContainsEdgePass
-import io.shiftleft.semanticcpg.passes.languagespecific.fuzzyc.TypeDeclStubCreator
-import io.shiftleft.semanticcpg.passes.linking.linker.Linker
 
 class AstCreationPassTests extends WordSpec with Matchers {
 

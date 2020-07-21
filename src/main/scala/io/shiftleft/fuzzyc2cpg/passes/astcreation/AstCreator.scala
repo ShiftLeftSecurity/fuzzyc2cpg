@@ -59,7 +59,6 @@ import io.shiftleft.passes.DiffGraph
 import io.shiftleft.proto.cpg.Cpg.{DispatchTypes, EvaluationStrategies}
 
 import scala.jdk.CollectionConverters._
-import scala.language.implicitConversions
 
 private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
                                       namespaceBlock: nodes.NamespaceBlock,
@@ -73,8 +72,6 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
 
   private var contextStack = List[Context]()
   private val scope = new Scope[String, (nodes.CpgNode, String), nodes.CpgNode]()
-  private var methodNode = Option.empty[nodes.CpgNode]
-  private var methodReturnNode = Option.empty[nodes.CpgNode]
 
   pushContext(namespaceBlock, 1)
 
@@ -126,7 +123,6 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       signature = signature,
     )
 
-    methodNode = Some(method)
     addAndConnectAsAstChild(method)
 
     pushContext(method, 1)
@@ -160,8 +156,6 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       columnNumber = methodReturnLocation.startPos,
       order = context.childNum
     )
-
-    methodReturnNode = Some(methodReturn)
 
     addAndConnectAsAstChild(methodReturn)
 
@@ -668,8 +662,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
           order = context.childNum
         )
         diffGraph.addNode(local)
-        val scopeParentNode =
-          scope.addToScope(localName, (local, declTypeName))
+        scope.addToScope(localName, (local, declTypeName))
         connectAstChild(local)
 
         val assignmentExpression = identifierDecl.getAssignment

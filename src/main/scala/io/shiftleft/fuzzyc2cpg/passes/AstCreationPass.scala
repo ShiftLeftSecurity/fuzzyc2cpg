@@ -3,7 +3,7 @@ package io.shiftleft.fuzzyc2cpg.passes
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.{File, NamespaceBlock}
 import io.shiftleft.fuzzyc2cpg.passes.astcreation.{AntlrCModuleParserDriver, AstVisitor}
-import io.shiftleft.fuzzyc2cpg.{FuzzyC2CpgCache, Global}
+import io.shiftleft.fuzzyc2cpg.Global
 import io.shiftleft.passes.{DiffGraph, KeyPool, ParallelCpgPass}
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
@@ -13,7 +13,6 @@ class AstCreationPass(filenames: List[String], cpg: Cpg, keyPools: Option[Iterat
 
   private val logger = LoggerFactory.getLogger(getClass)
   val global: Global = Global()
-  val cache = new FuzzyC2CpgCache()
 
   override def partIterator: Iterator[String] = filenames.iterator
 
@@ -42,7 +41,7 @@ class AstCreationPass(filenames: List[String], cpg: Cpg, keyPools: Option[Iterat
   def createDriver(fileNode: File, namespaceBlock: NamespaceBlock): AntlrCModuleParserDriver = {
     val driver = new AntlrCModuleParserDriver()
     val astVisitor =
-      new AstVisitor(driver, namespaceBlock, cache, global)
+      new AstVisitor(driver, namespaceBlock, global)
     driver.addObserver(astVisitor)
     driver.setFileNode(fileNode)
     driver

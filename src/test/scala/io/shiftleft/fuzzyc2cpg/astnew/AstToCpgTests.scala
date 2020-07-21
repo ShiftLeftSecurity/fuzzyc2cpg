@@ -303,7 +303,11 @@ class AstToCpgTests extends WordSpec with Matchers {
       val arguments = rightHandSide.expandAst()
       arguments.check(
         2,
-        arg => (arg.label, arg.property(NodeKeysOdb.CODE), arg.property(NodeKeysOdb.ORDER), arg.property(NodeKeysOdb.ARGUMENT_INDEX)),
+        arg =>
+          (arg.label,
+           arg.property(NodeKeysOdb.CODE),
+           arg.property(NodeKeysOdb.ORDER),
+           arg.property(NodeKeysOdb.ARGUMENT_INDEX)),
         expectations = (NodeTypes.IDENTIFIER, "y", 1, 1),
         (NodeTypes.IDENTIFIER, "z", 2, 2)
       )
@@ -552,7 +556,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       fieldAccess
         .expandAst(NodeTypes.FIELD_IDENTIFIER)
         .check(1, arg => {
-          (arg.property(NodeKeysOdb.CODE), arg.property(NodeKeysOdb.CANONICAL_NAME), arg.property(NodeKeysOdb.ARGUMENT_INDEX))
+          (arg.property(NodeKeysOdb.CODE),
+           arg.property(NodeKeysOdb.CANONICAL_NAME),
+           arg.property(NodeKeysOdb.ARGUMENT_INDEX))
         }, expectations = ("a", "a", 2))
 
     }
@@ -576,7 +582,9 @@ class AstToCpgTests extends WordSpec with Matchers {
       fieldAccess
         .expandAst(NodeTypes.FIELD_IDENTIFIER)
         .check(1, arg => {
-          (arg.property(NodeKeysOdb.CODE), arg.property(NodeKeysOdb.CANONICAL_NAME), arg.property(NodeKeysOdb.ARGUMENT_INDEX))
+          (arg.property(NodeKeysOdb.CODE),
+           arg.property(NodeKeysOdb.CANONICAL_NAME),
+           arg.property(NodeKeysOdb.ARGUMENT_INDEX))
         }, expectations = ("a", "a", 2))
     }
 
