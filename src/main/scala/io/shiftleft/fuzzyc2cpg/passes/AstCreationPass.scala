@@ -23,7 +23,7 @@ class AstCreationPass(filenames: List[String], cpg: Cpg, keyPools: Option[Iterat
         val driver = createDriver(fileNode, namespaceBlock)
         tryToParse(driver, filename)
       case None =>
-        logger.warn("Invalid File/Namspace Graph")
+        logger.warn("Invalid File/Namespace Graph")
         Iterator()
     }
   }
