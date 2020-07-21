@@ -45,7 +45,7 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpr
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.{FunctionDef, Parameter}
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label, Statement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.CatchList
+import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{CatchList, ForStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{
   BreakStatement,
   ContinueStatement,
@@ -146,23 +146,24 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
         astFunction.getLocation
       }
 
-    val methodReturn = nodes.NewMethodReturn(
-      code = "RET",
-      evaluationStrategy = EvaluationStrategies.BY_VALUE.name(),
-      typeFullName = registerType(returnType),
-      lineNumber = methodReturnLocation.startLine,
-      columnNumber = methodReturnLocation.startPos
-    )
-
-    methodReturnNode = Some(methodReturn)
-
-    addAndConnectAsAstChild(methodReturn)
-
     astFunction.getParameterList.asScala.foreach { parameter =>
       parameter.accept(this)
     }
 
     astFunction.getContent.accept(this)
+
+    val methodReturn = nodes.NewMethodReturn(
+      code = "RET",
+      evaluationStrategy = EvaluationStrategies.BY_VALUE.name(),
+      typeFullName = registerType(returnType),
+      lineNumber = methodReturnLocation.startLine,
+      columnNumber = methodReturnLocation.startPos,
+      order = context.childNum
+    )
+
+    methodReturnNode = Some(methodReturn)
+
+    addAndConnectAsAstChild(methodReturn)
 
     scope.popScope()
     popContext()
@@ -457,7 +458,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
 
   override def visit(astConditionalExpr: ConditionalExpression): Unit = {
     //this ought to be a ControlStructureNode, but we currently cannot handle that in the dataflow tracker
-    val cpgConditionalExpr = createCallNode(astConditionalExpr, "<operator>.conditionalExpression")
+    val cpgConditionalExpr = createCallNode(astConditionalExpr, Operators.conditional)
     diffGraph.addNode(cpgConditionalExpr)
     connectAstChild(cpgConditionalExpr)
     val condition = astConditionalExpr.getChild(0).asInstanceOf[Condition]
@@ -511,7 +512,30 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
     connectAstChild(cpgBlockStarter)
     pushContext(cpgBlockStarter, 1)
 
-    acceptChildren(astBlockStarter)
+    astBlockStarter match {
+      case forStatement: ForStatement =>
+        // Special handling of for statements: since all three
+        // parts of a for statement are optional, the AST we emit
+        // does not currently allow distinguishing the three. We
+        // may want to perform more elaborate modeling here in the
+        // future. For now, we increase ORDER even when expressions
+        // are empty, making it possible to distinguish the three
+        // by the ORDER field.
+        Option(forStatement.getForInitExpression)
+          .map(_.accept(this))
+          .getOrElse(context.childNum += 1)
+        Option(forStatement.getCondition)
+          .map(_.accept(this))
+          .getOrElse { context.childNum += 1 }
+        Option(forStatement.getForLoopExpression)
+          .map(_.accept(this))
+          .getOrElse(context.childNum += 1)
+        Option(forStatement.getStatement)
+          .map(_.accept(this))
+          .getOrElse(context.childNum += 1)
+      case _ =>
+        acceptChildren(astBlockStarter)
+    }
 
     popContext()
   }
