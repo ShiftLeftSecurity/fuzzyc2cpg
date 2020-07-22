@@ -73,22 +73,42 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       case call: nodes.Call if call.name == Operators.logicalOr =>
         handleOrExpression(call)
       case call: nodes.Call =>
-        expandChildren(call)
-        extendCfg(call)
+        handleCall(call)
       case identifier: nodes.Identifier =>
-        extendCfg(identifier)
+        handleIdentifier(identifier)
       case literal: nodes.Literal =>
-        extendCfg(literal)
+        handleLiteral(literal)
       case actualRet: nodes.Return =>
-        expandChildren(actualRet)
-        extendCfg(actualRet)
-        fringe = Nil
-        returns = actualRet :: returns
+        handleReturn(actualRet)
       case formalRet: nodes.MethodReturn =>
-        extendCfg(formalRet)
+        handleFormalReturn(formalRet)
       case n: nodes.AstNode =>
         expandChildren(n)
     }
+  }
+
+  private def handleCall(call: nodes.Call): Unit = {
+    expandChildren(call)
+    extendCfg(call)
+  }
+
+  private def handleIdentifier(identifier: nodes.Identifier): Unit = {
+    extendCfg(identifier)
+  }
+
+  private def handleLiteral(literal: nodes.Literal): Unit = {
+    extendCfg(literal)
+  }
+
+  private def handleReturn(actualRet: nodes.Return): Unit = {
+    expandChildren(actualRet)
+    extendCfg(actualRet)
+    fringe = Nil
+    returns = actualRet :: returns
+  }
+
+  private def handleFormalReturn(formalRet: nodes.MethodReturn): Unit = {
+    extendCfg(formalRet)
   }
 
   private def connectGotosAndLabels(): Unit = {
@@ -164,173 +184,204 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     extendCfg(call)
   }
 
+  private def handleBreakStatement(node: nodes.ControlStructure): Unit = {
+    extendCfg(node)
+    // Under normal conditions this is always true.
+    // But if the parser missed a loop or switch statement, breakStack
+    // might by empty.
+    if (breakStack.numberOfLayers > 0) {
+      fringe = Nil
+      breakStack.store(node)
+    }
+  }
+
+  private def handleContinueStatement(node: nodes.ControlStructure): Unit = {
+    extendCfg(node)
+    // Under normal conditions this is always true.
+    // But if the parser missed a loop statement, continueStack
+    // might by empty.
+    if (continueStack.numberOfLayers > 0) {
+      fringe = Nil
+      continueStack.store(node)
+    }
+  }
+
+  private def handleWhileStatement(node: nodes.ControlStructure): Unit = {
+    breakStack.pushLayer()
+    continueStack.pushLayer()
+
+    markerStack = None :: markerStack
+    node.start.condition.headOption.foreach(postOrderLeftToRightExpand)
+    val conditionFringe = fringe
+    fringe = fringe.setCfgEdgeType(TrueEdge)
+
+    node.start.whenTrue.l.foreach(postOrderLeftToRightExpand)
+    fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
+    extendCfg(markerStack.head.get)
+
+    fringe = conditionFringe
+      .setCfgEdgeType(FalseEdge)
+      .add(breakStack.getTopElements, AlwaysEdge)
+
+    markerStack = markerStack.tail
+    breakStack.popLayer()
+    continueStack.popLayer()
+  }
+
+  private def handleDoStatement(node: nodes.ControlStructure): Unit = {
+    breakStack.pushLayer()
+    continueStack.pushLayer()
+
+    markerStack = None :: markerStack
+    node.astChildren.filter(_.order(1)).foreach(postOrderLeftToRightExpand)
+    fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
+
+    node.start.condition.headOption match {
+      case Some(condition) =>
+        postOrderLeftToRightExpand(condition)
+        val conditionFringe = fringe
+        fringe = fringe.setCfgEdgeType(TrueEdge)
+
+        extendCfg(markerStack.head.get)
+
+        fringe = conditionFringe.setCfgEdgeType(FalseEdge)
+      case None =>
+      // We only get here if the parser missed the condition.
+      // In this case doing nothing here means that we have
+      // no CFG edge to the loop start because we default
+      // to an always false condition.
+    }
+    fringe = fringe.add(breakStack.getTopElements, AlwaysEdge)
+
+    markerStack = markerStack.tail
+    breakStack.popLayer()
+    continueStack.popLayer()
+  }
+
+  private def handleForStatement(node: nodes.ControlStructure): Unit = {
+    breakStack.pushLayer()
+    continueStack.pushLayer()
+
+    val children = node.astChildren.l
+    val initExprOption = children.find(_.order == 1)
+    val conditionOption = children.find(_.order == 2)
+    val loopExprOption = children.find(_.order == 3)
+    val statementOption = children.find(_.order == 4)
+
+    initExprOption.foreach(postOrderLeftToRightExpand)
+
+    markerStack = None :: markerStack
+    val conditionFringe =
+      conditionOption match {
+        case Some(condition) =>
+          postOrderLeftToRightExpand(condition)
+          val storedFringe = fringe
+          fringe = fringe.setCfgEdgeType(TrueEdge)
+          storedFringe
+        case None => Nil
+      }
+
+    statementOption.foreach(postOrderLeftToRightExpand)
+
+    fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
+
+    loopExprOption.foreach(postOrderLeftToRightExpand)
+
+    markerStack.head.foreach(extendCfg)
+
+    fringe = conditionFringe
+      .setCfgEdgeType(FalseEdge)
+      .add(breakStack.getTopElements, AlwaysEdge)
+
+    markerStack = markerStack.tail
+    breakStack.popLayer()
+    continueStack.popLayer()
+  }
+
+  private def handleGotoStatement(node: nodes.ControlStructure): Unit = {
+    extendCfg(node)
+    fringe = Nil
+    // TODO: the target name should be in the AST
+    node.code.split(" ").lastOption.map(x => x.slice(0, x.length - 1)).foreach { target =>
+      gotos = (node, target) :: gotos
+    }
+  }
+
+  private def handleIfStatement(node: nodes.ControlStructure): Unit = {
+    node.start.condition.foreach(postOrderLeftToRightExpand)
+    val conditionFringe = fringe
+    fringe = fringe.setCfgEdgeType(TrueEdge)
+    node.start.whenTrue.foreach(postOrderLeftToRightExpand)
+    node.start.whenFalse
+      .map { elseStatement =>
+        val ifBlockFringe = fringe
+        fringe = conditionFringe.setCfgEdgeType(FalseEdge)
+        postOrderLeftToRightExpand(elseStatement)
+        fringe = fringe.add(ifBlockFringe)
+      }
+      .headOption
+      .getOrElse {
+        fringe = fringe.add(conditionFringe.setCfgEdgeType(FalseEdge))
+      }
+  }
+
+  private def handleSwitchStatement(node: nodes.ControlStructure): Unit = {
+    node.start.condition.foreach(postOrderLeftToRightExpand)
+    val conditionFringe = fringe.setCfgEdgeType(CaseEdge)
+    fringe = Nil
+
+    // We can only push the break and case stacks after we processed the condition
+    // in order to allow for nested switches with no nodes CFG nodes in between
+    // an outer switch case label and the inner switch condition.
+    // This is ok because in C/C++ it is not allowed to have another switch
+    // statement in the condition of a switch statement.
+    breakStack.pushLayer()
+    caseStack.pushLayer()
+
+    node.start.whenTrue.foreach(postOrderLeftToRightExpand)
+    val switchFringe = fringe
+
+    caseStack.getTopElements.foreach {
+      case (caseNode, _) =>
+        fringe = conditionFringe
+        extendCfg(caseNode)
+    }
+
+    val hasDefaultCase = caseStack.getTopElements.exists {
+      case (_, isDefault) =>
+        isDefault
+    }
+
+    fringe = switchFringe.add(breakStack.getTopElements, AlwaysEdge)
+
+    if (!hasDefaultCase) {
+      fringe = fringe.add(conditionFringe)
+    }
+
+    breakStack.popLayer()
+    caseStack.popLayer()
+  }
+
   private def handleControlStructure(node: nodes.ControlStructure): Unit = {
     node.parserTypeName match {
       case "BreakStatement" =>
-        extendCfg(node)
-        // Under normal conditions this is always true.
-        // But if the parser missed a loop or switch statement, breakStack
-        // might by empty.
-        if (breakStack.numberOfLayers > 0) {
-          fringe = Nil
-          breakStack.store(node)
-        }
+        handleBreakStatement(node)
       case "ContinueStatement" =>
-        extendCfg(node)
-        // Under normal conditions this is always true.
-        // But if the parser missed a loop statement, continueStack
-        // might by empty.
-        if (continueStack.numberOfLayers > 0) {
-          fringe = Nil
-          continueStack.store(node)
-        }
+        handleContinueStatement(node)
       case "WhileStatement" =>
-        breakStack.pushLayer()
-        continueStack.pushLayer()
-
-        markerStack = None :: markerStack
-        node.start.condition.headOption.foreach(postOrderLeftToRightExpand)
-        val conditionFringe = fringe
-        fringe = fringe.setCfgEdgeType(TrueEdge)
-
-        node.start.whenTrue.l.foreach(postOrderLeftToRightExpand)
-        fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
-        extendCfg(markerStack.head.get)
-
-        fringe = conditionFringe
-          .setCfgEdgeType(FalseEdge)
-          .add(breakStack.getTopElements, AlwaysEdge)
-
-        markerStack = markerStack.tail
-        breakStack.popLayer()
-        continueStack.popLayer()
+        handleWhileStatement(node)
       case "DoStatement" =>
-        breakStack.pushLayer()
-        continueStack.pushLayer()
-
-        markerStack = None :: markerStack
-        node.astChildren.filter(_.order(1)).foreach(postOrderLeftToRightExpand)
-        fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
-
-        node.start.condition.headOption match {
-          case Some(condition) =>
-            postOrderLeftToRightExpand(condition)
-            val conditionFringe = fringe
-            fringe = fringe.setCfgEdgeType(TrueEdge)
-
-            extendCfg(markerStack.head.get)
-
-            fringe = conditionFringe.setCfgEdgeType(FalseEdge)
-          case None =>
-          // We only get here if the parser missed the condition.
-          // In this case doing nothing here means that we have
-          // no CFG edge to the loop start because we default
-          // to an always false condition.
-        }
-        fringe = fringe.add(breakStack.getTopElements, AlwaysEdge)
-
-        markerStack = markerStack.tail
-        breakStack.popLayer()
-        continueStack.popLayer()
+        handleDoStatement(node)
       case "ForStatement" =>
-        breakStack.pushLayer()
-        continueStack.pushLayer()
-
-        val children = node.astChildren.l
-        val initExprOption = children.find(_.order == 1)
-        val conditionOption = children.find(_.order == 2)
-        val loopExprOption = children.find(_.order == 3)
-        val statementOption = children.find(_.order == 4)
-
-        initExprOption.foreach(postOrderLeftToRightExpand)
-
-        markerStack = None :: markerStack
-        val conditionFringe =
-          conditionOption match {
-            case Some(condition) =>
-              postOrderLeftToRightExpand(condition)
-              val storedFringe = fringe
-              fringe = fringe.setCfgEdgeType(TrueEdge)
-              storedFringe
-            case None => Nil
-          }
-
-        statementOption.foreach(postOrderLeftToRightExpand)
-
-        fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
-
-        loopExprOption.foreach(postOrderLeftToRightExpand)
-
-        markerStack.head.foreach(extendCfg)
-
-        fringe = conditionFringe
-          .setCfgEdgeType(FalseEdge)
-          .add(breakStack.getTopElements, AlwaysEdge)
-
-        markerStack = markerStack.tail
-        breakStack.popLayer()
-        continueStack.popLayer()
-
+        handleForStatement(node)
       case "GotoStatement" =>
-        extendCfg(node)
-        fringe = Nil
-        // TODO: the target name should be in the AST
-        node.code.split(" ").lastOption.map(x => x.slice(0, x.length - 1)).foreach { target =>
-          gotos = (node, target) :: gotos
-        }
+        handleGotoStatement(node)
       case "IfStatement" =>
-        node.start.condition.foreach(postOrderLeftToRightExpand)
-        val conditionFringe = fringe
-        fringe = fringe.setCfgEdgeType(TrueEdge)
-        node.start.whenTrue.foreach(postOrderLeftToRightExpand)
-        node.start.whenFalse
-          .map { elseStatement =>
-            val ifBlockFringe = fringe
-            fringe = conditionFringe.setCfgEdgeType(FalseEdge)
-            postOrderLeftToRightExpand(elseStatement)
-            fringe = fringe.add(ifBlockFringe)
-          }
-          .headOption
-          .getOrElse {
-            fringe = fringe.add(conditionFringe.setCfgEdgeType(FalseEdge))
-          }
+        handleIfStatement(node)
       case "ElseStatement" =>
         expandChildren(node)
       case "SwitchStatement" =>
-        node.start.condition.foreach(postOrderLeftToRightExpand)
-        val conditionFringe = fringe.setCfgEdgeType(CaseEdge)
-        fringe = Nil
-
-        // We can only push the break and case stacks after we processed the condition
-        // in order to allow for nested switches with no nodes CFG nodes in between
-        // an outer switch case label and the inner switch condition.
-        // This is ok because in C/C++ it is not allowed to have another switch
-        // statement in the condition of a switch statement.
-        breakStack.pushLayer()
-        caseStack.pushLayer()
-
-        node.start.whenTrue.foreach(postOrderLeftToRightExpand)
-        val switchFringe = fringe
-
-        caseStack.getTopElements.foreach {
-          case (caseNode, _) =>
-            fringe = conditionFringe
-            extendCfg(caseNode)
-        }
-
-        val hasDefaultCase = caseStack.getTopElements.exists {
-          case (_, isDefault) =>
-            isDefault
-        }
-
-        fringe = switchFringe.add(breakStack.getTopElements, AlwaysEdge)
-
-        if (!hasDefaultCase) {
-          fringe = fringe.add(conditionFringe)
-        }
-
-        breakStack.popLayer()
-        caseStack.popLayer()
+        handleSwitchStatement(node)
       case _ =>
     }
   }
