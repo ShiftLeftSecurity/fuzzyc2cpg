@@ -6,6 +6,11 @@ import io.shiftleft.fuzzyc2cpg.Defines
 import io.shiftleft.fuzzyc2cpg.Utils.getGlobalNamespaceBlockFullName
 import io.shiftleft.passes.{CpgPass, DiffGraph, KeyPool}
 
+/**
+  * A pass that creates a MetaData node, specifying that this
+  * is a CPG for C, and a NamespaceBlock for anything that
+  * cannot be assigned to any other namespace.
+  * */
 class CMetaDataPass(cpg: Cpg, keyPool: Option[KeyPool] = None) extends CpgPass(cpg, keyPool = keyPool) {
   override def run(): Iterator[DiffGraph] = {
     def addMetaDataNode(diffGraph: DiffGraph.Builder): Unit = {

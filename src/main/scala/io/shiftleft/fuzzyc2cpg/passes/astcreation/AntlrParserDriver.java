@@ -51,7 +51,7 @@ abstract public class AntlrParserDriver {
     private ParseTreeListener listener;
     private CommonParserContext context = null;
     public DiffGraph.Builder cpg;
-    private List<AntlrParserDriverObserver> observers = new ArrayList<>();
+    private final List<AntlrParserDriverObserver> observers = new ArrayList<>();
     private File fileNode;
 
     public AntlrParserDriver() {
@@ -66,7 +66,7 @@ abstract public class AntlrParserDriver {
 
     public abstract Lexer createLexer(CharStream input);
 
-    public DiffGraph.Builder parseAndWalkFile(String filename) throws ParserException, IOException {
+    public DiffGraph.Builder parseAndWalkFile(String filename) throws ParserException {
         cpg  = DiffGraph.newBuilder();
         handleHiddenTokens(filename);
         TokenSubStream stream = createTokenStreamFromFile(filename);
@@ -157,13 +157,10 @@ abstract public class AntlrParserDriver {
 
     protected void setLLStarMode(Parser parser) {
         parser.removeErrorListeners();
-        // parser.addErrorListener(ConsoleErrorListener.INSTANCE);
         parser.setErrorHandler(new DefaultErrorStrategy());
-        // parser.getInterpreter().setPredictionMode(PredictionMode.LL);
     }
 
     protected void setSLLMode(Parser parser) {
-        // parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
         parser.removeErrorListeners();
         parser.setErrorHandler(new BailErrorStrategy());
     }
@@ -207,30 +204,15 @@ abstract public class AntlrParserDriver {
     }
 
     public void notifyObserversOfUnitStart(ParserRuleContext ctx) {
-        notifyObservers(new Consumer<AntlrParserDriverObserver>() {
-            @Override
-            public void accept(AntlrParserDriverObserver observer) {
-                observer.startOfUnit(ctx, filename);
-            }
-        });
+        notifyObservers(observer -> observer.startOfUnit(ctx, filename));
     }
 
     public void notifyObserversOfUnitEnd(ParserRuleContext ctx) {
-        notifyObservers(new Consumer<AntlrParserDriverObserver>() {
-            @Override
-            public void accept(AntlrParserDriverObserver observer) {
-                observer.endOfUnit(ctx, filename);
-            }
-        });
+        notifyObservers(observer -> observer.endOfUnit(ctx, filename));
     }
 
     public void notifyObserversOfItem(AstNode aItem) {
-        notifyObservers(new Consumer<AntlrParserDriverObserver>() {
-            @Override
-            public void accept(AntlrParserDriverObserver observer) {
-                observer.processItem(aItem, builderStack);
-            }
-        });
+        notifyObservers(observer -> observer.processItem(aItem, builderStack));
     }
 
     public ParseTreeListener getListener() {
