@@ -4,7 +4,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Call
 import io.shiftleft.passes.{DiffGraph, KeyPool, ParallelCpgPass}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
-import io.shiftleft.fuzzyc2cpg.adapter.{AlwaysEdge, CaseEdge, CfgEdgeType, EdgeProperty, FalseEdge, TrueEdge}
+import io.shiftleft.fuzzyc2cpg.adapter.{AlwaysEdge, CaseEdge, CfgEdgeType, FalseEdge, TrueEdge}
 import io.shiftleft.fuzzyc2cpg.cfg.LayeredStack
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
@@ -12,18 +12,14 @@ import org.slf4j.LoggerFactory
 class CfgCreationPass(cpg: Cpg, keyPools: Option[Iterator[KeyPool]])
     extends ParallelCpgPass[nodes.Method](cpg, keyPools = keyPools) {
 
-  override def partIterator: Iterator[nodes.Method] = {
-    cpg.method.iterator
-  }
+  override def partIterator: Iterator[nodes.Method] = cpg.method.iterator
 
-  override def runOnPart(method: nodes.Method): Iterator[DiffGraph] = {
+  override def runOnPart(method: nodes.Method): Iterator[DiffGraph] =
     new CfgCreatorForMethod(method).run()
-  }
+
 }
 
 class CfgCreatorForMethod(entryNode: nodes.Method) {
-
-  private val logger = LoggerFactory.getLogger(getClass)
 
   private implicit class FringeWrapper(fringe: List[FringeElement]) {
     def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[FringeElement] = {
@@ -32,26 +28,21 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
           FringeElement(node, cfgEdgeType)
       }
     }
-
-    def add(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType): List[FringeElement] = {
+    def add(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType): List[FringeElement] =
       FringeElement(node, cfgEdgeType) :: fringe
-    }
 
-    def add(ns: List[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[FringeElement] = {
+    def add(ns: List[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[FringeElement] =
       ns.map(node => FringeElement(node, cfgEdgeType)) ++ fringe
-    }
 
-    def add(otherFringe: List[FringeElement]): List[FringeElement] = {
+    def add(otherFringe: List[FringeElement]): List[FringeElement] =
       otherFringe ++ fringe
-    }
   }
 
+  private val logger = LoggerFactory.getLogger(getClass)
   val diffGraph: DiffGraph.Builder = DiffGraph.newBuilder
-  val exitNode: nodes.MethodReturn = entryNode.methodReturn
 
   private var fringe = List[FringeElement]().add(entryNode, AlwaysEdge)
-  private var markerStack = List[Option[nodes.CfgNode]]() // Used to track the start of yet to be processed
-  // cfg parts.
+  private var markerStack = List[Option[nodes.CfgNode]]()
   private case class FringeElement(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType)
   private var labeledNodes = Map[String, nodes.CfgNode]()
   private var pendingGotoLabels = List[String]()
@@ -69,34 +60,12 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     Iterator(diffGraph.build)
   }
 
-  private def connectGotosAndLabels(): Unit = {
-    gotos.foreach {
-      case (goto, label) =>
-        labeledNodes.get(label) match {
-          case Some(labeledNode) =>
-            diffGraph.addEdge(
-              goto,
-              labeledNode,
-              EdgeTypes.CFG
-            ) // TODO
-          // .addProperty(EdgeProperty.CFG_EDGE_TYPE, AlwaysEdge.toString)
-          case None =>
-            logger.info("Unable to wire goto statement. Missing label {}.", label)
-        }
-    }
-  }
-
   private def postOrderLeftToRightExpand(node: nodes.AstNode): Unit = {
     node match {
       case n: nodes.ControlStructure =>
         handleControlStructure(n)
       case n: nodes.JumpTarget =>
-        val labelName = n.name
-        if (labelName.startsWith("case") || labelName.startsWith("default")) {
-          pendingCaseLabels = labelName :: pendingCaseLabels
-        } else {
-          pendingGotoLabels = labelName :: pendingGotoLabels
-        }
+        handleJumpTarget(n)
       case call: nodes.Call if call.name == Operators.conditional =>
         handleConditionalExpression(call)
       case call: nodes.Call if call.name == Operators.logicalAnd =>
@@ -122,13 +91,40 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     }
   }
 
+  private def connectGotosAndLabels(): Unit = {
+    gotos.foreach {
+      case (goto, label) =>
+        labeledNodes.get(label) match {
+          case Some(labeledNode) =>
+            // TODO: CFG_EDGE_TYPE isn't defined for non-proto CPGs
+            // .addProperty(EdgeProperty.CFG_EDGE_TYPE, AlwaysEdge.toString)
+            diffGraph.addEdge(
+              goto,
+              labeledNode,
+              EdgeTypes.CFG
+            )
+          case None =>
+            logger.info("Unable to wire goto statement. Missing label {}.", label)
+        }
+    }
+  }
+
   private def connectReturnsToExit(): Unit = {
-    returns.foreach { ret =>
+    returns.foreach(
       diffGraph.addEdge(
-        ret,
-        exitNode,
+        _,
+        entryNode.methodReturn,
         EdgeTypes.CFG
       )
+    )
+  }
+
+  private def handleJumpTarget(n: nodes.JumpTarget): Unit = {
+    val labelName = n.name
+    if (labelName.startsWith("case") || labelName.startsWith("default")) {
+      pendingCaseLabels = labelName :: pendingCaseLabels
+    } else {
+      pendingGotoLabels = labelName :: pendingGotoLabels
     }
   }
 
@@ -149,12 +145,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   }
 
   private def handleAndExpression(call: Call): Unit = {
-    val left = call.argument(1)
-    val right = call.argument(2)
-    postOrderLeftToRightExpand(left)
+    postOrderLeftToRightExpand(call.argument(1))
     val entry = fringe
     fringe = fringe.setCfgEdgeType(TrueEdge)
-    postOrderLeftToRightExpand(right)
+    postOrderLeftToRightExpand(call.argument(2))
     fringe = fringe.add(entry.setCfgEdgeType(FalseEdge))
     extendCfg(call)
   }
@@ -200,9 +194,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         fringe = fringe.setCfgEdgeType(TrueEdge)
 
         node.start.whenTrue.l.foreach(postOrderLeftToRightExpand)
-
         fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
-
         extendCfg(markerStack.head.get)
 
         fringe = conditionFringe
@@ -350,7 +342,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
   private def extendCfg(dstNode: nodes.CfgNode): Unit = {
     fringe.foreach {
-      case FringeElement(srcNode, cfgEdgeType) =>
+      case FringeElement(srcNode, _) =>
         // TODO add edge CFG edge type in CPG spec
         // val props = List(("CFG_EDGE_TYPE", cfgEdgeType.toString))
         diffGraph.addEdge(
