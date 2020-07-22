@@ -2,20 +2,18 @@ package io.shiftleft.fuzzyc2cpg.passes
 
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, nodes}
-import io.shiftleft.codepropertygraph.generated.nodes.{File, NamespaceBlock}
 import io.shiftleft.fuzzyc2cpg.Utils.getGlobalNamespaceBlockFullName
 import io.shiftleft.fuzzyc2cpg.passes.astcreation.{AntlrCModuleParserDriver, AstVisitor}
 import io.shiftleft.fuzzyc2cpg.{Defines, Global}
-import io.shiftleft.passes.{DiffGraph, KeyPool, ParallelCpgPass}
-import io.shiftleft.semanticcpg.language._
+import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, KeyPool, ParallelCpgPass}
 import org.slf4j.LoggerFactory
 
 /**
   * Given a list of filenames, this pass creates abstract syntax trees for
-  * each file, including file and namespaceblock nodes. Files are processed in parallel.
+  * each file, including File and NamespaceBlock nodes. Files are processed in parallel.
   * */
-class AstCreationPass(filenames: List[String], cpg: Cpg, keyPools: Option[Iterator[KeyPool]])
-    extends ParallelCpgPass[String](cpg, keyPools = keyPools) {
+class AstCreationPass(filenames: List[String], cpg: Cpg, keyPool: IntervalKeyPool)
+    extends ParallelCpgPass[String](cpg, keyPools = Some(keyPool.split(filenames.size))) {
 
   private val logger = LoggerFactory.getLogger(getClass)
   val global: Global = Global()

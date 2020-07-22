@@ -17,7 +17,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
       expectedFilenameFields.foreach { filename =>
         (dir / filename).write("//foo")
       }
-      new AstCreationPass(filenames, cpg, Some(Iterator(new IntervalKeyPool(1, 100), new IntervalKeyPool(101, 200))))
+      new AstCreationPass(filenames, cpg, new IntervalKeyPool(1, 1000))
         .createAndApply()
 
       "create one File node per file name with absolute path in `name`" in {
@@ -748,9 +748,9 @@ object Fixture {
       file2.write(file2Code)
 
       val cpg = Cpg.emptyCpg
-      val keyPools = Iterator(new IntervalKeyPool(1001, 2000), new IntervalKeyPool(2001, 3000))
+      val keyPool = new IntervalKeyPool(1001, 2000)
       val filenames = List(file1.path.toAbsolutePath.toString, file2.path.toAbsolutePath.toString)
-      new AstCreationPass(filenames, cpg, Some(keyPools)).createAndApply()
+      new AstCreationPass(filenames, cpg, keyPool).createAndApply()
 
       f(cpg)
     }
