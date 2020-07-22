@@ -9,6 +9,33 @@ import io.shiftleft.codepropertygraph.generated.{Operators, nodes}
 
 class AstCreationPassTests extends WordSpec with Matchers {
 
+  "AstCreationPass" should {
+    val cpg = Cpg.emptyCpg
+    File.usingTemporaryDirectory("astCreationTests") { dir =>
+      val filenames = List("foo.c", "woo.c")
+      val expectedFilenameFields = filenames.map(f => File(f).path.toAbsolutePath.toString)
+      expectedFilenameFields.foreach { filename =>
+        (dir / filename).write("//foo")
+      }
+      new AstCreationPass(filenames, cpg, Some(Iterator(new IntervalKeyPool(1, 100), new IntervalKeyPool(101, 200))))
+        .createAndApply()
+
+      "create one File node per file name with absolute path in `name`" in {
+        cpg.file.name.toSet shouldBe expectedFilenameFields.toSet
+      }
+
+      "create one NamespaceBlock per file" in {
+        val expectedNamespaceFullNames = expectedFilenameFields.map(f => s"$f:<global>").toSet
+        cpg.namespaceBlock.fullName.toSet shouldBe expectedNamespaceFullNames
+      }
+
+      "create SOURCE_FILE edges from File to NamespaceBlocks" in {
+        cpg.file.l.size shouldBe 2
+        cpg.file.l.flatMap(f => f.start.namespaceBlock.l.map((f, _))).size shouldBe 2
+      }
+    }
+  }
+
   "Method AST layout" should {
 
     "be correct for empty method" in Fixture("void method(int x) { }") { cpg =>
@@ -723,9 +750,6 @@ object Fixture {
       val cpg = Cpg.emptyCpg
       val keyPools = Iterator(new IntervalKeyPool(1001, 2000), new IntervalKeyPool(2001, 3000))
       val filenames = List(file1.path.toAbsolutePath.toString, file2.path.toAbsolutePath.toString)
-
-      val otherPool = Some(new IntervalKeyPool(0, 1000))
-      new FileAndNamespaceBlockPass(filenames, cpg, otherPool).createAndApply()
       new AstCreationPass(filenames, cpg, Some(keyPools)).createAndApply()
 
       f(cpg)

@@ -1,16 +1,18 @@
 package io.shiftleft.fuzzyc2cpg.passes
 
 import io.shiftleft.codepropertygraph.Cpg
+import io.shiftleft.codepropertygraph.generated.{EdgeTypes, nodes}
 import io.shiftleft.codepropertygraph.generated.nodes.{File, NamespaceBlock}
+import io.shiftleft.fuzzyc2cpg.Utils.getGlobalNamespaceBlockFullName
 import io.shiftleft.fuzzyc2cpg.passes.astcreation.{AntlrCModuleParserDriver, AstVisitor}
-import io.shiftleft.fuzzyc2cpg.Global
+import io.shiftleft.fuzzyc2cpg.{Defines, Global}
 import io.shiftleft.passes.{DiffGraph, KeyPool, ParallelCpgPass}
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
 
 /**
   * Given a list of filenames, this pass creates abstract syntax trees for
-  * each file. Files are processed in parallel.
+  * each file, including file and namespaceblock nodes. Files are processed in parallel.
   * */
 class AstCreationPass(filenames: List[String], cpg: Cpg, keyPools: Option[Iterator[KeyPool]])
     extends ParallelCpgPass[String](cpg, keyPools = keyPools) {
@@ -21,28 +23,25 @@ class AstCreationPass(filenames: List[String], cpg: Cpg, keyPools: Option[Iterat
   override def partIterator: Iterator[String] = filenames.iterator
 
   override def runOnPart(filename: String): Iterator[DiffGraph] = {
-    fileAndNamespaceBlock(filename) match {
-      case Some((fileNode, namespaceBlock)) =>
-        val driver = createDriver(fileNode, namespaceBlock)
-        tryToParse(driver, filename)
-      case None =>
-        logger.warn("Invalid File/Namespace Graph")
-        Iterator()
-    }
+
+    val diffGraph = DiffGraph.newBuilder
+    val absolutePath = new java.io.File(filename).toPath.toAbsolutePath.normalize().toString
+    val fileNode = nodes.NewFile(name = absolutePath)
+    diffGraph.addNode(fileNode)
+    val namespaceBlock = nodes.NewNamespaceBlock(
+      name = Defines.globalNamespaceName,
+      fullName = getGlobalNamespaceBlockFullName(Some(fileNode.name))
+    )
+    diffGraph.addNode(fileNode)
+    diffGraph.addNode(namespaceBlock)
+    diffGraph.addEdge(namespaceBlock, fileNode, EdgeTypes.SOURCE_FILE)
+
+    val driver = createDriver(fileNode, namespaceBlock)
+    tryToParse(driver, filename, diffGraph)
   }
 
-  private def fileAndNamespaceBlock(filename: String): Option[(File, NamespaceBlock)] = {
-    val absolutePath = new java.io.File(filename).getAbsolutePath
-    cpg.file
-      .nameExact(absolutePath)
-      .l
-      .flatMap { f =>
-        f.start.namespaceBlock.l.map(n => (f, n))
-      }
-      .headOption
-  }
-
-  private def createDriver(fileNode: File, namespaceBlock: NamespaceBlock): AntlrCModuleParserDriver = {
+  private def createDriver(fileNode: nodes.NewFile,
+                           namespaceBlock: nodes.NewNamespaceBlock): AntlrCModuleParserDriver = {
     val driver = new AntlrCModuleParserDriver()
     val astVisitor = new AstVisitor(driver, namespaceBlock, global)
     driver.addObserver(astVisitor)
@@ -50,9 +49,11 @@ class AstCreationPass(filenames: List[String], cpg: Cpg, keyPools: Option[Iterat
     driver
   }
 
-  private def tryToParse(driver: AntlrCModuleParserDriver, filename: String): Iterator[DiffGraph] = {
+  private def tryToParse(driver: AntlrCModuleParserDriver,
+                         filename: String,
+                         diffGraph: DiffGraph.Builder): Iterator[DiffGraph] = {
     try {
-      val diffGraph = driver.parseAndWalkFile(filename)
+      driver.parseAndWalkFile(filename, diffGraph)
       Iterator(diffGraph.build)
     } catch {
       case ex: RuntimeException => {

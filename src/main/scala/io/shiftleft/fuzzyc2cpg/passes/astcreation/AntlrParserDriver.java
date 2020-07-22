@@ -4,6 +4,7 @@ import static org.antlr.v4.runtime.Token.EOF;
 
 import io.shiftleft.codepropertygraph.generated.EdgeTypes;
 import io.shiftleft.codepropertygraph.generated.nodes.NewComment;
+import io.shiftleft.codepropertygraph.generated.nodes.NewFile;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver;
@@ -52,13 +53,13 @@ abstract public class AntlrParserDriver {
     private CommonParserContext context = null;
     public DiffGraph.Builder cpg;
     private final List<AntlrParserDriverObserver> observers = new ArrayList<>();
-    private File fileNode;
+    private NewFile fileNode;
 
     public AntlrParserDriver() {
         super();
     }
 
-    public void setFileNode(File fileNode) {
+    public void setFileNode(NewFile fileNode) {
         this.fileNode = fileNode;
     }
 
@@ -66,8 +67,8 @@ abstract public class AntlrParserDriver {
 
     public abstract Lexer createLexer(CharStream input);
 
-    public DiffGraph.Builder parseAndWalkFile(String filename) throws ParserException {
-        cpg  = DiffGraph.newBuilder();
+    public DiffGraph.Builder parseAndWalkFile(String filename, DiffGraph.Builder diffGraph) throws ParserException {
+        cpg  = diffGraph;
         handleHiddenTokens(filename);
         TokenSubStream stream = createTokenStreamFromFile(filename);
         initializeContextWithFile(filename, stream);

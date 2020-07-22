@@ -61,7 +61,7 @@ import io.shiftleft.proto.cpg.Cpg.{DispatchTypes, EvaluationStrategies}
 import scala.jdk.CollectionConverters._
 
 private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
-                                      namespaceBlock: nodes.NamespaceBlock,
+                                      namespaceBlock: nodes.NewNamespaceBlock,
                                       global: Global)
     extends ASTNodeVisitor {
 
