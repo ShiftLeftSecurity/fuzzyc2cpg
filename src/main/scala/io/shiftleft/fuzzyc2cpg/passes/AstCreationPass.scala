@@ -2,7 +2,6 @@ package io.shiftleft.fuzzyc2cpg.passes
 
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, nodes}
-import io.shiftleft.fuzzyc2cpg.Utils.getGlobalNamespaceBlockFullName
 import io.shiftleft.fuzzyc2cpg.passes.astcreation.{AntlrCModuleParserDriver, AstVisitor}
 import io.shiftleft.fuzzyc2cpg.{Defines, Global}
 import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, ParallelCpgPass}
@@ -28,7 +27,7 @@ class AstCreationPass(filenames: List[String], cpg: Cpg, keyPool: IntervalKeyPoo
     diffGraph.addNode(fileNode)
     val namespaceBlock = nodes.NewNamespaceBlock(
       name = Defines.globalNamespaceName,
-      fullName = getGlobalNamespaceBlockFullName(Some(fileNode.name))
+      fullName = CMetaDataPass.getGlobalNamespaceBlockFullName(Some(fileNode.name))
     )
     diffGraph.addNode(fileNode)
     diffGraph.addNode(namespaceBlock)
