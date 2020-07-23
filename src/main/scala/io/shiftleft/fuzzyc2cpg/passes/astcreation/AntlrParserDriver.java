@@ -32,7 +32,6 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import io.shiftleft.codepropertygraph.generated.nodes.File;
 import scala.Some;
 import scala.collection.immutable.List$;
 

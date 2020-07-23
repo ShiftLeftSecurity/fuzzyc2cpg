@@ -5,7 +5,7 @@ import io.shiftleft.codepropertygraph.generated.{EdgeTypes, nodes}
 import io.shiftleft.fuzzyc2cpg.Utils.getGlobalNamespaceBlockFullName
 import io.shiftleft.fuzzyc2cpg.passes.astcreation.{AntlrCModuleParserDriver, AstVisitor}
 import io.shiftleft.fuzzyc2cpg.{Defines, Global}
-import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, KeyPool, ParallelCpgPass}
+import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, ParallelCpgPass}
 import org.slf4j.LoggerFactory
 
 /**
