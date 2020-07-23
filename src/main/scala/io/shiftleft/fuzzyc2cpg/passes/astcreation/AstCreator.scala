@@ -103,12 +103,8 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
     } else {
       "int"
     }
-    val signature = new StringBuilder()
-      .append(returnType)
-      .append("(")
-      .append(astFunction.getParameterList.getEscapedCodeStr(false))
-      .append(")")
-      .toString()
+
+    val signature = astFunction.getFunctionSignature(false)
 
     val location = astFunction.getLocation
     val method = nodes.NewMethod(
