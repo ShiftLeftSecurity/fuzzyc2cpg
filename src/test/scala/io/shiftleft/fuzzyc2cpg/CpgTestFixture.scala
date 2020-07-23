@@ -2,7 +2,7 @@ package io.shiftleft.fuzzyc2cpg
 
 import gremlin.scala.GraphAsScala
 import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.fuzzyc2cpg.passes.{AstCreationPass, CMetaDataPass, CfgCreationPass}
+import io.shiftleft.fuzzyc2cpg.passes.{AstCreationPass, CMetaDataPass, CfgCreationPass, StubRemovalPass}
 import io.shiftleft.passes.IntervalKeyPool
 import io.shiftleft.semanticcpg.language._
 
@@ -19,6 +19,7 @@ case class CpgTestFixture(projectName: String) {
   if (cpg.method.size > 0) {
     new CfgCreationPass(cpg, cfgKeyPool).createAndApply()
   }
+  new StubRemovalPass(cpg).createAndApply()
 
   def V = cpg.graph.asScala.V
 
