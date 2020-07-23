@@ -8,7 +8,7 @@ import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.semanticcpg.language._
 
 import scala.jdk.CollectionConverters._
-import io.shiftleft.codepropertygraph.generated.{Operators, nodes}
+import io.shiftleft.codepropertygraph.generated.nodes
 
 class CfgCreationPassTests extends WordSpec with Matchers {
 
@@ -410,45 +410,6 @@ class CfgCreationPassTests extends WordSpec with Matchers {
         succOf("c") shouldBe expected(("d", TrueEdge), ("e", FalseEdge))
         succOf("d") shouldBe expected(("RET", AlwaysEdge))
         succOf("e") shouldBe expected(("RET", AlwaysEdge))
-      }
-  }
-
-  "CFG layout" should {
-
-    def singleNextCfgNode(node: nodes.CfgNode): nodes.CfgNode = {
-      node.start.cfgNext.l match {
-        case List(n: nodes.CfgNode) => n
-        case _                      => fail
-      }
-    }
-
-    "be correct for decl assignment in method" in
-      new CfgFixture("int x = 1;") {
-        val identifier = singleNextCfgNode(cpg.method.head).asInstanceOf[nodes.Identifier]
-        identifier.name shouldBe "x"
-        val literal = singleNextCfgNode(identifier).asInstanceOf[nodes.Literal]
-        literal.code shouldBe "1"
-        val call = singleNextCfgNode(literal).asInstanceOf[nodes.Call]
-        call.name shouldBe Operators.assignment
-      }
-
-    "be correct for nested expression" in
-      new CfgFixture("""
-          |   int x;
-          |   int y;
-          |   int z;
-          |   x = y + z;
-          |""".stripMargin) {
-        val x = singleNextCfgNode(cpg.method.head).asInstanceOf[nodes.Identifier]
-        x.name shouldBe "x"
-        val y = singleNextCfgNode(x).asInstanceOf[nodes.Identifier]
-        y.name shouldBe "y"
-        val z = singleNextCfgNode(y).asInstanceOf[nodes.Identifier]
-        z.name shouldBe "z"
-        val add = singleNextCfgNode(z).asInstanceOf[nodes.Call]
-        add.name shouldBe Operators.addition
-        val assign = singleNextCfgNode(add).asInstanceOf[nodes.Call]
-        assign.name shouldBe Operators.assignment
       }
   }
 
