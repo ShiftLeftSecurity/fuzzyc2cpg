@@ -18,8 +18,6 @@ case class Global(usedTypes: ConcurrentHashMap[String, Boolean] = new Concurrent
 class FuzzyC2Cpg() {
   import FuzzyC2Cpg.logger
 
-  var cpg : Cpg = _
-
   def runWithPreprocessorAndOutput(sourcePaths: Set[String],
                                    sourceFileExtensions: Set[String],
                                    includeFiles: Set[String],
@@ -57,7 +55,7 @@ class FuzzyC2Cpg() {
 
     if (exitCode == 0) {
       logger.info(s"Preprocessing complete, files written to [$preprocessedPath], starting CPG generation...")
-      runAndOutput(Set(preprocessedPath.toString), sourceFileExtensions)
+      val cpg = runAndOutput(Set(preprocessedPath.toString), sourceFileExtensions)
       cpg.close()
     } else {
       logger.error(
@@ -65,37 +63,45 @@ class FuzzyC2Cpg() {
     }
   }
 
-  def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String], optionalOutputPath : Option[String] = None): Cpg = {
+  def runAndOutput(sourcePaths: Set[String],
+                   sourceFileExtensions: Set[String],
+                   optionalOutputPath: Option[String] = None): Cpg = {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
     val metaDataKeyPool = new IntervalKeyPool(1, 100)
     val typesKeyPool = new IntervalKeyPool(100, 1000100)
     val functionKeyPools = KeyPools.obtain(2, 1000101)
 
-    val odbConfig = optionalOutputPath.map{ outputPath =>
-      val outFile = File(outputPath)
-      if (outputPath != "" && outFile.exists) {
-        logger.info("Output file exists, removing: " + outputPath)
-        outFile.delete()
-      }
-      OdbConfig.withDefaults.withStorageLocation(outputPath)
-    }.getOrElse{
-      OdbConfig.withDefaults()
-    }
-
-    val graph = OdbGraph.open(odbConfig,
-      io.shiftleft.codepropertygraph.generated.nodes.Factories.allAsJava,
-      io.shiftleft.codepropertygraph.generated.edges.Factories.allAsJava
-    )
-    cpg = new Cpg(graph)
+    val cpg = initCpg(optionalOutputPath)
 
     new CMetaDataPass(cpg, Some(metaDataKeyPool)).createAndApply()
     val astCreator = new AstCreationPass(sourceFileNames, cpg, functionKeyPools.head)
     new CfgCreationPass(cpg, functionKeyPools.last)
     astCreator.createAndApply()
-    new TypeNodePass(astCreator.global, cpg, Some(typesKeyPool)).createAndApply()
+    new TypeNodePass(astCreator.global.usedTypes.toList, cpg, Some(typesKeyPool)).createAndApply()
     new StubRemovalPass(cpg).createAndApply()
+
     cpg
+  }
+
+  private def initCpg(optionalOutputPath: Option[String]): Cpg = {
+    val odbConfig = optionalOutputPath
+      .map { outputPath =>
+        val outFile = File(outputPath)
+        if (outputPath != "" && outFile.exists) {
+          logger.info("Output file exists, removing: " + outputPath)
+          outFile.delete()
+        }
+        OdbConfig.withDefaults.withStorageLocation(outputPath)
+      }
+      .getOrElse {
+        OdbConfig.withDefaults()
+      }
+
+    val graph = OdbGraph.open(odbConfig,
+                              io.shiftleft.codepropertygraph.generated.nodes.Factories.allAsJava,
+                              io.shiftleft.codepropertygraph.generated.edges.Factories.allAsJava)
+    new Cpg(graph)
   }
 
 }

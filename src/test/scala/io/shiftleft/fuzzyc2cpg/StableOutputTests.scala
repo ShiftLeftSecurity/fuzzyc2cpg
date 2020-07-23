@@ -10,8 +10,7 @@ class StableOutputTests extends WordSpec with Matchers {
     val projectName = "stableid"
     val dirName = String.format("src/test/resources/testcode/%s", projectName)
     val fuzzyc2Cpg = new FuzzyC2Cpg()
-    fuzzyc2Cpg.runAndOutput(Set(dirName), Set(".c", ".cc", ".cpp", ".h", ".hpp"))
-    val cpg = fuzzyc2Cpg.cpg
+    val cpg = fuzzyc2Cpg.runAndOutput(Set(dirName), Set(".c", ".cc", ".cpp", ".h", ".hpp"))
     val nodes = cpg.graph.V().asScala.toList
     nodes.sortBy(_.id2()).map(x => x.label + ": " + x.propertyMap().asScala.toString).mkString("\n")
   }

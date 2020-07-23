@@ -32,7 +32,6 @@ object CaseEdge extends CfgEdgeType {
   override def toString: String = "CaseEdge"
 }
 
-
 class CfgCreationPass(cpg: Cpg, keyPool: IntervalKeyPool)
     extends ParallelCpgPass[nodes.Method](cpg, keyPools = Some(keyPool.split(cpg.method.size))) {
 
