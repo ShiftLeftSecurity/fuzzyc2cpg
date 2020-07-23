@@ -5,6 +5,10 @@ import io.shiftleft.passes.{DiffGraph, ParallelCpgPass}
 import io.shiftleft.semanticcpg.language._
 import io.shiftleft.codepropertygraph.generated.nodes
 
+/**
+  * A pass that ensures that for any method m for which a body exists,
+  * there are no more method stubs for corresponding declarations.
+  * */
 class StubRemovalPass(cpg: Cpg) extends ParallelCpgPass[nodes.Method](cpg) {
   override def partIterator: Iterator[nodes.Method] =
     cpg.method.isNotStub.iterator
