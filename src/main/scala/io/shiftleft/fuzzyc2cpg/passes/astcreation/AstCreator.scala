@@ -164,14 +164,15 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
     } else {
       "int"
     }
+    val location = astParameter.getLocation
     val parameter = nodes.NewMethodParameterIn(
       code = astParameter.getEscapedCodeStr,
       name = astParameter.getName,
       order = astParameter.getChildNumber + 1,
       evaluationStrategy = EvaluationStrategies.BY_VALUE.name(),
       typeFullName = registerType(parameterType),
-      lineNumber = astParameter.getLocation.startLine,
-      columnNumber = astParameter.getLocation.startPos
+      lineNumber = location.startLine,
+      columnNumber = location.startPos
     )
     diffGraph.addNode(parameter)
     scope.addToScope(astParameter.getName, (parameter, parameterType))

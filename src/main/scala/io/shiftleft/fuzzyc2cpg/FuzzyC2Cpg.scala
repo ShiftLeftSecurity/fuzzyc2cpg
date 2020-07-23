@@ -76,8 +76,8 @@ class FuzzyC2Cpg() {
     new CMetaDataPass(cpg, Some(metaDataKeyPool)).createAndApply()
     val astCreator = new AstCreationPass(sourceFileNames, cpg, functionKeyPools.head)
     astCreator.createAndApply()
-    new StubRemovalPass(cpg).createAndApply()
     new CfgCreationPass(cpg, functionKeyPools.last).createAndApply()
+    new StubRemovalPass(cpg).createAndApply()
     new TypeNodePass(astCreator.global.usedTypes.toList, cpg, Some(typesKeyPool)).createAndApply()
     cpg
   }
