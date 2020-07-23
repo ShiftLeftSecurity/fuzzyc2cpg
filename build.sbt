@@ -3,7 +3,7 @@ organization := "io.shiftleft"
 scalaVersion := "2.13.1"
 enablePlugins(GitVersioning)
 
-val cpgVersion = "0.11.335"
+val cpgVersion = "0.11.334+1-737e71a2+20200723-1903"
 val antlrVersion = "4.7.2"
 
 libraryDependencies ++= Seq(
