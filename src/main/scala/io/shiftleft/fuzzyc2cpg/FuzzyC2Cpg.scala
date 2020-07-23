@@ -66,13 +66,12 @@ class FuzzyC2Cpg() {
   def runAndOutput(sourcePaths: Set[String],
                    sourceFileExtensions: Set[String],
                    optionalOutputPath: Option[String] = None): Cpg = {
-    val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
-
     val metaDataKeyPool = new IntervalKeyPool(1, 100)
     val typesKeyPool = new IntervalKeyPool(100, 1000100)
     val functionKeyPools = KeyPools.obtain(2, 1000101)
 
     val cpg = initCpg(optionalOutputPath)
+    val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
     new CMetaDataPass(cpg, Some(metaDataKeyPool)).createAndApply()
     val astCreator = new AstCreationPass(sourceFileNames, cpg, functionKeyPools.head)

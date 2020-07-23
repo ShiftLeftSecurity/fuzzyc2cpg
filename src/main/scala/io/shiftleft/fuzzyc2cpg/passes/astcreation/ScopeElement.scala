@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.scope
+package io.shiftleft.fuzzyc2cpg.passes.astcreation
 
 /**
   * A single element of a scope stack.

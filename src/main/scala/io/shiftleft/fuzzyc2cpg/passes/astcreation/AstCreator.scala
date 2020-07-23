@@ -7,54 +7,15 @@ import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
 import io.shiftleft.codepropertygraph.generated.nodes.NewNode
 import io.shiftleft.fuzzyc2cpg.{Defines, Global}
 import io.shiftleft.fuzzyc2cpg.ast.declarations.{ClassDefStatement, IdentifierDecl}
-import io.shiftleft.fuzzyc2cpg.ast.expressions.{
-  AdditiveExpression,
-  AndExpression,
-  Argument,
-  ArgumentList,
-  ArrayIndexing,
-  AssignmentExpression,
-  BinaryExpression,
-  BitAndExpression,
-  CastExpression,
-  CastTarget,
-  Condition,
-  ConditionalExpression,
-  Constant,
-  DeleteExpression,
-  EqualityExpression,
-  ExclusiveOrExpression,
-  Expression,
-  ForInit,
-  Identifier,
-  InclusiveOrExpression,
-  InitializerList,
-  MemberAccess,
-  MultiplicativeExpression,
-  NewExpression,
-  OrExpression,
-  PostIncDecOperationExpression,
-  PtrMemberAccess,
-  RelationalExpression,
-  ShiftExpression,
-  SizeofOperand,
-  UnaryExpression
-}
+import io.shiftleft.fuzzyc2cpg.ast.expressions.{AdditiveExpression, AndExpression, Argument, ArgumentList, ArrayIndexing, AssignmentExpression, BinaryExpression, BitAndExpression, CastExpression, CastTarget, Condition, ConditionalExpression, Constant, DeleteExpression, EqualityExpression, ExclusiveOrExpression, Expression, ForInit, Identifier, InclusiveOrExpression, InitializerList, MemberAccess, MultiplicativeExpression, NewExpression, OrExpression, PostIncDecOperationExpression, PtrMemberAccess, RelationalExpression, ShiftExpression, SizeofOperand, UnaryExpression}
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.Template
 import io.shiftleft.fuzzyc2cpg.ast.langc.expressions.{CallExpression, SizeofExpression}
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.{FunctionDef, Parameter}
 import io.shiftleft.fuzzyc2cpg.ast.langc.statements.blockstarters.IfStatement
 import io.shiftleft.fuzzyc2cpg.ast.logical.statements.{BlockStarter, CompoundStatement, Label, Statement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.blockstarters.{CatchList, ForStatement}
-import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{
-  BreakStatement,
-  ContinueStatement,
-  GotoStatement,
-  ReturnStatement,
-  ThrowStatement
-}
+import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{BreakStatement, ContinueStatement, GotoStatement, ReturnStatement, ThrowStatement}
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
-import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.passes.DiffGraph
 import io.shiftleft.proto.cpg.Cpg.{DispatchTypes, EvaluationStrategies}
 
