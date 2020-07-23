@@ -4,10 +4,34 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Call
 import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, ParallelCpgPass}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
-import io.shiftleft.fuzzyc2cpg.adapter.{AlwaysEdge, CaseEdge, CfgEdgeType, FalseEdge, TrueEdge}
-import io.shiftleft.fuzzyc2cpg.cfg.LayeredStack
+import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.LayeredStack
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
+
+object EdgeProperty extends Enumeration {
+  type EdgeProperty = Value
+  val CFG_EDGE_TYPE = Value
+}
+
+object EdgeKind extends Enumeration {
+  type EdgeKind = Value
+  val AST, CFG, REF, CONDITION, ARGUMENT = Value
+}
+
+trait CfgEdgeType
+object TrueEdge extends CfgEdgeType {
+  override def toString: String = "TrueEdge"
+}
+object FalseEdge extends CfgEdgeType {
+  override def toString: String = "FalseEdge"
+}
+object AlwaysEdge extends CfgEdgeType {
+  override def toString: String = "AlwaysEdge"
+}
+object CaseEdge extends CfgEdgeType {
+  override def toString: String = "CaseEdge"
+}
+
 
 class CfgCreationPass(cpg: Cpg, keyPool: IntervalKeyPool)
     extends ParallelCpgPass[nodes.Method](cpg, keyPools = Some(keyPool.split(cpg.method.size))) {

@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.cfg
+package io.shiftleft.fuzzyc2cpg.passes.cfgcreation
 
 class LayeredStack[ElementType] {
   private case class StackElement(elements: List[ElementType] = List()) {

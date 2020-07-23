@@ -1,11 +1,7 @@
 package io.shiftleft.fuzzyc2cpg
 
 import org.slf4j.LoggerFactory
-import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
-import io.shiftleft.fuzzyc2cpg.output.protobuf.OutputModuleFactory
-import io.shiftleft.proto.cpg.Cpg.CpgStruct
 import java.nio.file.Files
-import java.util.concurrent.LinkedBlockingQueue
 
 import better.files.File
 import io.shiftleft.codepropertygraph.Cpg
@@ -69,7 +65,7 @@ class FuzzyC2Cpg() {
     }
   }
 
-  def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String], optionalOutputPath : Option[String] = None): Unit = {
+  def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String], optionalOutputPath : Option[String] = None): Cpg = {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
     val metaDataKeyPool = new IntervalKeyPool(1, 100)
@@ -99,6 +95,7 @@ class FuzzyC2Cpg() {
     astCreator.createAndApply()
     new TypeNodePass(astCreator.global, cpg, Some(typesKeyPool)).createAndApply()
     new StubRemovalPass(cpg).createAndApply()
+    cpg
   }
 
 }
@@ -110,15 +107,6 @@ object FuzzyC2Cpg {
   def main(args: Array[String]): Unit = {
     parseConfig(args).foreach { config =>
       try {
-
-        val factory = if (!config.overflowDb) {
-          new OutputModuleFactory(config.outputPath, true)
-            .asInstanceOf[CpgOutputModuleFactory]
-        } else {
-          val queue = new LinkedBlockingQueue[CpgStruct.Builder]()
-          new io.shiftleft.fuzzyc2cpg.output.overflowdb.OutputModuleFactory(config.outputPath, queue)
-        }
-
         val fuzzyc = new FuzzyC2Cpg()
 
         if (config.usePreprocessor) {
@@ -130,7 +118,8 @@ object FuzzyC2Cpg {
                                               config.undefines,
                                               config.preprocessorExecutable)
         } else {
-          fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(config.outputPath))
+          val cpg = fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(config.outputPath))
+          cpg.close()
         }
 
       } catch {
