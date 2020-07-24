@@ -2,8 +2,8 @@ package io.shiftleft.fuzzyc2cpg.parser.functions;
 
 import io.shiftleft.fuzzyc2cpg.FunctionLexer;
 import io.shiftleft.fuzzyc2cpg.FunctionParser;
-import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriver;
 import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
+import io.shiftleft.fuzzyc2cpg.passes.astcreation.AntlrParserDriver;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -18,7 +18,7 @@ public class AntlrCFunctionParserDriver extends AntlrParserDriver {
   @Override
   public ParseTree parseTokenStreamImpl(TokenSubStream tokens) {
     FunctionParser parser = new FunctionParser(tokens);
-    setAntlrParser(parser);
+    setParser(parser);
     ParseTree tree = null;
 
     try {

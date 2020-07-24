@@ -2,8 +2,8 @@ package io.shiftleft.fuzzyc2cpg.parser.functions;
 
 import io.shiftleft.fuzzyc2cpg.FunctionBaseListener;
 import io.shiftleft.fuzzyc2cpg.FunctionParser;
-import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriver;
 import io.shiftleft.fuzzyc2cpg.parser.functions.builder.FunctionContentBuilder;
+import io.shiftleft.fuzzyc2cpg.passes.astcreation.AntlrParserDriver;
 
 /**
  * This is where hooks are registered for different types of parse tree nodes.

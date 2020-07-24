@@ -7,6 +7,7 @@ import io.shiftleft.codepropertygraph.generated.nodes.NewComment;
 import io.shiftleft.codepropertygraph.generated.nodes.NewFile;
 import io.shiftleft.fuzzyc2cpg.ast.AstNode;
 import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
+import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriverObserver;
 import io.shiftleft.fuzzyc2cpg.parser.CommonParserContext;
 import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
@@ -53,6 +54,7 @@ abstract public class AntlrParserDriver {
     public DiffGraph.Builder cpg;
     private final List<AntlrParserDriverObserver> observers = new ArrayList<>();
     private NewFile fileNode;
+    private Parser antlrParser;
 
     public AntlrParserDriver() {
         super();
@@ -100,6 +102,32 @@ abstract public class AntlrParserDriver {
         }
     }
 
+    public void parseAndWalkTokenStream(TokenSubStream tokens)
+            throws ParserException {
+        filename = "";
+        stream = tokens;
+        ParseTree tree = parseTokenStream(tokens);
+        walkTree(tree);
+    }
+
+
+    public ParseTree parseAndWalkString(String input) throws ParserException {
+        ParseTree tree = parseString(input);
+        walkTree(tree);
+        return tree;
+    }
+
+    public CompoundStatement getResult() {
+        return (CompoundStatement) builderStack.peek().getItem();
+    }
+
+    public ParseTree parseString(String input) throws ParserException {
+        CharStream inputStream = CharStreams.fromString(input);
+        Lexer lex = createLexer(inputStream);
+        TokenSubStream tokens = new TokenSubStream(lex);
+        ParseTree tree = parseTokenStream(tokens);
+        return tree;
+    }
 
     public ParseTree parseTokenStream(TokenSubStream tokens)
             throws ParserException {
@@ -108,6 +136,14 @@ abstract public class AntlrParserDriver {
             throw new ParserException("");
         }
         return returnTree;
+    }
+
+    public void setParser(Parser parser) {
+        antlrParser = parser;
+    }
+
+    public Parser getAntlrParser() {
+        return antlrParser;
     }
 
     protected TokenSubStream createTokenStreamFromFile(String filename)
