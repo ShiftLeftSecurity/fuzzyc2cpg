@@ -873,6 +873,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
   }
 
   private def newCallNode(astNode: AstNode, methodName: String): nodes.NewCall = {
+    val location = astNode.getLocation
     nodes.NewCall(
       name = methodName,
       dispatchType = DispatchTypes.STATIC_DISPATCH.name(),
@@ -882,30 +883,32 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       code = astNode.getEscapedCodeStr,
       order = context.childNum,
       argumentIndex = context.childNum,
-      lineNumber = astNode.getLocation.startLine,
-      columnNumber = astNode.getLocation.startPos
+      lineNumber = location.startLine,
+      columnNumber = location.startPos
     )
   }
 
   private def newUnknownNode(astNode: AstNode): nodes.NewUnknown = {
+    val location = astNode.getLocation
     nodes.NewUnknown(
       parserTypeName = astNode.getClass.getSimpleName,
       code = astNode.getEscapedCodeStr,
       order = context.childNum,
       argumentIndex = context.childNum,
-      lineNumber = astNode.getLocation.startLine,
-      columnNumber = astNode.getLocation.startPos
+      lineNumber = location.startLine,
+      columnNumber = location.startPos
     )
   }
 
   private def newControlStructureNode(astNode: AstNode): nodes.NewControlStructure = {
+    val location = astNode.getLocation
     nodes.NewControlStructure(
       parserTypeName = astNode.getClass.getSimpleName,
       code = astNode.getEscapedCodeStr,
       order = context.childNum,
       argumentIndex = context.childNum,
-      lineNumber = astNode.getLocation.startLine,
-      columnNumber = astNode.getLocation.startPos
+      lineNumber = location.startLine,
+      columnNumber = location.startPos
     )
   }
 
