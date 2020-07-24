@@ -1,25 +1,27 @@
 package io.shiftleft.fuzzyc2cpg.passes
 
 import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.passes.{CpgPass, DiffGraph}
+import io.shiftleft.passes.{CpgPass, DiffGraph, ParallelCpgPass}
 import io.shiftleft.semanticcpg.language._
+import io.shiftleft.codepropertygraph.generated.nodes
+import io.shiftleft.codepropertygraph.generated.nodes.Method
 
 /**
   * A pass that ensures that for any method m for which a body exists,
   * there are no more method stubs for corresponding declarations.
   * */
-class StubRemovalPass(cpg: Cpg) extends CpgPass(cpg) {
-  override def run(): Iterator[DiffGraph] = {
+class StubRemovalPass(cpg: Cpg) extends ParallelCpgPass[nodes.Method](cpg) {
 
-    val sigToMethodWithDef = cpg.method.isNotStub.map(m => (m.signature -> true)).toMap
+  private val sigToMethodWithDef = cpg.method.isNotStub.map(m => (m.signature -> true)).toMap
 
-    cpg.method.isStub.toList
-      .filter(m => sigToMethodWithDef.contains(m.signature))
-      .iterator
-      .map { stub =>
-        val diffGraph = DiffGraph.newBuilder
-        stub.start.ast.foreach(diffGraph.removeNode)
-        diffGraph.build
-      }
+  override def partIterator: Iterator[Method] =
+  cpg.method.isStub.toList
+    .filter(m => sigToMethodWithDef.contains(m.signature))
+    .iterator
+
+  override def runOnPart(stub: Method): Iterator[DiffGraph] = {
+    val diffGraph = DiffGraph.newBuilder
+    stub.ast.foreach(diffGraph.removeNode)
+    Iterator(diffGraph.build)
   }
 }
