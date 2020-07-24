@@ -7,6 +7,8 @@ import better.files.File
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.passes.{AstCreationPass, CMetaDataPass, CfgCreationPass, StubRemovalPass, TypeNodePass}
 import io.shiftleft.passes.IntervalKeyPool
+import io.shiftleft.semanticcpg.passes.languagespecific.fuzzyc.{MethodStubCreator, TypeDeclStubCreator}
+import io.shiftleft.semanticcpg.passes.methoddecorations.MethodDecoratorPass
 import overflowdb.{OdbConfig, OdbGraph}
 
 import scala.collection.mutable.ListBuffer
@@ -70,7 +72,7 @@ class FuzzyC2Cpg() {
     val typesKeyPool = new IntervalKeyPool(100, 1000100)
     val functionKeyPools = KeyPools.obtain(2, 1000101)
 
-    val cpg = initCpg(optionalOutputPath)
+    var cpg = initCpg(optionalOutputPath)
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
 
     new CMetaDataPass(cpg, Some(metaDataKeyPool)).createAndApply()
@@ -79,6 +81,19 @@ class FuzzyC2Cpg() {
     new CfgCreationPass(cpg, functionKeyPools.last).createAndApply()
     new StubRemovalPass(cpg).createAndApply()
     new TypeNodePass(astCreator.global.usedTypes.toList, cpg, Some(typesKeyPool)).createAndApply()
+
+    ////////////////////////////////////////////////////////
+    // // Comment in the following block to get a crash
+//    cpg.close()
+//    val graph = OdbGraph.open(OdbConfig.withDefaults.withStorageLocation(optionalOutputPath.get),
+//      io.shiftleft.codepropertygraph.generated.nodes.Factories.allAsJava,
+//      io.shiftleft.codepropertygraph.generated.edges.Factories.allAsJava)
+//    cpg = new Cpg(graph)
+    ////////////////////////////////////////////////////
+
+    new TypeDeclStubCreator(cpg).createAndApply()
+    new MethodStubCreator(cpg).createAndApply()
+    new MethodDecoratorPass(cpg).createAndApply()
     cpg
   }
 
