@@ -15,9 +15,9 @@ class StubRemovalPass(cpg: Cpg) extends ParallelCpgPass[nodes.Method](cpg) {
   private val sigToMethodWithDef = cpg.method.isNotStub.map(m => (m.signature -> true)).toMap
 
   override def partIterator: Iterator[Method] =
-  cpg.method.isStub.toList
-    .filter(m => sigToMethodWithDef.contains(m.signature))
-    .iterator
+    cpg.method.isStub.toList
+      .filter(m => sigToMethodWithDef.contains(m.signature))
+      .iterator
 
   override def runOnPart(stub: Method): Iterator[DiffGraph] = {
     val diffGraph = DiffGraph.newBuilder
