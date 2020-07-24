@@ -84,11 +84,11 @@ class FuzzyC2Cpg() {
 
     ////////////////////////////////////////////////////////
     // // Comment in the following block to get a crash
-//    cpg.close()
-//    val graph = OdbGraph.open(OdbConfig.withDefaults.withStorageLocation(optionalOutputPath.get),
-//      io.shiftleft.codepropertygraph.generated.nodes.Factories.allAsJava,
-//      io.shiftleft.codepropertygraph.generated.edges.Factories.allAsJava)
-//    cpg = new Cpg(graph)
+    cpg.close()
+    val graph = OdbGraph.open(OdbConfig.withDefaults.withStorageLocation(optionalOutputPath.get),
+      io.shiftleft.codepropertygraph.generated.nodes.Factories.allAsJava,
+      io.shiftleft.codepropertygraph.generated.edges.Factories.allAsJava)
+    cpg = new Cpg(graph)
     ////////////////////////////////////////////////////
 
     new TypeDeclStubCreator(cpg).createAndApply()
