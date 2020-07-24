@@ -4,13 +4,14 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Call
 import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, ParallelCpgPass}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
+import io.shiftleft.fuzzyc2cpg.passes
 import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.LayeredStack
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
 
 object EdgeProperty extends Enumeration {
   type EdgeProperty = Value
-  val CFG_EDGE_TYPE = Value
+  val CFG_EDGE_TYPE: passes.EdgeProperty.Value = Value
 }
 
 object EdgeKind extends Enumeration {
@@ -325,7 +326,8 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     extendCfg(node)
     fringe = Nil
     // TODO: the target name should be in the AST
-    node.code.split(" ").lastOption.map(x => x.slice(0, x.length - 1)).foreach { target =>
+    val target = node.code.split(" ").lastOption.map(x => x.slice(0, x.length - 1))
+    target.foreach { target =>
       gotos = (node, target) :: gotos
     }
   }
