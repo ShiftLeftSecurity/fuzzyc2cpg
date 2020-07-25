@@ -45,6 +45,8 @@ class CfgCreationPass(cpg: Cpg, keyPool: IntervalKeyPool)
 
 class CfgCreatorForMethod(entryNode: nodes.Method) {
 
+  val exitNode = entryNode.methodReturn
+
   private implicit class FringeWrapper(fringe: List[FringeElement]) {
     def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[FringeElement] = {
       fringe.map {
@@ -71,7 +73,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private var labeledNodes = Map[String, nodes.CfgNode]()
   private var pendingGotoLabels = List[String]()
   private var pendingCaseLabels = List[String]()
-  private var returns = List[nodes.CfgNode]()
   private val breakStack = new LayeredStack[nodes.CfgNode]()
   private val continueStack = new LayeredStack[nodes.CfgNode]()
   private val caseStack = new LayeredStack[(nodes.CfgNode, Boolean)]()
@@ -80,7 +81,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   def run(): Iterator[DiffGraph] = {
     postOrderLeftToRightExpand(entryNode)
     connectGotosAndLabels()
-    connectReturnsToExit()
     Iterator(diffGraph.build)
   }
 
@@ -128,7 +128,11 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     expandChildren(actualRet)
     extendCfg(actualRet)
     fringe = Nil
-    returns = actualRet :: returns
+    diffGraph.addEdge(
+      actualRet,
+      exitNode,
+      EdgeTypes.CFG
+    )
   }
 
   private def handleFormalReturn(formalRet: nodes.MethodReturn): Unit = {
@@ -151,16 +155,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
             logger.info("Unable to wire goto statement. Missing label {}.", label)
         }
     }
-  }
-
-  private def connectReturnsToExit(): Unit = {
-    returns.foreach(
-      diffGraph.addEdge(
-        _,
-        entryNode.methodReturn,
-        EdgeTypes.CFG
-      )
-    )
   }
 
   private def handleJumpTarget(n: nodes.JumpTarget): Unit = {
