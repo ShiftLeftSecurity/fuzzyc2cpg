@@ -42,17 +42,6 @@ class StubRemovalPassTests extends WordSpec with Matchers {
       cpg.method.name.l shouldBe List("foo", "foo")
     }
 
-    "should remove all nodes of the stub" in StubRemovalPassFixture(
-      """
-        |int foo(int x);
-        |int foo(int x) {
-        | return 0;
-        |}
-        |""".stripMargin) {cpg =>
-      cpg.parameter.size shouldBe 1
-      cpg.methodReturn.size shouldBe 1
-    }
-
   }
 
 }
@@ -65,8 +54,7 @@ object StubRemovalPassFixture {
       val cpg = Cpg.emptyCpg
       val keyPool = new IntervalKeyPool(1001, 2000)
       val filenames = List(file1.path.toAbsolutePath.toString)
-      val astCreator = new AstCreationPass(filenames, cpg, keyPool)
-      astCreator.createAndApply()
+      new AstCreationPass(filenames, cpg, keyPool).createAndApply()
       val cfgKeyPool = new IntervalKeyPool(2001, 3000)
       new CfgCreationPass(cpg, cfgKeyPool).createAndApply()
       new StubRemovalPass(cpg).createAndApply()
