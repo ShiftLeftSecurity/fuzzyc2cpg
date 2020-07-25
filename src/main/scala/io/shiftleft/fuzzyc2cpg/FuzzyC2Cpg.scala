@@ -2,13 +2,12 @@ package io.shiftleft.fuzzyc2cpg
 
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
-
+import java.util.concurrent.ConcurrentHashMap
 import better.files.File
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.passes.{AstCreationPass, CMetaDataPass, CfgCreationPass, StubRemovalPass, TypeNodePass}
 import io.shiftleft.passes.IntervalKeyPool
 import overflowdb.{OdbConfig, OdbGraph}
-
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import scala.jdk.CollectionConverters._
@@ -78,7 +77,7 @@ class FuzzyC2Cpg() {
     astCreator.createAndApply()
     new CfgCreationPass(cpg, functionKeyPools.last).createAndApply()
     new StubRemovalPass(cpg).createAndApply()
-    new TypeNodePass(astCreator.global.usedTypes.toList, cpg, Some(typesKeyPool)).createAndApply()
+    new TypeNodePass(astCreator.global.usedTypes.keys().asScala.toList, cpg, Some(typesKeyPool)).createAndApply()
     cpg
   }
 

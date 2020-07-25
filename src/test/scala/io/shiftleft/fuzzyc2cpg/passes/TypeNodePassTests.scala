@@ -5,6 +5,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.passes.IntervalKeyPool
 import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.semanticcpg.language._
+import scala.jdk.CollectionConverters._
 
 class TypeNodePassTests extends WordSpec with Matchers {
   "TypeNodePass" should {
@@ -25,7 +26,7 @@ object TypeNodePassFixture {
       val filenames = List(file1.path.toAbsolutePath.toString)
       val astCreator = new AstCreationPass(filenames, cpg, keyPool)
       astCreator.createAndApply()
-      new TypeNodePass(astCreator.global.usedTypes.toList, cpg).createAndApply()
+      new TypeNodePass(astCreator.global.usedTypes.keys().asScala.toList, cpg).createAndApply()
 
       f(cpg)
     }
