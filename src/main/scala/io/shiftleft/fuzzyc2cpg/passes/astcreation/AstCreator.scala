@@ -849,7 +849,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
   }
 
   private def registerType(typeName: String): String = {
-    global.usedTypes += typeName
+    global.usedTypes.put(typeName, true)
     typeName
   }
 

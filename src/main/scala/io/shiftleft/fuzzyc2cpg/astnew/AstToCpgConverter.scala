@@ -884,7 +884,7 @@ class AstToCpgConverter[NodeBuilderType, NodeType, EdgeBuilderType, EdgeType](
   }
 
   private def registerType(typeName: String): String = {
-    global.usedTypes += typeName
+    global.usedTypes.put(typeName, true)
     typeName
   }
 
