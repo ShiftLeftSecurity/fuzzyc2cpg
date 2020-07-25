@@ -138,7 +138,7 @@ abstract public class AntlrParserDriver {
         return returnTree;
     }
 
-    public void setParser(Parser parser) {
+    public void setAntlrParser(Parser parser) {
         antlrParser = parser;
     }
 

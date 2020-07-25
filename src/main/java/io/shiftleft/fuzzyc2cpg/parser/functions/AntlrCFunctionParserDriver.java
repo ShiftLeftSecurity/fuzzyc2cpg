@@ -18,7 +18,7 @@ public class AntlrCFunctionParserDriver extends AntlrParserDriver {
   @Override
   public ParseTree parseTokenStreamImpl(TokenSubStream tokens) {
     FunctionParser parser = new FunctionParser(tokens);
-    setParser(parser);
+    setAntlrParser(parser);
     ParseTree tree = null;
 
     try {
