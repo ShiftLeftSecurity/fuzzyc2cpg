@@ -11,15 +11,16 @@ import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
 import java.nio.file.{Files, Path}
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
+
 import io.shiftleft.passes.KeyPool
 
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.CollectionConverters._
 import scala.util.control.NonFatal
+import scala.jdk.CollectionConverters._
 
-case class Global(usedTypes: mutable.Set[String] = new mutable.HashSet[String])
+case class Global(usedTypes: ConcurrentHashMap[String, Boolean] = new ConcurrentHashMap[String, Boolean]())
 
 class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   import FuzzyC2Cpg.logger
@@ -119,7 +120,7 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
     }
   }
 
-  private def addTypeNodes(usedTypes: mutable.Set[String], keyPool: KeyPool): Unit = {
+  private def addTypeNodes(usedTypes: ConcurrentHashMap[String, Boolean], keyPool: KeyPool): Unit = {
     val cpg = CpgStruct.newBuilder()
     val outputModule = outputModuleFactory.create()
     outputModule.setOutputIdentifier("__types__")
@@ -158,8 +159,14 @@ class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
       .build
   }
 
-  private def createTypeNodes(usedTypes: mutable.Set[String], keyPool: KeyPool, cpg: CpgStruct.Builder): Unit = {
-    usedTypes.toList.sorted
+  private def createTypeNodes(usedTypes: ConcurrentHashMap[String, Boolean],
+                              keyPool: KeyPool,
+                              cpg: CpgStruct.Builder): Unit = {
+    usedTypes
+      .keys()
+      .asScala
+      .toList
+      .sorted
       .foreach { typeName =>
         val node = newNode(NodeType.TYPE)
           .setKey(keyPool.next)
