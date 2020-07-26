@@ -68,13 +68,13 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private val caseStack = new LayeredStack[(nodes.CfgNode, Boolean)]()
 
   def run(): Iterator[DiffGraph] = {
-    Iterator(cfgForMethod(entryNode).build)
+    cfgForMethod(entryNode).map(_.build).iterator
   }
 
-  private def cfgForMethod(method: nodes.Method): DiffGraph.Builder = {
+  private def cfgForMethod(method: nodes.Method): List[DiffGraph.Builder] = {
     cfgForChildren(method)
     cfgForGotos(gotos, labelToNode)
-    diffGraph
+    List(diffGraph)
   }
 
   private def cfgForChildren(node: nodes.AstNode): Unit = node.astChildren.foreach(convert)
