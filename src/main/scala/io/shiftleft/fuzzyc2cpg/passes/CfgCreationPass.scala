@@ -4,7 +4,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.{Call, MethodReturn}
 import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, ParallelCpgPass}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
-import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.LayeredStack
+import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.StackOfNodeLists
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
 
@@ -63,9 +63,9 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private var gotos = List[nodes.CfgNode]()
 
   private var markerStack = List[Option[nodes.CfgNode]]()
-  private val breakStack = new LayeredStack[nodes.CfgNode]()
-  private val continueStack = new LayeredStack[nodes.CfgNode]()
-  private val caseStack = new LayeredStack[nodes.CfgNode]()
+  private val breakStack = new StackOfNodeLists()
+  private val continueStack = new StackOfNodeLists()
+  private val caseStack = new StackOfNodeLists()
 
   def run(): Iterator[DiffGraph] = {
     cfgForMethod(entryNode).map(_.build).iterator
