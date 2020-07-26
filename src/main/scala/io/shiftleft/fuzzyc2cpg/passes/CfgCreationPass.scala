@@ -70,7 +70,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private var fringe = List[FringeElement]().add(entryNode, AlwaysEdge)
   private var markerStack = List[Option[nodes.CfgNode]]()
   private case class FringeElement(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType)
-  private var labeledNodes = Map[String, nodes.CfgNode]()
+  private var labelNodes = Map[String, nodes.CfgNode]()
   private val breakStack = new LayeredStack[nodes.CfgNode]()
   private val continueStack = new LayeredStack[nodes.CfgNode]()
   private val caseStack = new LayeredStack[(nodes.CfgNode, Boolean)]()
@@ -140,7 +140,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private def connectGotosAndLabels(): Unit = {
     gotos.foreach {
       case (goto, label) =>
-        labeledNodes.get(label) match {
+        labelNodes.get(label) match {
           case Some(labeledNode) =>
             // TODO: CFG_EDGE_TYPE isn't defined for non-proto CPGs
             // .addProperty(EdgeProperty.CFG_EDGE_TYPE, AlwaysEdge.toString)
@@ -165,7 +165,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         caseStack.store((n, (labelName == "default")))
       }
     } else {
-      labeledNodes = labeledNodes + (labelName -> n)
+      labelNodes = labelNodes + (labelName -> n)
     }
     extendCfg(n)
   }
