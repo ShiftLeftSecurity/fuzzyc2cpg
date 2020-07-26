@@ -65,7 +65,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private var markerStack = List[Option[nodes.CfgNode]]()
   private val breakStack = new LayeredStack[nodes.CfgNode]()
   private val continueStack = new LayeredStack[nodes.CfgNode]()
-  private val caseStack = new LayeredStack[(nodes.CfgNode, Boolean)]()
+  private val caseStack = new LayeredStack[nodes.CfgNode]()
 
   def run(): Iterator[DiffGraph] = {
     cfgForMethod(entryNode).map(_.build).iterator
@@ -163,7 +163,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       // But if the parser missed a switch statement, caseStack
       // might by empty.
       if (caseStack.numberOfLayers > 0) {
-        caseStack.store((n, (labelName == "default")))
+        caseStack.store(n)
       }
     } else {
       labelToNode = labelToNode + (labelName -> n)
@@ -361,15 +361,13 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     node.start.whenTrue.foreach(convert)
     val switchFringe = fringe
 
-    caseStack.getTopElements.foreach {
-      case (caseNode, _) =>
-        fringe = conditionFringe
-        extendCfg(caseNode)
+    caseStack.getTopElements.foreach { caseNode =>
+      fringe = conditionFringe
+      extendCfg(caseNode)
     }
 
-    val hasDefaultCase = caseStack.getTopElements.exists {
-      case (_, isDefault) =>
-        isDefault
+    val hasDefaultCase = caseStack.getTopElements.exists { n =>
+      n.asInstanceOf[nodes.JumpTarget].name == "default"
     }
 
     fringe = switchFringe.add(breakStack.getTopElements, AlwaysEdge)
