@@ -36,28 +36,22 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
   val exitNode: MethodReturn = entryNode.methodReturn
 
-  private implicit class FringeWrapper(fringe: List[FringeElement]) {
-    def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[FringeElement] = {
+  private implicit class FringeWrapper(fringe: List[(nodes.CfgNode, CfgEdgeType)]) {
+    def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[(nodes.CfgNode, CfgEdgeType)] = {
       fringe.map {
-        case FringeElement(node, _) =>
-          FringeElement(node, cfgEdgeType)
+        case (node, _) =>
+          (node, cfgEdgeType)
       }
     }
-    def add(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType): List[FringeElement] =
-      FringeElement(node, cfgEdgeType) :: fringe
 
-    def add(ns: List[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[FringeElement] =
-      ns.map(node => FringeElement(node, cfgEdgeType)) ++ fringe
-
-    def add(otherFringe: List[FringeElement]): List[FringeElement] =
-      otherFringe ++ fringe
+    def add(ns: List[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[(nodes.CfgNode, CfgEdgeType)] =
+      ns.map(node => (node, cfgEdgeType)) ++ fringe
   }
 
   private val logger = LoggerFactory.getLogger(getClass)
   val diffGraph: DiffGraph.Builder = DiffGraph.newBuilder
 
-  private var fringe = List[FringeElement]().add(entryNode, AlwaysEdge)
-  private case class FringeElement(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType)
+  private var fringe: List[(nodes.CfgNode, CfgEdgeType)] = List((entryNode, AlwaysEdge))
 
   private var labelToNode = Map[String, nodes.CfgNode]()
   private var gotos = List[nodes.CfgNode]()
@@ -183,7 +177,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     val fromTrue = fringe
     fringe = fromCond.setCfgEdgeType(FalseEdge)
     convert(falseExpression)
-    fringe = fringe.add(fromTrue)
+    fringe = fringe ++ fromTrue
     extendCfg(call)
   }
 
@@ -192,7 +186,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     val entry = fringe
     fringe = fringe.setCfgEdgeType(TrueEdge)
     convert(call.argument(2))
-    fringe = fringe.add(entry.setCfgEdgeType(FalseEdge))
+    fringe = fringe ++ entry.setCfgEdgeType(FalseEdge)
     extendCfg(call)
   }
 
@@ -203,7 +197,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     val entry = fringe
     fringe = fringe.setCfgEdgeType(FalseEdge)
     convert(right)
-    fringe = fringe.add(entry.setCfgEdgeType(TrueEdge))
+    fringe = fringe ++ entry.setCfgEdgeType(TrueEdge)
     extendCfg(call)
   }
 
@@ -337,11 +331,11 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         val ifBlockFringe = fringe
         fringe = conditionFringe.setCfgEdgeType(FalseEdge)
         convert(elseStatement)
-        fringe = fringe.add(ifBlockFringe)
+        fringe = fringe ++ ifBlockFringe
       }
       .headOption
       .getOrElse {
-        fringe = fringe.add(conditionFringe.setCfgEdgeType(FalseEdge))
+        fringe = fringe ++ conditionFringe.setCfgEdgeType(FalseEdge)
       }
   }
 
@@ -373,7 +367,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     fringe = switchFringe.add(breakStack.getTopElements, AlwaysEdge)
 
     if (!hasDefaultCase) {
-      fringe = fringe.add(conditionFringe)
+      fringe = fringe ++ conditionFringe
     }
 
     breakStack.popLayer()
@@ -405,17 +399,20 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   }
 
   private def extendCfg(dstNode: nodes.CfgNode): Unit = {
+
+    // TODO: we are currently not writing edge types
+    // into the DiffGraph because we have not agreed
+    // on the exact CFG edge types across languages
+
     fringe.foreach {
-      case FringeElement(srcNode, _) =>
-        // TODO add edge CFG edge type in CPG spec
-        // val props = List(("CFG_EDGE_TYPE", cfgEdgeType.toString))
+      case (srcNode, _) =>
         diffGraph.addEdge(
           srcNode,
           dstNode,
           EdgeTypes.CFG
         )
     }
-    fringe = Nil.add(dstNode, AlwaysEdge)
+    fringe = List((dstNode, AlwaysEdge))
 
     if (markerStack.nonEmpty) {
       // Up until the first none None stack element we replace the Nones with Some(dstNode)
