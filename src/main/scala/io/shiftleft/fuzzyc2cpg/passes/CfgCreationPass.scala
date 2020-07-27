@@ -4,20 +4,9 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Call
 import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, ParallelCpgPass}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
-import io.shiftleft.fuzzyc2cpg.passes
 import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.LayeredStack
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
-
-object EdgeProperty extends Enumeration {
-  type EdgeProperty = Value
-  val CFG_EDGE_TYPE: passes.EdgeProperty.Value = Value
-}
-
-object EdgeKind extends Enumeration {
-  type EdgeKind = Value
-  val AST, CFG, REF, CONDITION, ARGUMENT = Value
-}
 
 trait CfgEdgeType
 object TrueEdge extends CfgEdgeType {
