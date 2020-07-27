@@ -4,7 +4,6 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.codepropertygraph.generated.nodes.Call
 import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, ParallelCpgPass}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
-import io.shiftleft.fuzzyc2cpg.passes.CfgCreatorForMethod.FringeElement
 import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.LayeredStack
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
@@ -65,7 +64,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     cfg.diffGraphs.map(_.build).iterator
   }
 
-  private def postOrderLeftToRightExpand(node: nodes.AstNode): Unit = {
+  private def postOrderLeftToRightExpand(node: nodes.AstNode): Cfg = {
     node match {
       case n: nodes.ControlStructure =>
         handleControlStructure(n)
@@ -90,33 +89,39 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       case n: nodes.AstNode =>
         expandChildren(n)
     }
+    cfg
   }
 
-  private def handleCall(call: nodes.Call): Unit = {
+  private def handleCall(call: nodes.Call): Cfg = {
     expandChildren(call)
     extendCfg(call)
+    cfg
   }
 
-  private def handleIdentifier(identifier: nodes.Identifier): Unit = {
+  private def handleIdentifier(identifier: nodes.Identifier): Cfg = {
     extendCfg(identifier)
+    cfg
   }
 
-  private def handleLiteral(literal: nodes.Literal): Unit = {
+  private def handleLiteral(literal: nodes.Literal): Cfg = {
     extendCfg(literal)
+    cfg
   }
 
-  private def handleReturn(actualRet: nodes.Return): Unit = {
+  private def handleReturn(actualRet: nodes.Return): Cfg = {
     expandChildren(actualRet)
     extendCfg(actualRet)
     cfg.fringe = Nil
     cfg.returns = actualRet :: cfg.returns
+    cfg
   }
 
-  private def handleFormalReturn(formalRet: nodes.MethodReturn): Unit = {
+  private def handleFormalReturn(formalRet: nodes.MethodReturn): Cfg = {
     extendCfg(formalRet)
+    cfg
   }
 
-  private def connectGotosAndLabels(): Unit = {
+  private def connectGotosAndLabels(): Cfg = {
     val diffGraph = DiffGraph.newBuilder
     cfg.gotos.foreach {
       case (goto, label) =>
@@ -137,7 +142,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     cfg
   }
 
-  private def connectReturnsToExit(): Unit = {
+  private def connectReturnsToExit(): Cfg = {
     val diffGraph = DiffGraph.newBuilder
     cfg.returns.foreach(
       diffGraph.addEdge(
@@ -150,7 +155,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     cfg
   }
 
-  private def handleJumpTarget(n: nodes.JumpTarget): Unit = {
+  private def handleJumpTarget(n: nodes.JumpTarget): Cfg = {
     val labelName = n.name
     if (labelName.startsWith("case") || labelName.startsWith("default")) {
       // Under normal conditions this is always true.
@@ -163,9 +168,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       cfg.labeledNodes = cfg.labeledNodes + (labelName -> n)
     }
     extendCfg(n)
+    cfg
   }
 
-  private def handleConditionalExpression(call: nodes.Call): Unit = {
+  private def handleConditionalExpression(call: nodes.Call): Cfg = {
     val condition = call.argument(1)
     val trueExpression = call.argument(2)
     val falseExpression = call.argument(3)
@@ -179,18 +185,20 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     postOrderLeftToRightExpand(falseExpression)
     cfg.fringe = cfg.fringe.add(fromTrue)
     extendCfg(call)
+    cfg
   }
 
-  private def handleAndExpression(call: Call): Unit = {
+  private def handleAndExpression(call: Call): Cfg = {
     postOrderLeftToRightExpand(call.argument(1))
     val entry = cfg.fringe
     cfg.fringe = cfg.fringe.setCfgEdgeType(TrueEdge)
     postOrderLeftToRightExpand(call.argument(2))
     cfg.fringe = cfg.fringe.add(entry.setCfgEdgeType(FalseEdge))
     extendCfg(call)
+    cfg
   }
 
-  private def handleOrExpression(call: Call): Unit = {
+  private def handleOrExpression(call: Call): Cfg = {
     val left = call.argument(1)
     val right = call.argument(2)
     postOrderLeftToRightExpand(left)
@@ -199,9 +207,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     postOrderLeftToRightExpand(right)
     cfg.fringe = cfg.fringe.add(entry.setCfgEdgeType(TrueEdge))
     extendCfg(call)
+    cfg
   }
 
-  private def handleBreakStatement(node: nodes.ControlStructure): Unit = {
+  private def handleBreakStatement(node: nodes.ControlStructure): Cfg = {
     extendCfg(node)
     // Under normal conditions this is always true.
     // But if the parser missed a loop or switch statement, breakStack
@@ -210,9 +219,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       cfg.fringe = Nil
       cfg.breakStack.store(node)
     }
+    cfg
   }
 
-  private def handleContinueStatement(node: nodes.ControlStructure): Unit = {
+  private def handleContinueStatement(node: nodes.ControlStructure): Cfg = {
     extendCfg(node)
     // Under normal conditions this is always true.
     // But if the parser missed a loop statement, continueStack
@@ -221,9 +231,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       cfg.fringe = Nil
       cfg.continueStack.store(node)
     }
+    cfg
   }
 
-  private def handleWhileStatement(node: nodes.ControlStructure): Unit = {
+  private def handleWhileStatement(node: nodes.ControlStructure): Cfg = {
     cfg.breakStack.pushLayer()
     cfg.continueStack.pushLayer()
 
@@ -243,9 +254,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     cfg.markerStack = cfg.markerStack.tail
     cfg.breakStack.popLayer()
     cfg.continueStack.popLayer()
+    cfg
   }
 
-  private def handleDoStatement(node: nodes.ControlStructure): Unit = {
+  private def handleDoStatement(node: nodes.ControlStructure): Cfg = {
     cfg.breakStack.pushLayer()
     cfg.continueStack.pushLayer()
 
@@ -273,9 +285,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     cfg.markerStack = cfg.markerStack.tail
     cfg.breakStack.popLayer()
     cfg.continueStack.popLayer()
+    cfg
   }
 
-  private def handleForStatement(node: nodes.ControlStructure): Unit = {
+  private def handleForStatement(node: nodes.ControlStructure): Cfg = {
     cfg.breakStack.pushLayer()
     cfg.continueStack.pushLayer()
 
@@ -313,9 +326,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     cfg.markerStack = cfg.markerStack.tail
     cfg.breakStack.popLayer()
     cfg.continueStack.popLayer()
+    cfg
   }
 
-  private def handleGotoStatement(node: nodes.ControlStructure): Unit = {
+  private def handleGotoStatement(node: nodes.ControlStructure): Cfg = {
     extendCfg(node)
     cfg.fringe = Nil
     // TODO: the target name should be in the AST
@@ -323,9 +337,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     target.foreach { target =>
       cfg.gotos = (node, target) :: cfg.gotos
     }
+    cfg
   }
 
-  private def handleIfStatement(node: nodes.ControlStructure): Unit = {
+  private def handleIfStatement(node: nodes.ControlStructure): Cfg = {
     node.start.condition.foreach(postOrderLeftToRightExpand)
     val conditionFringe = cfg.fringe
     cfg.fringe = cfg.fringe.setCfgEdgeType(TrueEdge)
@@ -341,9 +356,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       .getOrElse {
         cfg.fringe = cfg.fringe.add(conditionFringe.setCfgEdgeType(FalseEdge))
       }
+    cfg
   }
 
-  private def handleSwitchStatement(node: nodes.ControlStructure): Unit = {
+  private def handleSwitchStatement(node: nodes.ControlStructure): Cfg = {
     node.start.condition.foreach(postOrderLeftToRightExpand)
     val conditionFringe = cfg.fringe.setCfgEdgeType(CaseEdge)
     cfg.fringe = Nil
@@ -376,9 +392,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
     cfg.breakStack.popLayer()
     cfg.caseStack.popLayer()
+    cfg
   }
 
-  private def handleControlStructure(node: nodes.ControlStructure): Unit = {
+  private def handleControlStructure(node: nodes.ControlStructure): Cfg = {
     node.parserTypeName match {
       case "BreakStatement" =>
         handleBreakStatement(node)
@@ -400,14 +417,16 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         handleSwitchStatement(node)
       case _ =>
     }
+    cfg
   }
 
-  private def expandChildren(node: nodes.AstNode): Unit = {
+  private def expandChildren(node: nodes.AstNode): Cfg = {
     val children = node.astChildren.l
     children.foreach(postOrderLeftToRightExpand)
+    cfg
   }
 
-  private def extendCfg(dstNode: nodes.CfgNode): Unit = {
+  private def extendCfg(dstNode: nodes.CfgNode): Cfg = {
     val diffGraph = DiffGraph.newBuilder
     cfg.fringe.foreach {
       case FringeElement(srcNode, _) =>
@@ -428,6 +447,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         .drop(leadingNoneLength)
     }
     cfg.diffGraphs += diffGraph
+    cfg
   }
 
 }
