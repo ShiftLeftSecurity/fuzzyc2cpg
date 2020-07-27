@@ -166,7 +166,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     if (labelName.startsWith("case") || labelName.startsWith("default")) {
       // Under normal conditions this is always true.
       // But if the parser missed a switch statement, caseStack
-      // might by empty.
+      // might be empty.
       if (caseStack.numberOfLayers > 0) {
         caseStack.store(n)
       }
@@ -216,7 +216,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     extendCfg(node)
     // Under normal conditions this is always true.
     // But if the parser missed a loop or switch statement, breakStack
-    // might by empty.
+    // might be empty.
     if (breakStack.numberOfLayers > 0) {
       fringe = Nil
       breakStack.store(node)
@@ -227,7 +227,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     extendCfg(node)
     // Under normal conditions this is always true.
     // But if the parser missed a loop statement, continueStack
-    // might by empty.
+    // might be empty.
     if (continueStack.numberOfLayers > 0) {
       fringe = Nil
       continueStack.store(node)
