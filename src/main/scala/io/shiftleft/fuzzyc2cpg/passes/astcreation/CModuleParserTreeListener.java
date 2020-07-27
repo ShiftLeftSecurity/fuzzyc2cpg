@@ -11,7 +11,6 @@ import io.shiftleft.fuzzyc2cpg.ast.logical.statements.CompoundStatement;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
 import io.shiftleft.fuzzyc2cpg.parser.CompoundItemAssembler;
 import io.shiftleft.fuzzyc2cpg.parser.ModuleFunctionParserInterface;
-import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver;
 import io.shiftleft.fuzzyc2cpg.parser.modules.builder.FunctionDefBuilder;
 import io.shiftleft.fuzzyc2cpg.parser.shared.builders.ClassDefBuilder;
 import io.shiftleft.fuzzyc2cpg.parser.shared.builders.IdentifierDeclBuilder;

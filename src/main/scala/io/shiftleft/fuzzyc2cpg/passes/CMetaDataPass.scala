@@ -1,9 +1,8 @@
 package io.shiftleft.fuzzyc2cpg.passes
 
 import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.codepropertygraph.generated.{Languages, nodes}
+import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Languages, nodes}
 import io.shiftleft.fuzzyc2cpg.Defines
-import io.shiftleft.fuzzyc2cpg.Utils.getGlobalNamespaceBlockFullName
 import io.shiftleft.passes.{CpgPass, DiffGraph, KeyPool}
 
 /**
@@ -21,9 +20,12 @@ class CMetaDataPass(cpg: Cpg, keyPool: Option[KeyPool] = None) extends CpgPass(c
     def addAnyNamespaceBlock(diffGraph: DiffGraph.Builder): Unit = {
       val node = nodes.NewNamespaceBlock(
         name = Defines.globalNamespaceName,
-        fullName = getGlobalNamespaceBlockFullName(None)
+        fullName = CMetaDataPass.getGlobalNamespaceBlockFullName(None)
       )
+      val fileWithNoName = nodes.NewFile(name = "")
+      diffGraph.addNode(fileWithNoName)
       diffGraph.addNode(node)
+      diffGraph.addEdge(node, fileWithNoName, EdgeTypes.SOURCE_FILE)
     }
 
     val diffGraph = DiffGraph.newBuilder
@@ -31,4 +33,17 @@ class CMetaDataPass(cpg: Cpg, keyPool: Option[KeyPool] = None) extends CpgPass(c
     addAnyNamespaceBlock(diffGraph)
     Iterator(diffGraph.build())
   }
+}
+
+object CMetaDataPass {
+
+  def getGlobalNamespaceBlockFullName(fileNameOption: Option[String]): String = {
+    fileNameOption match {
+      case Some(fileName) =>
+        s"$fileName:${Defines.globalNamespaceName}"
+      case None =>
+        Defines.globalNamespaceName
+    }
+  }
+
 }

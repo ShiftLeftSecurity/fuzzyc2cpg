@@ -2,11 +2,11 @@ package io.shiftleft.fuzzyc2cpg.antlrparsers.functionparser;
 
 import static org.junit.Assert.assertEquals;
 
+import io.shiftleft.fuzzyc2cpg.passes.astcreation.AntlrParserDriver;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
 import io.shiftleft.fuzzyc2cpg.FunctionParser;
-import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriver;
 
 public class FunctionCommentTests extends FunctionParserTestBase {
 

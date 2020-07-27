@@ -54,7 +54,6 @@ import io.shiftleft.fuzzyc2cpg.ast.statements.jump.{
   ThrowStatement
 }
 import io.shiftleft.fuzzyc2cpg.ast.statements.{ExpressionStatement, IdentifierDeclStatement}
-import io.shiftleft.fuzzyc2cpg.scope.Scope
 import io.shiftleft.passes.DiffGraph
 import io.shiftleft.proto.cpg.Cpg.{DispatchTypes, EvaluationStrategies}
 
@@ -104,7 +103,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       "int"
     }
 
-    val signature = astFunction.getFunctionSignature(false)
+    val signature = returnType + " " + astFunction.getFunctionSignature(false)
 
     val location = astFunction.getLocation
     val method = nodes.NewMethod(
@@ -165,14 +164,15 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
     } else {
       "int"
     }
+    val location = astParameter.getLocation
     val parameter = nodes.NewMethodParameterIn(
       code = astParameter.getEscapedCodeStr,
       name = astParameter.getName,
       order = astParameter.getChildNumber + 1,
       evaluationStrategy = EvaluationStrategies.BY_VALUE.name(),
       typeFullName = registerType(parameterType),
-      lineNumber = astParameter.getLocation.startLine,
-      columnNumber = astParameter.getLocation.startPos
+      lineNumber = location.startLine,
+      columnNumber = location.startPos
     )
     diffGraph.addNode(parameter)
     scope.addToScope(astParameter.getName, (parameter, parameterType))
@@ -873,6 +873,7 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
   }
 
   private def newCallNode(astNode: AstNode, methodName: String): nodes.NewCall = {
+    val location = astNode.getLocation
     nodes.NewCall(
       name = methodName,
       dispatchType = DispatchTypes.STATIC_DISPATCH.name(),
@@ -882,30 +883,32 @@ private[astcreation] class AstCreator(diffGraph: DiffGraph.Builder,
       code = astNode.getEscapedCodeStr,
       order = context.childNum,
       argumentIndex = context.childNum,
-      lineNumber = astNode.getLocation.startLine,
-      columnNumber = astNode.getLocation.startPos
+      lineNumber = location.startLine,
+      columnNumber = location.startPos
     )
   }
 
   private def newUnknownNode(astNode: AstNode): nodes.NewUnknown = {
+    val location = astNode.getLocation
     nodes.NewUnknown(
       parserTypeName = astNode.getClass.getSimpleName,
       code = astNode.getEscapedCodeStr,
       order = context.childNum,
       argumentIndex = context.childNum,
-      lineNumber = astNode.getLocation.startLine,
-      columnNumber = astNode.getLocation.startPos
+      lineNumber = location.startLine,
+      columnNumber = location.startPos
     )
   }
 
   private def newControlStructureNode(astNode: AstNode): nodes.NewControlStructure = {
+    val location = astNode.getLocation
     nodes.NewControlStructure(
       parserTypeName = astNode.getClass.getSimpleName,
       code = astNode.getEscapedCodeStr,
       order = context.childNum,
       argumentIndex = context.childNum,
-      lineNumber = astNode.getLocation.startLine,
-      columnNumber = astNode.getLocation.startPos
+      lineNumber = location.startLine,
+      columnNumber = location.startPos
     )
   }
 
