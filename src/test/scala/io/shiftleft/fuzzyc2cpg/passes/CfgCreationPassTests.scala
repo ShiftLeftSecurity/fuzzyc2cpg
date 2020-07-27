@@ -183,6 +183,14 @@ class CfgCreationPassTests extends WordSpec with Matchers {
         succOf("y") shouldBe expected(("x", TrueEdge), ("z", FalseEdge))
         succOf("z") shouldBe expected(("x", TrueEdge), ("RET", FalseEdge))
       }
+
+    "be correct for do-while-loop with empty body" in
+    new CfgFixture("do { } while(x > 1);") {
+      succOf("func ()") shouldBe expected(("x", AlwaysEdge))
+      succOf("1") shouldBe expected(("x > 1", AlwaysEdge))
+      succOf("x > 1") shouldBe expected(("x", TrueEdge), ("RET", FalseEdge))
+    }
+
   }
 
   "Cfg for for-loop" should {

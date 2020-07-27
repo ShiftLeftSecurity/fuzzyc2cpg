@@ -8,20 +8,15 @@ import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.StackOfNodeLists
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
 
-trait CfgEdgeType
-object TrueEdge extends CfgEdgeType {
-  override def toString: String = "TrueEdge"
-}
-object FalseEdge extends CfgEdgeType {
-  override def toString: String = "FalseEdge"
-}
-object AlwaysEdge extends CfgEdgeType {
-  override def toString: String = "AlwaysEdge"
-}
-object CaseEdge extends CfgEdgeType {
-  override def toString: String = "CaseEdge"
-}
-
+/**
+  * A pass for control flow graph generation from abstract syntax trees.
+  *
+  * Control flow graphs can be calculated independently for each method.
+  * The pass therefore inherits from `CfgCreationPass` and returns
+  * method nodes to workers of a thread pool. To ensure that ids are
+  * stable across runs, a key pool is assigned to each method prior
+  * to branching off into parallel computation.
+  **/
 class CfgCreationPass(cpg: Cpg, keyPool: IntervalKeyPool)
     extends ParallelCpgPass[nodes.Method](cpg, keyPools = Some(keyPool.split(cpg.method.size))) {
 
@@ -32,30 +27,45 @@ class CfgCreationPass(cpg: Cpg, keyPool: IntervalKeyPool)
 
 }
 
+/**
+  * Method control flow graph calculation from abstract syntax tree.
+  *
+  * We construct the CFG by traversing the AST from left to right in
+  * post order, that is, we first translate leaves and then their
+  * parents.
+  * */
 class CfgCreatorForMethod(entryNode: nodes.Method) {
 
-  val exitNode: MethodReturn = entryNode.methodReturn
+  /**
+    * Control flow graph definitions often feature artificial entry and exit
+    * nodes which serve as single entry and exit points into the function.
+    * `Return` statements are connected to the exit point via outgoing CFG edges,
+    * thereby ensuring that the function has a single exit point even in the
+    * presence of multiple `return` statements.
+    *
+    * In the Code Property Graph, instead of introducing these artificial nodes, we
+    * simply reuse the METHOD node and the METHOD_RETURN node as entry and
+    * exit nodes respectively. Note that the METHOD_RETURN node is the *formal*
+    * return parameter (of which there exists exactly one per method) as opposed
+    * to the return statements.
+    * */
 
-  private implicit class FringeWrapper(fringe: List[(nodes.CfgNode, CfgEdgeType)]) {
-    def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[(nodes.CfgNode, CfgEdgeType)] = {
-      fringe.map {
-        case (node, _) =>
-          (node, cfgEdgeType)
-      }
-    }
+  private val exitNode: MethodReturn = entryNode.methodReturn
 
-    def add(ns: List[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[(nodes.CfgNode, CfgEdgeType)] =
-      ns.map(node => (node, cfgEdgeType)) ++ fringe
-  }
-
+  import CfgCreatorForMethod._
   private val logger = LoggerFactory.getLogger(getClass)
-  val diffGraph: DiffGraph.Builder = DiffGraph.newBuilder
 
-  private var fringe: List[(nodes.CfgNode, CfgEdgeType)] = List((entryNode, AlwaysEdge))
 
+  /**
+    * The resulting CFG is a diffGraph, that is, it is a sequence
+    * of graph modifications. In particular, in the case of CFG
+    * construction, it consists entirely of edge additions.
+    * */
+  private val diffGraph: DiffGraph.Builder = DiffGraph.newBuilder
   private var labelToNode = Map[String, nodes.CfgNode]()
   private var gotos = List[nodes.CfgNode]()
 
+  private var fringe: List[(nodes.CfgNode, CfgEdgeType)] = List((entryNode, AlwaysEdge))
   private var markerStack = List[Option[nodes.CfgNode]]()
   private val breakStack = new StackOfNodeLists()
   private val continueStack = new StackOfNodeLists()
@@ -65,6 +75,14 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     cfgForMethod(entryNode).map(_.build).iterator
   }
 
+  /**
+    * The CFG for a method is calculated in two steps. First, we handle
+    * all structured control flow as well as returns, continues, and breaks,
+    * and collect goto statements and labels in the process. Second, we
+    * connect gotos to labels. Note that this strategy is only valid
+    * because labels in C must be unique per function as opposed to
+    * per scope.
+    * */
   private def cfgForMethod(method: nodes.Method): List[DiffGraph.Builder] = {
     cfgForChildren(method)
     cfgForGotos(gotos, labelToNode)
@@ -96,20 +114,40 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     node match {
       case n: nodes.ControlStructure =>
         handleControlStructure(n)
-      case n: nodes.JumpTarget =>
-        handleJumpTarget(n)
       case call: nodes.Call =>
         handleCall(call)
-      case identifier: nodes.Identifier =>
-        handleIdentifier(identifier)
-      case literal: nodes.Literal =>
-        handleLiteral(literal)
+      case n: nodes.JumpTarget =>
+        handleJumpTarget(n)
       case actualRet: nodes.Return =>
         handleReturn(actualRet)
-      case formalRet: nodes.MethodReturn =>
-        handleFormalReturn(formalRet)
+      case (_ : nodes.Identifier | _ : nodes.Literal | _ : nodes.MethodReturn) =>
+        handleLeaf(node.asInstanceOf[nodes.CfgNode])
       case n: nodes.AstNode =>
         cfgForChildren(n)
+    }
+  }
+
+  private def handleControlStructure(node: nodes.ControlStructure): Unit = {
+    node.parserTypeName match {
+      case "BreakStatement" =>
+        handleBreakStatement(node)
+      case "ContinueStatement" =>
+        handleContinueStatement(node)
+      case "WhileStatement" =>
+        handleWhileStatement(node)
+      case "DoStatement" =>
+        handleDoStatement(node)
+      case "ForStatement" =>
+        handleForStatement(node)
+      case "GotoStatement" =>
+        handleGotoStatement(node)
+      case "IfStatement" =>
+        handleIfStatement(node)
+      case "ElseStatement" =>
+        cfgForChildren(node)
+      case "SwitchStatement" =>
+        handleSwitchStatement(node)
+      case _ =>
     }
   }
 
@@ -127,12 +165,8 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     }
   }
 
-  private def handleIdentifier(identifier: nodes.Identifier): Unit = {
+  private def handleLeaf(identifier: nodes.CfgNode): Unit = {
     extendCfg(identifier)
-  }
-
-  private def handleLiteral(literal: nodes.Literal): Unit = {
-    extendCfg(literal)
   }
 
   private def handleReturn(actualRet: nodes.Return): Unit = {
@@ -144,10 +178,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       exitNode,
       EdgeTypes.CFG
     )
-  }
-
-  private def handleFormalReturn(formalRet: nodes.MethodReturn): Unit = {
-    extendCfg(formalRet)
   }
 
   private def handleJumpTarget(n: nodes.JumpTarget): Unit = {
@@ -224,19 +254,29 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   }
 
   private def handleWhileStatement(node: nodes.ControlStructure): Unit = {
-    breakStack.pushLayer()
-    continueStack.pushLayer()
+    breakStack.newEmptyLayer()
+    continueStack.newEmptyLayer()
 
     markerStack = None :: markerStack
     node.start.condition.headOption.foreach(convert)
-    val conditionFringe = fringe
+    val firstNodeOfCondition = markerStack.head.get
+
+    val fringeAtEntry = fringe
     fringe = fringe.setCfgEdgeType(TrueEdge)
 
     node.start.whenTrue.l.foreach(convert)
-    fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
-    extendCfg(markerStack.head.get)
 
-    fringe = conditionFringe
+    fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
+    // At this point, continue statements and whatever was on
+    // the fringe before calling `handleWhileStatement` are on
+    // the fringe
+
+    extendCfg(firstNodeOfCondition)
+
+    // As we exit `handleWhileStatement`, we return
+    // the fringe as we found it and add break statements
+
+    fringe = fringeAtEntry
       .setCfgEdgeType(FalseEdge)
       .add(breakStack.getTopElements, AlwaysEdge)
 
@@ -246,20 +286,26 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   }
 
   private def handleDoStatement(node: nodes.ControlStructure): Unit = {
-    breakStack.pushLayer()
-    continueStack.pushLayer()
+    breakStack.newEmptyLayer()
+    continueStack.newEmptyLayer()
 
     markerStack = None :: markerStack
     node.astChildren.filter(_.order(1)).foreach(convert)
+
     fringe = fringe.add(continueStack.getTopElements, AlwaysEdge)
 
     node.start.condition.headOption match {
       case Some(condition) =>
         convert(condition)
+
+        // On an empty do-block, this is actually
+        // the first node of the condition
+        val firstNodeInBody = markerStack.head.get
+
         val conditionFringe = fringe
         fringe = fringe.setCfgEdgeType(TrueEdge)
 
-        extendCfg(markerStack.head.get)
+        extendCfg(firstNodeInBody)
 
         fringe = conditionFringe.setCfgEdgeType(FalseEdge)
       case None =>
@@ -276,8 +322,8 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   }
 
   private def handleForStatement(node: nodes.ControlStructure): Unit = {
-    breakStack.pushLayer()
-    continueStack.pushLayer()
+    breakStack.newEmptyLayer()
+    continueStack.newEmptyLayer()
 
     val children = node.astChildren.l
     val initExprOption = children.find(_.order == 1)
@@ -349,8 +395,8 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     // an outer switch case label and the inner switch condition.
     // This is ok because in C/C++ it is not allowed to have another switch
     // statement in the condition of a switch statement.
-    breakStack.pushLayer()
-    caseStack.pushLayer()
+    breakStack.newEmptyLayer()
+    caseStack.newEmptyLayer()
 
     node.start.whenTrue.foreach(convert)
     val switchFringe = fringe
@@ -374,30 +420,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     caseStack.popLayer()
   }
 
-  private def handleControlStructure(node: nodes.ControlStructure): Unit = {
-    node.parserTypeName match {
-      case "BreakStatement" =>
-        handleBreakStatement(node)
-      case "ContinueStatement" =>
-        handleContinueStatement(node)
-      case "WhileStatement" =>
-        handleWhileStatement(node)
-      case "DoStatement" =>
-        handleDoStatement(node)
-      case "ForStatement" =>
-        handleForStatement(node)
-      case "GotoStatement" =>
-        handleGotoStatement(node)
-      case "IfStatement" =>
-        handleIfStatement(node)
-      case "ElseStatement" =>
-        cfgForChildren(node)
-      case "SwitchStatement" =>
-        handleSwitchStatement(node)
-      case _ =>
-    }
-  }
-
   private def extendCfg(dstNode: nodes.CfgNode): Unit = {
 
     // TODO: we are currently not writing edge types
@@ -415,11 +437,42 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     fringe = List((dstNode, AlwaysEdge))
 
     if (markerStack.nonEmpty) {
-      // Up until the first none None stack element we replace the Nones with Some(dstNode)
+      // Up until the first element that is not `None`, replace the Nones with Some(dstNode)
       val leadingNoneLength = markerStack.segmentLength(_.isEmpty, 0)
       markerStack = List.fill(leadingNoneLength)(Some(dstNode)) ++ markerStack
         .drop(leadingNoneLength)
     }
+  }
+
+}
+
+object CfgCreatorForMethod {
+
+  trait CfgEdgeType
+  object TrueEdge extends CfgEdgeType {
+    override def toString: String = "TrueEdge"
+  }
+  object FalseEdge extends CfgEdgeType {
+    override def toString: String = "FalseEdge"
+  }
+  object AlwaysEdge extends CfgEdgeType {
+    override def toString: String = "AlwaysEdge"
+  }
+  object CaseEdge extends CfgEdgeType {
+    override def toString: String = "CaseEdge"
+  }
+
+
+  implicit class FringeWrapper(fringe: List[(nodes.CfgNode, CfgEdgeType)]) {
+    def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[(nodes.CfgNode, CfgEdgeType)] = {
+      fringe.map {
+        case (node, _) =>
+          (node, cfgEdgeType)
+      }
+    }
+
+    def add(ns: List[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[(nodes.CfgNode, CfgEdgeType)] =
+      ns.map(node => (node, cfgEdgeType)) ++ fringe
   }
 
 }

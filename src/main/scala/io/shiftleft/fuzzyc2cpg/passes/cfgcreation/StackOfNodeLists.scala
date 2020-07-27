@@ -11,7 +11,7 @@ class StackOfNodeLists {
 
   private var stack = List[NodeList]()
 
-  def pushLayer(): Unit = {
+  def newEmptyLayer(): Unit = {
     stack = NodeList() :: stack
   }
 
