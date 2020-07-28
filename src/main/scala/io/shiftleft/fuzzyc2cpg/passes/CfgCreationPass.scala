@@ -79,189 +79,193 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
   import CfgCreatorForMethod._
 
-  var cfg: Cfg = _
-
   def run(): Iterator[DiffGraph] = {
-    val cfg = convert(entryNode).connectGotoAndLabels()
+    val cfg = convertMethod(entryNode).connectGotoAndLabels()
     cfg.diffGraphs.map(_.build).iterator
   }
 
-  private def convert(node: nodes.AstNode): Cfg = {
+  private def convertMethod(node: nodes.Method): Cfg = {
+    expandChildren(node, Cfg(node))
+  }
+
+  private def expandChildren(node: nodes.AstNode, initialCfg: Cfg): Cfg = {
+    node.astChildren.l.foldLeft(initialCfg)((cfg, child) => convert(child, cfg))
+  }
+
+  private def convert(node: nodes.AstNode, initialCfg: Cfg): Cfg = {
     node match {
       case n: nodes.Method =>
-        cfg = Cfg(n)
-        expandChildren(n)
+        convertMethod(n)
       case n: nodes.ControlStructure =>
-        handleControlStructure(n)
+        handleControlStructure(n, initialCfg)
       case n: nodes.JumpTarget =>
-        handleJumpTarget(n)
+        handleJumpTarget(n, initialCfg)
       case call: nodes.Call if call.name == Operators.conditional =>
-        handleConditionalExpression(call)
+        handleConditionalExpression(call, initialCfg)
       case call: nodes.Call if call.name == Operators.logicalAnd =>
-        handleAndExpression(call)
+        handleAndExpression(call, initialCfg)
       case call: nodes.Call if call.name == Operators.logicalOr =>
-        handleOrExpression(call)
+        handleOrExpression(call, initialCfg)
       case actualRet: nodes.Return =>
-        handleReturn(actualRet)
+        handleReturn(actualRet, initialCfg)
       case (_: nodes.Call | _: nodes.Identifier | _: nodes.Literal | _: nodes.MethodReturn) =>
-        handleLeaf(node.asInstanceOf[nodes.CfgNode])
+        expandChildrenAndInclude(node.asInstanceOf[nodes.CfgNode], initialCfg)
       case n: nodes.AstNode =>
-        expandChildren(n)
+        expandChildren(n, initialCfg)
     }
-    cfg
   }
 
-  private def handleLeaf(node: nodes.CfgNode): Cfg = {
-    expandChildren(node)
-    extendCfg(node)
+  private def expandChildrenAndInclude(node: nodes.CfgNode, initialCfg: Cfg): Cfg = {
+    expandChildren(node, initialCfg)
+    extendCfg(node, initialCfg)
   }
 
-  private def handleReturn(actualRet: nodes.Return): Cfg = {
+  private def handleReturn(actualRet: nodes.Return, initialCfg: Cfg): Cfg = {
     val diffGraph = DiffGraph.newBuilder
-    expandChildren(actualRet)
-    extendCfg(actualRet)
-    cfg.fringe = Nil
+    expandChildren(actualRet, initialCfg)
+    extendCfg(actualRet, initialCfg)
+    initialCfg.fringe = Nil
     diffGraph.addEdge(
       actualRet,
       entryNode.methodReturn,
       EdgeTypes.CFG
     )
-    cfg.diffGraphs += diffGraph
-    cfg
+    initialCfg.diffGraphs += diffGraph
+    initialCfg
   }
 
-  private def handleJumpTarget(n: nodes.JumpTarget): Cfg = {
+  private def handleJumpTarget(n: nodes.JumpTarget, initialCfg: Cfg): Cfg = {
     val labelName = n.name
     if (labelName.startsWith("case") || labelName.startsWith("default")) {
       // Under normal conditions this is always true.
       // But if the parser missed a switch statement, caseStack
       // might be empty.
-      if (cfg.caseStack.numberOfLayers > 0) {
-        cfg.caseStack.store(n)
+      if (initialCfg.caseStack.numberOfLayers > 0) {
+        initialCfg.caseStack.store(n)
       }
     } else {
-      cfg.labeledNodes = cfg.labeledNodes + (labelName -> n)
+      initialCfg.labeledNodes = initialCfg.labeledNodes + (labelName -> n)
     }
-    extendCfg(n)
+    extendCfg(n, initialCfg)
   }
 
-  private def handleConditionalExpression(call: nodes.Call): Cfg = {
+  private def handleConditionalExpression(call: nodes.Call, initialCfg: Cfg): Cfg = {
     val condition = call.argument(1)
     val trueExpression = call.argument(2)
     val falseExpression = call.argument(3)
 
-    convert(condition)
-    val fromCond = cfg.fringe
-    cfg.fringe = cfg.fringe.setCfgEdgeType(TrueEdge)
-    convert(trueExpression)
-    val fromTrue = cfg.fringe
-    cfg.fringe = fromCond.setCfgEdgeType(FalseEdge)
-    convert(falseExpression)
-    cfg.fringe = cfg.fringe ++ fromTrue
-    extendCfg(call)
+    convert(condition, initialCfg)
+    val fromCond = initialCfg.fringe
+    initialCfg.fringe = initialCfg.fringe.setCfgEdgeType(TrueEdge)
+    convert(trueExpression, initialCfg)
+    val fromTrue = initialCfg.fringe
+    initialCfg.fringe = fromCond.setCfgEdgeType(FalseEdge)
+    convert(falseExpression, initialCfg)
+    initialCfg.fringe = initialCfg.fringe ++ fromTrue
+    extendCfg(call, initialCfg)
   }
 
-  private def handleAndExpression(call: Call): Cfg = {
-    convert(call.argument(1))
-    val entry = cfg.fringe
-    cfg.fringe = cfg.fringe.setCfgEdgeType(TrueEdge)
-    convert(call.argument(2))
-    cfg.fringe = cfg.fringe ++ entry.setCfgEdgeType(FalseEdge)
-    extendCfg(call)
+  private def handleAndExpression(call: Call, initialCfg: Cfg): Cfg = {
+    convert(call.argument(1), initialCfg)
+    val entry = initialCfg.fringe
+    initialCfg.fringe = initialCfg.fringe.setCfgEdgeType(TrueEdge)
+    convert(call.argument(2), initialCfg)
+    initialCfg.fringe = initialCfg.fringe ++ entry.setCfgEdgeType(FalseEdge)
+    extendCfg(call, initialCfg)
   }
 
-  private def handleOrExpression(call: Call): Cfg = {
+  private def handleOrExpression(call: Call, initialCfg: Cfg): Cfg = {
     val left = call.argument(1)
     val right = call.argument(2)
-    convert(left)
-    val entry = cfg.fringe
-    cfg.fringe = cfg.fringe.setCfgEdgeType(FalseEdge)
-    convert(right)
-    cfg.fringe = cfg.fringe ++ entry.setCfgEdgeType(TrueEdge)
-    extendCfg(call)
+    convert(left, initialCfg)
+    val entry = initialCfg.fringe
+    initialCfg.fringe = initialCfg.fringe.setCfgEdgeType(FalseEdge)
+    convert(right, initialCfg)
+    initialCfg.fringe = initialCfg.fringe ++ entry.setCfgEdgeType(TrueEdge)
+    extendCfg(call, initialCfg)
   }
 
-  private def handleBreakStatement(node: nodes.ControlStructure): Cfg = {
-    extendCfg(node)
+  private def handleBreakStatement(node: nodes.ControlStructure, initialCfg: Cfg): Cfg = {
+    extendCfg(node, initialCfg)
     // Under normal conditions this is always true.
     // But if the parser missed a loop or switch statement, breakStack
     // might be empty.
-    if (cfg.breakStack.numberOfLayers > 0) {
-      cfg.fringe = Nil
-      cfg.breakStack.store(node)
+    if (initialCfg.breakStack.numberOfLayers > 0) {
+      initialCfg.fringe = Nil
+      initialCfg.breakStack.store(node)
     }
-    cfg
+    initialCfg
   }
 
-  private def handleContinueStatement(node: nodes.ControlStructure): Cfg = {
-    extendCfg(node)
+  private def handleContinueStatement(node: nodes.ControlStructure, initialCfg: Cfg): Cfg = {
+    extendCfg(node, initialCfg)
     // Under normal conditions this is always true.
     // But if the parser missed a loop statement, continueStack
     // might be empty.
-    if (cfg.continueStack.numberOfLayers > 0) {
-      cfg.fringe = Nil
-      cfg.continueStack.store(node)
+    if (initialCfg.continueStack.numberOfLayers > 0) {
+      initialCfg.fringe = Nil
+      initialCfg.continueStack.store(node)
     }
-    cfg
+    initialCfg
   }
 
-  private def handleWhileStatement(node: nodes.ControlStructure): Cfg = {
-    cfg.breakStack.pushLayer()
-    cfg.continueStack.pushLayer()
+  private def handleWhileStatement(node: nodes.ControlStructure, initialCfg: Cfg): Cfg = {
+    initialCfg.breakStack.pushLayer()
+    initialCfg.continueStack.pushLayer()
 
-    cfg.markerStack = None :: cfg.markerStack
-    node.start.condition.headOption.foreach(convert)
-    val conditionFringe = cfg.fringe
-    cfg.fringe = cfg.fringe.setCfgEdgeType(TrueEdge)
+    initialCfg.markerStack = None :: initialCfg.markerStack
+    node.start.condition.headOption.foreach(convert(_, initialCfg))
+    val conditionFringe = initialCfg.fringe
+    initialCfg.fringe = initialCfg.fringe.setCfgEdgeType(TrueEdge)
 
-    node.start.whenTrue.l.foreach(convert)
-    cfg.fringe = cfg.fringe.add(cfg.continueStack.getTopElements, AlwaysEdge)
-    extendCfg(cfg.markerStack.head.get)
+    node.start.whenTrue.l.foreach(convert(_, initialCfg))
+    initialCfg.fringe = initialCfg.fringe.add(initialCfg.continueStack.getTopElements, AlwaysEdge)
+    extendCfg(initialCfg.markerStack.head.get, initialCfg)
 
-    cfg.fringe = conditionFringe
+    initialCfg.fringe = conditionFringe
       .setCfgEdgeType(FalseEdge)
-      .add(cfg.breakStack.getTopElements, AlwaysEdge)
+      .add(initialCfg.breakStack.getTopElements, AlwaysEdge)
 
-    cfg.markerStack = cfg.markerStack.tail
-    cfg.breakStack.popLayer()
-    cfg.continueStack.popLayer()
-    cfg
+    initialCfg.markerStack = initialCfg.markerStack.tail
+    initialCfg.breakStack.popLayer()
+    initialCfg.continueStack.popLayer()
+    initialCfg
   }
 
-  private def handleDoStatement(node: nodes.ControlStructure): Cfg = {
-    cfg.breakStack.pushLayer()
-    cfg.continueStack.pushLayer()
+  private def handleDoStatement(node: nodes.ControlStructure, initialCfg: Cfg): Cfg = {
+    initialCfg.breakStack.pushLayer()
+    initialCfg.continueStack.pushLayer()
 
-    cfg.markerStack = None :: cfg.markerStack
-    node.astChildren.filter(_.order(1)).foreach(convert)
-    cfg.fringe = cfg.fringe.add(cfg.continueStack.getTopElements, AlwaysEdge)
+    initialCfg.markerStack = None :: initialCfg.markerStack
+    node.astChildren.filter(_.order(1)).foreach(convert(_, initialCfg))
+    initialCfg.fringe = initialCfg.fringe.add(initialCfg.continueStack.getTopElements, AlwaysEdge)
 
     node.start.condition.headOption match {
       case Some(condition) =>
-        convert(condition)
-        val conditionFringe = cfg.fringe
-        cfg.fringe = cfg.fringe.setCfgEdgeType(TrueEdge)
+        convert(condition, initialCfg)
+        val conditionFringe = initialCfg.fringe
+        initialCfg.fringe = initialCfg.fringe.setCfgEdgeType(TrueEdge)
 
-        extendCfg(cfg.markerStack.head.get)
+        extendCfg(initialCfg.markerStack.head.get, initialCfg)
 
-        cfg.fringe = conditionFringe.setCfgEdgeType(FalseEdge)
+        initialCfg.fringe = conditionFringe.setCfgEdgeType(FalseEdge)
       case None =>
       // We only get here if the parser missed the condition.
       // In this case doing nothing here means that we have
       // no CFG edge to the loop start because we default
       // to an always false condition.
     }
-    cfg.fringe = cfg.fringe.add(cfg.breakStack.getTopElements, AlwaysEdge)
+    initialCfg.fringe = initialCfg.fringe.add(initialCfg.breakStack.getTopElements, AlwaysEdge)
 
-    cfg.markerStack = cfg.markerStack.tail
-    cfg.breakStack.popLayer()
-    cfg.continueStack.popLayer()
-    cfg
+    initialCfg.markerStack = initialCfg.markerStack.tail
+    initialCfg.breakStack.popLayer()
+    initialCfg.continueStack.popLayer()
+    initialCfg
   }
 
-  private def handleForStatement(node: nodes.ControlStructure): Cfg = {
-    cfg.breakStack.pushLayer()
-    cfg.continueStack.pushLayer()
+  private def handleForStatement(node: nodes.ControlStructure, initialCfg: Cfg): Cfg = {
+    initialCfg.breakStack.pushLayer()
+    initialCfg.continueStack.pushLayer()
 
     val children = node.astChildren.l
     val initExprOption = children.find(_.order == 1)
@@ -269,137 +273,131 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     val loopExprOption = children.find(_.order == 3)
     val statementOption = children.find(_.order == 4)
 
-    initExprOption.foreach(convert)
+    initExprOption.foreach(convert(_, initialCfg))
 
-    cfg.markerStack = None :: cfg.markerStack
+    initialCfg.markerStack = None :: initialCfg.markerStack
     val conditionFringe =
       conditionOption match {
         case Some(condition) =>
-          convert(condition)
-          val storedFringe = cfg.fringe
-          cfg.fringe = cfg.fringe.setCfgEdgeType(TrueEdge)
+          convert(condition, initialCfg)
+          val storedFringe = initialCfg.fringe
+          initialCfg.fringe = initialCfg.fringe.setCfgEdgeType(TrueEdge)
           storedFringe
         case None => Nil
       }
 
-    statementOption.foreach(convert)
+    statementOption.foreach(convert(_, initialCfg))
 
-    cfg.fringe = cfg.fringe.add(cfg.continueStack.getTopElements, AlwaysEdge)
+    initialCfg.fringe = initialCfg.fringe.add(initialCfg.continueStack.getTopElements, AlwaysEdge)
 
-    loopExprOption.foreach(convert)
+    loopExprOption.foreach(convert(_, initialCfg))
 
-    cfg.markerStack.head.foreach(extendCfg)
+    initialCfg.markerStack.head.foreach(extendCfg(_, initialCfg))
 
-    cfg.fringe = conditionFringe
+    initialCfg.fringe = conditionFringe
       .setCfgEdgeType(FalseEdge)
-      .add(cfg.breakStack.getTopElements, AlwaysEdge)
+      .add(initialCfg.breakStack.getTopElements, AlwaysEdge)
 
-    cfg.markerStack = cfg.markerStack.tail
-    cfg.breakStack.popLayer()
-    cfg.continueStack.popLayer()
-    cfg
+    initialCfg.markerStack = initialCfg.markerStack.tail
+    initialCfg.breakStack.popLayer()
+    initialCfg.continueStack.popLayer()
+    initialCfg
   }
 
-  private def handleGotoStatement(node: nodes.ControlStructure): Cfg = {
-    extendCfg(node)
-    cfg.fringe = Nil
+  private def handleGotoStatement(node: nodes.ControlStructure, initialCfg: Cfg): Cfg = {
+    extendCfg(node, initialCfg)
+    initialCfg.fringe = Nil
     // TODO: the target name should be in the AST
     val target = node.code.split(" ").lastOption.map(x => x.slice(0, x.length - 1))
     target.foreach { target =>
-      cfg.gotos = (node, target) :: cfg.gotos
+      initialCfg.gotos = (node, target) :: initialCfg.gotos
     }
-    cfg
+    initialCfg
   }
 
-  private def handleIfStatement(node: nodes.ControlStructure): Cfg = {
-    node.start.condition.foreach(convert)
-    val conditionFringe = cfg.fringe
-    cfg.fringe = cfg.fringe.setCfgEdgeType(TrueEdge)
-    node.start.whenTrue.foreach(convert)
+  private def handleIfStatement(node: nodes.ControlStructure, initialCfg: Cfg): Cfg = {
+    node.start.condition.foreach(convert(_, initialCfg))
+    val conditionFringe = initialCfg.fringe
+    initialCfg.fringe = initialCfg.fringe.setCfgEdgeType(TrueEdge)
+    node.start.whenTrue.foreach(convert(_, initialCfg))
     node.start.whenFalse
       .map { elseStatement =>
-        val ifBlockFringe = cfg.fringe
-        cfg.fringe = conditionFringe.setCfgEdgeType(FalseEdge)
-        convert(elseStatement)
-        cfg.fringe = cfg.fringe ++ ifBlockFringe
+        val ifBlockFringe = initialCfg.fringe
+        initialCfg.fringe = conditionFringe.setCfgEdgeType(FalseEdge)
+        convert(elseStatement, initialCfg)
+        initialCfg.fringe = initialCfg.fringe ++ ifBlockFringe
       }
       .headOption
       .getOrElse {
-        cfg.fringe = cfg.fringe ++ conditionFringe.setCfgEdgeType(FalseEdge)
+        initialCfg.fringe = initialCfg.fringe ++ conditionFringe.setCfgEdgeType(FalseEdge)
       }
-    cfg
+    initialCfg
   }
 
-  private def handleSwitchStatement(node: nodes.ControlStructure): Cfg = {
-    node.start.condition.foreach(convert)
-    val conditionFringe = cfg.fringe.setCfgEdgeType(CaseEdge)
-    cfg.fringe = Nil
+  private def handleSwitchStatement(node: nodes.ControlStructure, initialCfg: Cfg): Cfg = {
+    node.start.condition.foreach(convert(_, initialCfg))
+    val conditionFringe = initialCfg.fringe.setCfgEdgeType(CaseEdge)
+    initialCfg.fringe = Nil
 
     // We can only push the break and case stacks after we processed the condition
     // in order to allow for nested switches with no nodes CFG nodes in between
     // an outer switch case label and the inner switch condition.
     // This is ok because in C/C++ it is not allowed to have another switch
     // statement in the condition of a switch statement.
-    cfg.breakStack.pushLayer()
-    cfg.caseStack.pushLayer()
+    initialCfg.breakStack.pushLayer()
+    initialCfg.caseStack.pushLayer()
 
-    node.start.whenTrue.foreach(convert)
-    val switchFringe = cfg.fringe
+    node.start.whenTrue.foreach(convert(_, initialCfg))
+    val switchFringe = initialCfg.fringe
 
-    cfg.caseStack.getTopElements.foreach { caseNode =>
-      cfg.fringe = conditionFringe
-      extendCfg(caseNode)
+    initialCfg.caseStack.getTopElements.foreach { caseNode =>
+      initialCfg.fringe = conditionFringe
+      extendCfg(caseNode, initialCfg)
     }
 
-    val hasDefaultCase = cfg.caseStack.getTopElements.exists { caseNode =>
+    val hasDefaultCase = initialCfg.caseStack.getTopElements.exists { caseNode =>
       caseNode.asInstanceOf[nodes.JumpTarget].name == "default"
     }
 
-    cfg.fringe = switchFringe.add(cfg.breakStack.getTopElements, AlwaysEdge)
+    initialCfg.fringe = switchFringe.add(initialCfg.breakStack.getTopElements, AlwaysEdge)
 
     if (!hasDefaultCase) {
-      cfg.fringe = cfg.fringe ++ conditionFringe
+      initialCfg.fringe = initialCfg.fringe ++ conditionFringe
     }
 
-    cfg.breakStack.popLayer()
-    cfg.caseStack.popLayer()
-    cfg
+    initialCfg.breakStack.popLayer()
+    initialCfg.caseStack.popLayer()
+    initialCfg
   }
 
-  private def handleControlStructure(node: nodes.ControlStructure): Cfg = {
+  private def handleControlStructure(node: nodes.ControlStructure, initialCfg: Cfg): Cfg = {
     node.parserTypeName match {
       case "BreakStatement" =>
-        handleBreakStatement(node)
+        handleBreakStatement(node, initialCfg)
       case "ContinueStatement" =>
-        handleContinueStatement(node)
+        handleContinueStatement(node, initialCfg)
       case "WhileStatement" =>
-        handleWhileStatement(node)
+        handleWhileStatement(node, initialCfg)
       case "DoStatement" =>
-        handleDoStatement(node)
+        handleDoStatement(node, initialCfg)
       case "ForStatement" =>
-        handleForStatement(node)
+        handleForStatement(node, initialCfg)
       case "GotoStatement" =>
-        handleGotoStatement(node)
+        handleGotoStatement(node, initialCfg)
       case "IfStatement" =>
-        handleIfStatement(node)
+        handleIfStatement(node, initialCfg)
       case "ElseStatement" =>
-        expandChildren(node)
+        expandChildren(node, initialCfg)
       case "SwitchStatement" =>
-        handleSwitchStatement(node)
+        handleSwitchStatement(node, initialCfg)
       case _ =>
     }
-    cfg
+    initialCfg
   }
 
-  private def expandChildren(node: nodes.AstNode): Cfg = {
-    val children = node.astChildren.l
-    children.foreach(convert)
-    cfg
-  }
-
-  private def extendCfg(dstNode: nodes.CfgNode): Cfg = {
+  private def extendCfg(dstNode: nodes.CfgNode, initialCfg: Cfg): Cfg = {
     val diffGraph = DiffGraph.newBuilder
-    cfg.fringe.foreach {
+    initialCfg.fringe.foreach {
       case FringeElement(srcNode, _) =>
         // TODO add edge CFG edge type in CPG spec
         // val props = List(("CFG_EDGE_TYPE", cfgEdgeType.toString))
@@ -409,16 +407,16 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
           EdgeTypes.CFG
         )
     }
-    cfg.fringe = Nil.add(dstNode, AlwaysEdge)
+    initialCfg.fringe = Nil.add(dstNode, AlwaysEdge)
 
-    if (cfg.markerStack.nonEmpty) {
+    if (initialCfg.markerStack.nonEmpty) {
       // Up until the first none None stack element we replace the Nones with Some(dstNode)
-      val leadingNoneLength = cfg.markerStack.segmentLength(_.isEmpty, 0)
-      cfg.markerStack = List.fill(leadingNoneLength)(Some(dstNode)) ++ cfg.markerStack
+      val leadingNoneLength = initialCfg.markerStack.segmentLength(_.isEmpty, 0)
+      initialCfg.markerStack = List.fill(leadingNoneLength)(Some(dstNode)) ++ initialCfg.markerStack
         .drop(leadingNoneLength)
     }
-    cfg.diffGraphs += diffGraph
-    cfg
+    initialCfg.diffGraphs += diffGraph
+    initialCfg
   }
 
 }
