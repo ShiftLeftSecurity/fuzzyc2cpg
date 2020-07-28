@@ -1,8 +1,10 @@
 package io.shiftleft.fuzzyc2cpg.passes.cfgcreation
 
-class LayeredStack[ElementType] {
-  private case class StackElement(elements: List[ElementType] = List()) {
-    def addNode(element: ElementType): StackElement = {
+import io.shiftleft.codepropertygraph.generated.nodes.CfgNode
+
+class LayeredStack {
+  private case class StackElement(elements: List[CfgNode] = List()) {
+    def addNode(element: CfgNode): StackElement = {
       StackElement(element :: elements)
     }
   }
@@ -17,11 +19,11 @@ class LayeredStack[ElementType] {
     stack = stack.tail
   }
 
-  def store(node: ElementType): Unit = {
+  def store(node: CfgNode): Unit = {
     stack = stack.head.addNode(node) :: stack.tail
   }
 
-  def getTopElements: List[ElementType] = {
+  def getTopElements: List[CfgNode] = {
     stack.head.elements
   }
 
