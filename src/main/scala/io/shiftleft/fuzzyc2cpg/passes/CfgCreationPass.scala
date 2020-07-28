@@ -95,17 +95,14 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private def handleCall(call: nodes.Call): Cfg = {
     expandChildren(call)
     extendCfg(call)
-    cfg
   }
 
   private def handleIdentifier(identifier: nodes.Identifier): Cfg = {
     extendCfg(identifier)
-    cfg
   }
 
   private def handleLiteral(literal: nodes.Literal): Cfg = {
     extendCfg(literal)
-    cfg
   }
 
   private def handleReturn(actualRet: nodes.Return): Cfg = {
@@ -118,7 +115,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
   private def handleFormalReturn(formalRet: nodes.MethodReturn): Cfg = {
     extendCfg(formalRet)
-    cfg
   }
 
   private def connectGotosAndLabels(): Cfg = {
@@ -168,7 +164,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       cfg.labeledNodes = cfg.labeledNodes + (labelName -> n)
     }
     extendCfg(n)
-    cfg
   }
 
   private def handleConditionalExpression(call: nodes.Call): Cfg = {
@@ -185,7 +180,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     postOrderLeftToRightExpand(falseExpression)
     cfg.fringe = cfg.fringe.add(fromTrue)
     extendCfg(call)
-    cfg
   }
 
   private def handleAndExpression(call: Call): Cfg = {
@@ -195,7 +189,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     postOrderLeftToRightExpand(call.argument(2))
     cfg.fringe = cfg.fringe.add(entry.setCfgEdgeType(FalseEdge))
     extendCfg(call)
-    cfg
   }
 
   private def handleOrExpression(call: Call): Cfg = {
@@ -207,7 +200,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     postOrderLeftToRightExpand(right)
     cfg.fringe = cfg.fringe.add(entry.setCfgEdgeType(TrueEdge))
     extendCfg(call)
-    cfg
   }
 
   private def handleBreakStatement(node: nodes.ControlStructure): Cfg = {
