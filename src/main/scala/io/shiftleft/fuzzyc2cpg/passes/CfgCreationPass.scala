@@ -60,7 +60,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   def run(): Iterator[DiffGraph] = {
     postOrderLeftToRightExpand(entryNode)
     connectGotosAndLabels()
-    connectReturnsToExit()
     cfg.diffGraphs.map(_.build).iterator
   }
 
@@ -106,10 +105,16 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   }
 
   private def handleReturn(actualRet: nodes.Return): Cfg = {
+    val diffGraph = DiffGraph.newBuilder
     expandChildren(actualRet)
     extendCfg(actualRet)
     cfg.fringe = Nil
-    cfg.returns = actualRet :: cfg.returns
+    diffGraph.addEdge(
+      actualRet,
+      entryNode.methodReturn,
+      EdgeTypes.CFG
+    )
+    cfg.diffGraphs += diffGraph
     cfg
   }
 
@@ -134,19 +139,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
             logger.info("Unable to wire goto statement. Missing label {}.", label)
         }
     }
-    cfg.diffGraphs += diffGraph
-    cfg
-  }
-
-  private def connectReturnsToExit(): Cfg = {
-    val diffGraph = DiffGraph.newBuilder
-    cfg.returns.foreach(
-      diffGraph.addEdge(
-        _,
-        entryNode.methodReturn,
-        EdgeTypes.CFG
-      )
-    )
     cfg.diffGraphs += diffGraph
     cfg
   }
