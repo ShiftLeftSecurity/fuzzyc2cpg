@@ -19,8 +19,9 @@ class LayeredStack {
     stack = stack.tail
   }
 
-  def store(node: CfgNode): Unit = {
+  def store(node: CfgNode): LayeredStack = {
     stack = stack.head.addNode(node) :: stack.tail
+    this
   }
 
   def getTopElements: List[CfgNode] = {
