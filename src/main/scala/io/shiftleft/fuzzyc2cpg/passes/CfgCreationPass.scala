@@ -43,8 +43,6 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
       case (goto, label) =>
         labeledNodes.get(label) match {
           case Some(labeledNode) =>
-            // TODO: CFG_EDGE_TYPE isn't defined for non-proto CPGs
-            // .addProperty(EdgeProperty.CFG_EDGE_TYPE, AlwaysEdge.toString)
             diffGraph.addEdge(
               goto,
               labeledNode,
@@ -413,20 +411,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 }
 
 object CfgCreatorForMethod {
-  implicit class FringeWrapper(fringe: List[FringeElement]) {
-    def setCfgEdgeType(cfgEdgeType: CfgEdgeType): List[FringeElement] = {
-      fringe.map {
-        case FringeElement(node, _) =>
-          FringeElement(node, cfgEdgeType)
-      }
-    }
-    def add(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType): List[FringeElement] =
-      FringeElement(node, cfgEdgeType) :: fringe
-
-    def add(ns: List[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[FringeElement] =
-      ns.map(node => FringeElement(node, cfgEdgeType)) ++ fringe
-
-  }
 
   case class FringeElement(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType)
 
