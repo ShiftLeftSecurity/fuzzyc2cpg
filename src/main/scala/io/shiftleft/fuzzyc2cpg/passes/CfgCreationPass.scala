@@ -37,21 +37,6 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def withFringeConnectedTo(node: nodes.CfgNode): Cfg = {
-    val diffGraph = DiffGraph.newBuilder
-    fringe.foreach {
-      case FringeElement(srcNode, _) =>
-        // TODO add edge CFG edge type in CPG spec
-        // val props = List(("CFG_EDGE_TYPE", cfgEdgeType.toString))
-        diffGraph.addEdge(
-          srcNode,
-          node,
-          EdgeTypes.CFG
-        )
-    }
-    this.copy(diffGraphs = diffGraphs ++ List(diffGraph), fringe = Nil.add(node, AlwaysEdge))
-  }
-
   def withResolvedGotos(): Cfg = {
     val diffGraph = DiffGraph.newBuilder
     gotos.foreach {
