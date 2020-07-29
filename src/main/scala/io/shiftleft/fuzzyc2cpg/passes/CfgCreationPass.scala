@@ -11,6 +11,48 @@ import org.slf4j.LoggerFactory
 /**
   * A pass that creates control flow graphs from abstract syntax trees.
   *
+  * Design overview
+  *
+  * (1) Recursive problem formulation and the "fringe"
+  *
+  * The problem of translating an abstract syntax tree into a corresponding
+  * control flow graph can be formulated as recursive problem in which
+  * sub trees of the syntax tree are translated and their corresponding
+  * control flow graphs and are connected according to the control flow
+  * semantics of the root node.
+  * For example, consider the abstract syntax tree for an if-statement:
+  *
+  *               (  if )
+  *              /       \
+  *          (x < 10)  (x += 1)
+  *            / \       / \
+  *           x  10     x   1
+  *
+  * This tree can be translated into a control flow graph, by translating
+  * the sub tree rooted in `x < 10` and that of `x += 1` and connecting
+  * their control flow graphs according to the semantics of `if`:
+  *
+  *            [x < 10]----
+  *               |t     f|
+  *            [x +=1 ]   |
+  *               |
+  * The semantics of if dictate that the first sub tree to the left
+  * is a condition, which is connected to the CFG of the second sub
+  * tree - the body of the if statement - via a control flow edge with
+  * the `true` label (indicated in the illustration by `t`), and to the CFG
+  * of any follow-up code via a `false` edge (indicated by `f`).
+  *
+  * A problem that becomes immediately apparent in the illustration is that
+  * the result of translating a sub tree may leave us with edges for which
+  * a source node is known but the destination not depends on parent or
+  * siblings that were not considered in the translation. For example, we know
+  * that an outgoing edge from [x<10] must exist, but we do not yet know where
+  * it should lead. We refer to the set of nodes of the control flow graph with
+  * outgoing edges for which the destination node is yet to be determined as
+  * the "fringe" of the control flow graph.
+  *
+  * (2) Parallelization
+  *
   * Control flow graphs can be calculated independently per method.
   * Therefore, we inherit from `ParallelCpgPass`. As for other
   * parallel passes, we provide a key pool that is split into equal
