@@ -41,8 +41,24 @@ object Cfg {
 }
 
 /**
-  * Control flow graph edges, along with untranslated
-  * jumps and labels.
+  * A control flow graph that is under construction, consisting of:
+  *
+  * @param entryNode  the control flow graph's first node, that is,
+  *                   the node to which a CFG that appends this CFG
+  *                   should attach itself to.
+  * @param diffGraphs control flow edges between nodes of the
+  *                   code property graph.
+  * @param fringe think of this as the control flow graph's last nodes,
+  *               that is, the nodes that should be connected to any
+  *               CFG that we append.
+  *
+  * @param labeledNodes labels contained in the abstract syntax tree
+  *                     from which this CPG was generated
+  * @param caseLabels labels beginning with "case"
+  *
+  * @param breaks unresolved breaks collected along the way
+  * @param continues unresolved continues collected along the way
+  * @param gotos unresolved gotos collected along the way
   *
   * In principle, sub trees of the abstract syntax tree
   * can be translated to CFGs and these can be combined.
@@ -70,6 +86,11 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  /**
+    * Upon completing traversal of the abstract syntax tree,
+    * this method creates CFG edges between gotos and
+    * respective labels.
+    * */
   def withResolvedGotos(): Cfg = {
     val diffGraph = DiffGraph.newBuilder
     gotos.foreach {
@@ -290,43 +311,25 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private def cfgForDoStatement(node: nodes.ControlStructure): Cfg = {
     val bodyCfg = node.astChildren.filter(_.order(1)).headOption.map(cfgFor).getOrElse(Cfg.empty)
     val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
-    val diffGraph = DiffGraph.newBuilder
 
-    val diffGraphs = if (bodyCfg.entryNode.isDefined) {
-      edgesFromFringeTo(conditionCfg, bodyCfg.entryNode)
-    } else {
-      edgesFromFringeTo(conditionCfg, conditionCfg.entryNode)
-    }
-
-    conditionCfg.fringe.foreach {
-      case (c, _) =>
-        bodyCfg.entryNode
-          .map { entry =>
-            diffGraph.addEdge(c, entry, EdgeTypes.CFG)
+    val diffGraphs =
+      edges(bodyCfg.continues, conditionCfg.entryNode) ++
+        edgesFromFringeTo(bodyCfg, conditionCfg.entryNode) ++ {
+        if (bodyCfg.entryNode.isDefined) {
+          edgesFromFringeTo(conditionCfg, bodyCfg.entryNode)
+        } else {
+          edgesFromFringeTo(conditionCfg, conditionCfg.entryNode)
+        } ++ {
+          if (bodyCfg.entryNode.isDefined) {
+            edgesFromFringeTo(conditionCfg, bodyCfg.entryNode)
+          } else {
+            edgesFromFringeTo(conditionCfg, conditionCfg.entryNode)
           }
-          .getOrElse {
-            conditionCfg.entryNode.foreach { cEntry =>
-              diffGraph.addEdge(c, cEntry, EdgeTypes.CFG)
-            }
-          }
-    }
-
-    bodyCfg.continues.foreach { c =>
-      conditionCfg.entryNode.foreach { e =>
-        diffGraph.addEdge(c, e, EdgeTypes.CFG)
-      }
-    }
-
-    bodyCfg.fringe.foreach {
-      case (b, _) =>
-        conditionCfg.entryNode.foreach { c =>
-          diffGraph.addEdge(b, c, EdgeTypes.CFG)
         }
-    }
-
+      }
     Cfg(
       if (bodyCfg != Cfg.empty) { bodyCfg.entryNode } else { conditionCfg.entryNode },
-      diffGraphs = diffGraphs ++ List(diffGraph) ++ bodyCfg.diffGraphs ++ conditionCfg.diffGraphs,
+      diffGraphs = diffGraphs ++ bodyCfg.diffGraphs ++ conditionCfg.diffGraphs,
       fringe = conditionCfg.fringe ++ bodyCfg.breaks.map((_, AlwaysEdge))
     )
   }
