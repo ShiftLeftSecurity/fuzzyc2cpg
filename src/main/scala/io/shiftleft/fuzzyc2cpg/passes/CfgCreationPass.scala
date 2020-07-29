@@ -24,14 +24,14 @@ object Cfg {
 }
 
 case class Cfg(entryNode: Option[nodes.CfgNode] = None,
-               var diffGraphs: mutable.ListBuffer[DiffGraph.Builder] = mutable.ListBuffer(DiffGraph.newBuilder),
-               var fringe: List[FringeElement] = List(),
-               var labeledNodes: Map[String, nodes.CfgNode] = Map(),
-               var returns: List[nodes.CfgNode] = List(),
-               breakStack: List[nodes.CfgNode] = List(),
-               continueStack: List[nodes.CfgNode] = List(),
-               caseStack: List[nodes.CfgNode] = List(),
-               var gotos: List[(nodes.CfgNode, String)] = List()) {
+               diffGraphs: List[DiffGraph.Builder] = List(),
+               fringe: List[FringeElement] = List(),
+               labeledNodes: Map[String, nodes.CfgNode] = Map(),
+               returns: List[nodes.CfgNode] = List(),
+               breaks: List[nodes.CfgNode] = List(),
+               continues: List[nodes.CfgNode] = List(),
+               caseLabels: List[nodes.CfgNode] = List(),
+               gotos: List[(nodes.CfgNode, String)] = List()) {
 
   import CfgCreatorForMethod._
 
@@ -49,9 +49,7 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
           EdgeTypes.CFG
         )
     }
-    fringe = Nil.add(node, AlwaysEdge)
-    diffGraphs = diffGraphs ++ List(diffGraph)
-    this.copy()
+    this.copy(diffGraphs = diffGraphs ++ List(diffGraph), fringe = Nil.add(node, AlwaysEdge))
   }
 
   def withResolvedGotos(): Cfg = {
@@ -92,9 +90,9 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
         diffGraphs = diffGraphs ++ other.diffGraphs ++ mutable.ListBuffer(diffGraph),
         gotos = this.gotos ++ other.gotos,
         labeledNodes = this.labeledNodes ++ other.labeledNodes,
-        breakStack = this.breakStack ++ other.breakStack,
-        continueStack = this.continueStack ++ other.continueStack,
-        caseStack = this.caseStack ++ other.caseStack
+        breaks = this.breaks ++ other.breaks,
+        continues = this.continues ++ other.continues,
+        caseLabels = this.caseLabels ++ other.caseLabels
       )
     }
   }
@@ -135,7 +133,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         }
     }
     Cfg(leftCfg.entryNode,
-        diffGraphs = mutable.ListBuffer(diffGraph) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs,
+        diffGraphs = List(diffGraph) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs,
         fringe = leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(call)
   }
 
@@ -151,7 +149,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         }
     }
     Cfg(leftCfg.entryNode,
-        diffGraphs = mutable.ListBuffer(diffGraph) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs,
+        diffGraphs = List(diffGraph) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs,
         fringe = leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(call)
   }
 
@@ -223,10 +221,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     }
 
   private def cfgForBreakStatement(node: nodes.ControlStructure): Cfg =
-    Cfg(Some(node), breakStack = List(node))
+    Cfg(Some(node), breaks = List(node))
 
   private def cfgForContinueStatement(node: nodes.ControlStructure): Cfg =
-    Cfg(Some(node), continueStack = List(node))
+    Cfg(Some(node), continues = List(node))
 
   private def cfgForForStatement(node: nodes.ControlStructure): Cfg = {
     val children = node.astChildren.l
@@ -259,7 +257,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         }
     }
 
-    bodyCfg.continueStack.foreach { c =>
+    bodyCfg.continues.foreach { c =>
       loopExprCfg.entryNode match {
         case Some(e) => diffGraph.addEdge(c, e, EdgeTypes.CFG)
         case None =>
@@ -279,9 +277,8 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
     Cfg(
       entryNode,
-      diffGraphs = mutable
-        .ListBuffer(diffGraph) ++ initExprCfg.diffGraphs ++ innerCfg.diffGraphs,
-      fringe = conditionCfg.fringe ++ bodyCfg.breakStack.map(FringeElement(_, AlwaysEdge))
+      diffGraphs = List(diffGraph) ++ initExprCfg.diffGraphs ++ innerCfg.diffGraphs,
+      fringe = conditionCfg.fringe ++ bodyCfg.breaks.map(FringeElement(_, AlwaysEdge))
     )
   }
 
@@ -303,7 +300,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
           }
     }
 
-    bodyCfg.continueStack.foreach { c =>
+    bodyCfg.continues.foreach { c =>
       conditionCfg.entryNode.foreach { e =>
         diffGraph.addEdge(c, e, EdgeTypes.CFG)
       }
@@ -318,8 +315,8 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
     Cfg(
       if (bodyCfg != Cfg.empty) { bodyCfg.entryNode } else { conditionCfg.entryNode },
-      diffGraphs = mutable.ListBuffer(diffGraph) ++ bodyCfg.diffGraphs ++ conditionCfg.diffGraphs,
-      fringe = conditionCfg.fringe ++ bodyCfg.breakStack.map(FringeElement(_, AlwaysEdge))
+      diffGraphs = List(diffGraph) ++ bodyCfg.diffGraphs ++ conditionCfg.diffGraphs,
+      fringe = conditionCfg.fringe ++ bodyCfg.breaks.map(FringeElement(_, AlwaysEdge))
     )
   }
 
@@ -342,7 +339,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         }
     }
 
-    trueCfg.continueStack.foreach { b =>
+    trueCfg.continues.foreach { b =>
       conditionCfg.entryNode.foreach { c =>
         diffGraph.addEdge(b, c, EdgeTypes.CFG)
       }
@@ -350,8 +347,8 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
     Cfg(
       conditionCfg.entryNode,
-      diffGraphs = mutable.ListBuffer(diffGraph) ++ conditionCfg.diffGraphs ++ trueCfg.diffGraphs,
-      fringe = conditionCfg.fringe ++ trueCfg.breakStack.map(FringeElement(_, AlwaysEdge))
+      diffGraphs = List(diffGraph) ++ conditionCfg.diffGraphs ++ trueCfg.diffGraphs,
+      fringe = conditionCfg.fringe ++ trueCfg.breaks.map(FringeElement(_, AlwaysEdge))
     )
   }
 
@@ -360,19 +357,19 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     val bodyCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
 
     val diffGraph = DiffGraph.newBuilder
-    bodyCfg.caseStack.foreach { caseNode =>
+    bodyCfg.caseLabels.foreach { caseNode =>
       conditionCfg.fringe.foreach {
         case FringeElement(c, _) =>
           diffGraph.addEdge(c, caseNode, EdgeTypes.CFG)
       }
     }
 
-    val hasDefaultCase = bodyCfg.caseStack.exists(x => x.asInstanceOf[nodes.JumpTarget].name == "default")
+    val hasDefaultCase = bodyCfg.caseLabels.exists(x => x.asInstanceOf[nodes.JumpTarget].name == "default")
 
     Cfg(
       conditionCfg.entryNode,
-      diffGraphs = mutable.ListBuffer(diffGraph) ++ conditionCfg.diffGraphs ++ bodyCfg.diffGraphs,
-      fringe = { if (!hasDefaultCase) { conditionCfg.fringe } else { List() } } ++ bodyCfg.breakStack.map(
+      diffGraphs = List(diffGraph) ++ conditionCfg.diffGraphs ++ bodyCfg.diffGraphs,
+      fringe = { if (!hasDefaultCase) { conditionCfg.fringe } else { List() } } ++ bodyCfg.breaks.map(
         FringeElement(_, AlwaysEdge)) ++ bodyCfg.fringe
     )
   }
@@ -396,8 +393,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
     Cfg(
       conditionCfg.entryNode,
-      diffGraphs = mutable
-        .ListBuffer(diffGraph) ++ conditionCfg.diffGraphs ++ trueCfg.diffGraphs ++ falseCfg.diffGraphs,
+      diffGraphs = List(diffGraph) ++ conditionCfg.diffGraphs ++ trueCfg.diffGraphs ++ falseCfg.diffGraphs,
       fringe = trueCfg.fringe ++ {
         if (falseCfg.entryNode.isDefined) {
           falseCfg.fringe
@@ -412,7 +408,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     val labelName = n.name
     val cfg = cfgForSingleNode(n)
     if (labelName.startsWith("case") || labelName.startsWith("default")) {
-      cfg.copy(caseStack = List(n))
+      cfg.copy(caseLabels = List(n))
     } else {
       cfg.copy(labeledNodes = cfg.labeledNodes + (labelName -> n))
     }
@@ -426,7 +422,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private def cfgForReturn(actualRet: nodes.Return): Cfg = {
     val diffGraph = DiffGraph.newBuilder
     diffGraph.addEdge(actualRet, exitNode, EdgeTypes.CFG)
-    cfgForChildren(actualRet) ++ Cfg(Some(actualRet), mutable.ListBuffer(diffGraph), fringe = List())
+    cfgForChildren(actualRet) ++ Cfg(Some(actualRet), List(diffGraph), fringe = List())
   }
 
 }
