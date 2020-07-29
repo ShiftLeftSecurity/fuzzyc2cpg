@@ -8,7 +8,7 @@ import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
 
 /**
-  * Pass that creates control flow graphs from abstract syntax trees.
+  * A pass that creates control flow graphs from abstract syntax trees.
   *
   * Control flow graphs can be calculated independently per method.
   * Therefore, we inherit from `ParallelCpgPass`. As for other
@@ -37,7 +37,31 @@ class CfgCreationPass(cpg: Cpg, keyPool: IntervalKeyPool)
 }
 
 object Cfg {
+
+  /**
+    * The safe "null" Cfg.
+    * */
   val empty: Cfg = new Cfg()
+
+  /**
+    * Create edges from all nodes of cfg's fringe to `node`.
+    * */
+  def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode]): List[DiffGraph.Builder] =
+    edges(cfg.fringe.map(_._1), node)
+
+  /**
+    * Create edges from all in `sources` to `node`.
+    * */
+  def edges(sources: List[nodes.CfgNode], dstNode: Option[nodes.CfgNode]): List[DiffGraph.Builder] = {
+    val diffGraph = DiffGraph.newBuilder
+    sources.foreach { l =>
+      dstNode.foreach { n =>
+        diffGraph.addEdge(l, n, EdgeTypes.CFG)
+      }
+    }
+    List(diffGraph)
+  }
+
 }
 
 /**
@@ -69,11 +93,6 @@ object Cfg {
   * need a data structure that contains the CFG along with
   * any jumps and labels that have not yet been translated,
   * and `CFG` provides this data structure.
-  *
-  * Ultimately, the result of our computation is a set of
-  * edges to be created between nodes of the code property graph.
-  * These edges are stored as a sequence of diff graphs (`diffGraphs`).
-  *
   * */
 case class Cfg(entryNode: Option[nodes.CfgNode] = None,
                diffGraphs: List[DiffGraph.Builder] = List(),
@@ -84,7 +103,37 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
                caseLabels: List[nodes.CfgNode] = List(),
                gotos: List[(nodes.CfgNode, String)] = List()) {
 
+  import Cfg._
+
   private val logger = LoggerFactory.getLogger(getClass)
+
+  /**
+    * Create a new CFG in which `other` is appended
+    * to this CFG. All nodes of the fringe are connected
+    * to `other`'s entry node and the new fringe is
+    * `other`'s fringe. The diffgraphs, jumps, and labels
+    * are the sum of those present in `this` and `other`.
+    *
+    * */
+  def ++(other: Cfg): Cfg = {
+    if (other == Cfg.empty) {
+      this
+    } else if (this == Cfg.empty) {
+      other
+    } else {
+      val diffGraphs = this.diffGraphs ++ other.diffGraphs ++
+        edgesFromFringeTo(this, other.entryNode)
+      this.copy(
+        fringe = other.fringe,
+        diffGraphs = diffGraphs,
+        gotos = this.gotos ++ other.gotos,
+        labeledNodes = this.labeledNodes ++ other.labeledNodes,
+        breaks = this.breaks ++ other.breaks,
+        continues = this.continues ++ other.continues,
+        caseLabels = this.caseLabels ++ other.caseLabels
+      )
+    }
+  }
 
   /**
     * Upon completing traversal of the abstract syntax tree,
@@ -109,45 +158,26 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
     this.copy(diffGraphs = diffGraphs ++ List(diffGraph))
   }
 
-  /**
-    * Create a new CFG in which `other` is appended
-    * to this CFG. All nodes of the fringe are connected
-    * to `other`'s entry node and the new fringe is
-    * `other`'s fringe. The diffgraphs, jumps, and labels
-    * are the sum of those present in `this` and `other`.
-    *
-    * */
-  def ++(other: Cfg): Cfg = {
-    if (other == Cfg.empty) {
-      this
-    } else if (this == Cfg.empty) {
-      other
-    } else {
-      val diffGraph = DiffGraph.newBuilder
-      this.fringe.foreach {
-        case (src, _) =>
-          other.entryNode.foreach { entry =>
-            diffGraph.addEdge(src, entry, EdgeTypes.CFG)
-          }
-      }
-      this.copy(
-        fringe = other.fringe,
-        diffGraphs = this.diffGraphs ++ other.diffGraphs ++ List(diffGraph),
-        gotos = this.gotos ++ other.gotos,
-        labeledNodes = this.labeledNodes ++ other.labeledNodes,
-        breaks = this.breaks ++ other.breaks,
-        continues = this.continues ++ other.continues,
-        caseLabels = this.caseLabels ++ other.caseLabels
-      )
-    }
-  }
-
 }
 
 class CfgCreatorForMethod(entryNode: nodes.Method) {
 
+  import Cfg._
   import CfgCreatorForMethod._
 
+  /**
+    * Control flow graph definitions often feature a designated entry
+    * and exit node for each method. While these nodes are no-ops
+    * from a computational point of view, they are useful to
+    * guarantee that a method has exactly one entry and one exit.
+    *
+    * For the CPG-based control flow graph, we do not need to
+    * introduce fake entry and exit node. Instead, we can use the
+    * METHOD and METHOD_RETURN nodes as entry and exit nodes
+    * respectively. Note that METHOD_RETURN nodes are the nodes
+    * representing formal return parameters, of which there exists
+    * exactly one per method.
+    * */
   private val exitNode: nodes.MethodReturn = entryNode.methodReturn
 
   def run(): Iterator[DiffGraph] =
@@ -160,9 +190,19 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private def cfgForMethod(node: nodes.Method): Cfg =
     cfgForSingleNode(node) ++ cfgForChildren(node)
 
+  /**
+    * For any single AST node, we can construct a CFG
+    * containing that single node by setting it as
+    * the entry node and placing it in the fringe.
+    * */
   private def cfgForSingleNode(node: nodes.CfgNode): Cfg =
     Cfg(Some(node), fringe = List((node, AlwaysEdge)))
 
+  /**
+    * The CFG for all children is obtained by translating
+    * child ASTs one by one from left to right and appending
+    * them.
+    * */
   private def cfgForChildren(node: nodes.AstNode): Cfg =
     node.astChildren.l.map(cfgFor).reduceOption((x, y) => x ++ y).getOrElse(Cfg.empty)
 
@@ -236,19 +276,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     val diffGraph = DiffGraph.newBuilder
     diffGraph.addEdge(actualRet, exitNode, EdgeTypes.CFG)
     cfgForChildren(actualRet) ++ Cfg(Some(actualRet), List(diffGraph), fringe = List())
-  }
-
-  private def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode]): List[DiffGraph.Builder] =
-    edges(cfg.fringe.map(_._1), node)
-
-  private def edges(sources: List[nodes.CfgNode], dstNode: Option[nodes.CfgNode]) = {
-    val diffGraph = DiffGraph.newBuilder
-    sources.foreach { l =>
-      dstNode.foreach { n =>
-        diffGraph.addEdge(l, n, EdgeTypes.CFG)
-      }
-    }
-    List(diffGraph)
   }
 
   def cfgForAndExpression(call: nodes.Call): Cfg = {
