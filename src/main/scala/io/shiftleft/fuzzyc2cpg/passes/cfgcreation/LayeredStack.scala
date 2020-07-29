@@ -31,4 +31,5 @@ class LayeredStack {
   def numberOfLayers: Int = {
     stack.size
   }
+
 }
