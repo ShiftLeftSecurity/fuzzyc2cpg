@@ -1,9 +1,10 @@
 package io.shiftleft.fuzzyc2cpg.passes
 
 import io.shiftleft.codepropertygraph.Cpg
+import io.shiftleft.codepropertygraph.generated.nodes.CfgNode
 import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, ParallelCpgPass}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
-import io.shiftleft.fuzzyc2cpg.passes.CfgCreatorForMethod.CfgEdgeType
+import io.shiftleft.fuzzyc2cpg.passes.CfgCreatorForMethod.{AlwaysEdge, CfgEdgeType}
 import io.shiftleft.semanticcpg.language._
 import org.slf4j.LoggerFactory
 
@@ -46,17 +47,25 @@ object Cfg {
   /**
     * Create edges from all nodes of cfg's fringe to `node`.
     * */
-  def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode]): List[DiffGraph.Builder] =
-    edges(cfg.fringe.map(_._1), node)
+  def edgesFromFringeTo(cfg: Cfg,
+                        node: Option[nodes.CfgNode],
+                        cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] =
+    edges(cfg.fringe.map(_._1), node, cfgEdgeType)
 
-  def edges(sources: List[nodes.CfgNode], dstNode: Option[nodes.CfgNode]): List[DiffGraph.Builder] = {
-    edges(sources, dstNode.toList)
+  def edges(sources: List[nodes.CfgNode],
+            dstNode: Option[nodes.CfgNode],
+            cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
+    edgesToMultiple(sources, dstNode.toList, cfgEdgeType)
   }
 
   /**
     * Create edges from all in `sources` to `node`.
     * */
-  def edges(sources: List[nodes.CfgNode], destinations: List[nodes.CfgNode]): List[DiffGraph.Builder] = {
+  def edgesToMultiple(sources: List[nodes.CfgNode],
+                      destinations: List[nodes.CfgNode],
+                      cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
+    // Note: the backend doesn't support Cfg edge types at the moment,
+    // so we just ignore them for now.
     val diffGraph = DiffGraph.newBuilder
     sources.foreach { l =>
       destinations.foreach { n =>
@@ -289,24 +298,23 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   def cfgForAndExpression(call: nodes.Call): Cfg = {
     val leftCfg = cfgFor(call.argument(1))
     val rightCfg = cfgFor(call.argument(2))
-    val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs
+    val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode, TrueEdge) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs
     Cfg(leftCfg.entryNode, diffGraphs, leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(call)
   }
 
   def cfgForOrExpression(call: nodes.Call): Cfg = {
     val leftCfg = cfgFor(call.argument(1))
     val rightCfg = cfgFor(call.argument(2))
-    val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs
-    Cfg(leftCfg.entryNode, diffGraphs = diffGraphs, fringe = leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(
-      call)
+    val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode, FalseEdge) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs
+    Cfg(leftCfg.entryNode, diffGraphs, leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(call)
   }
 
   private def cfgForConditionalExpression(call: nodes.Call): Cfg = {
     val conditionCfg = cfgFor(call.argument(1))
     val trueCfg = cfgFor(call.argument(2))
     val falseCfg = cfgFor(call.argument(3))
-    val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode) ++
-      edgesFromFringeTo(conditionCfg, falseCfg.entryNode)
+    val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode, TrueEdge) ++
+      edgesFromFringeTo(conditionCfg, falseCfg.entryNode, FalseEdge)
 
     Cfg(conditionCfg.entryNode,
         conditionCfg.diffGraphs ++ trueCfg.diffGraphs ++ falseCfg.diffGraphs ++ diffGraphs,
@@ -325,7 +333,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
     val diffGraphs = edgesFromFringeTo(initExprCfg, innerCfg.entryNode) ++
       edgesFromFringeTo(innerCfg, innerCfg.entryNode) ++
-      edgesFromFringeTo(conditionCfg, bodyCfg.entryNode) ++ {
+      edgesFromFringeTo(conditionCfg, bodyCfg.entryNode, TrueEdge) ++ {
       if (loopExprCfg.entryNode.isDefined) {
         edges(bodyCfg.continues, loopExprCfg.entryNode)
       } else {
@@ -335,7 +343,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
     Cfg(entryNode,
         diffGraphs ++ initExprCfg.diffGraphs ++ innerCfg.diffGraphs,
-        conditionCfg.fringe ++ bodyCfg.breaks.map((_, AlwaysEdge)))
+        conditionCfg.fringe.withEdgeType(FalseEdge) ++ bodyCfg.breaks.map((_, AlwaysEdge)))
   }
 
   private def cfgForDoStatement(node: nodes.ControlStructure): Cfg = {
@@ -381,7 +389,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private def cfgForSwitchStatement(node: nodes.ControlStructure): Cfg = {
     val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
     val bodyCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
-    val diffGraphs = edges(conditionCfg.fringe.map(_._1), bodyCfg.caseLabels)
+    val diffGraphs = edgesToMultiple(conditionCfg.fringe.map(_._1), bodyCfg.caseLabels)
 
     val hasDefaultCase = bodyCfg.caseLabels.exists(x => x.asInstanceOf[nodes.JumpTarget].name == "default")
 
@@ -418,6 +426,14 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 }
 
 object CfgCreatorForMethod {
+
+  implicit class FringeWrapper(fringe: List[(nodes.CfgNode, CfgEdgeType)]) {
+
+    def withEdgeType(edgeType: CfgEdgeType): List[(CfgNode, CfgEdgeType)] = {
+      fringe.map { case (x, _) => (x, edgeType) }
+    }
+
+  }
 
   trait CfgEdgeType
   object TrueEdge extends CfgEdgeType {
