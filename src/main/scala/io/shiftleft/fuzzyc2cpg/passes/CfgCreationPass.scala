@@ -9,20 +9,6 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 
-trait CfgEdgeType
-object TrueEdge extends CfgEdgeType {
-  override def toString: String = "TrueEdge"
-}
-object FalseEdge extends CfgEdgeType {
-  override def toString: String = "FalseEdge"
-}
-object AlwaysEdge extends CfgEdgeType {
-  override def toString: String = "AlwaysEdge"
-}
-object CaseEdge extends CfgEdgeType {
-  override def toString: String = "CaseEdge"
-}
-
 class CfgCreationPass(cpg: Cpg, keyPool: IntervalKeyPool)
     extends ParallelCpgPass[nodes.Method](cpg, keyPools = Some(keyPool.split(cpg.method.size))) {
 
@@ -42,7 +28,6 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
                var fringe: List[FringeElement] = List(),
                var labeledNodes: Map[String, nodes.CfgNode] = Map(),
                var returns: List[nodes.CfgNode] = List(),
-               var markerStack: List[Option[nodes.CfgNode]] = List(),
                breakStack: List[nodes.CfgNode] = List(),
                continueStack: List[nodes.CfgNode] = List(),
                caseStack: List[nodes.CfgNode] = List(),
@@ -275,15 +260,13 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     }
 
     bodyCfg.continueStack.foreach { c =>
-      loopExprCfg.entryNode
-        .map { e =>
-          diffGraph.addEdge(c, e, EdgeTypes.CFG)
-        }
-        .getOrElse(
-          innerCfg.entryNode.map { f =>
+      loopExprCfg.entryNode match {
+        case Some(e) => diffGraph.addEdge(c, e, EdgeTypes.CFG)
+        case None =>
+          innerCfg.entryNode.foreach { f =>
             diffGraph.addEdge(c, f, EdgeTypes.CFG)
           }
-        )
+      }
     }
 
     val entryNode = Option(
@@ -465,5 +448,19 @@ object CfgCreatorForMethod {
   }
 
   case class FringeElement(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType)
+
+  trait CfgEdgeType
+  object TrueEdge extends CfgEdgeType {
+    override def toString: String = "TrueEdge"
+  }
+  object FalseEdge extends CfgEdgeType {
+    override def toString: String = "FalseEdge"
+  }
+  object AlwaysEdge extends CfgEdgeType {
+    override def toString: String = "AlwaysEdge"
+  }
+  object CaseEdge extends CfgEdgeType {
+    override def toString: String = "CaseEdge"
+  }
 
 }
