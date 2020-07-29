@@ -382,7 +382,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     Cfg(
       conditionCfg.entryNode,
       diffGraphs ++ conditionCfg.diffGraphs ++ trueCfg.diffGraphs,
-      conditionCfg.fringe ++ trueCfg.breaks.map((_, AlwaysEdge))
+      conditionCfg.fringe.withEdgeType(FalseEdge) ++ trueCfg.breaks.map((_, AlwaysEdge))
     )
   }
 
@@ -396,7 +396,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     Cfg(
       conditionCfg.entryNode,
       diffGraphs ++ conditionCfg.diffGraphs ++ bodyCfg.diffGraphs,
-      { if (!hasDefaultCase) { conditionCfg.fringe } else { List() } } ++ bodyCfg.breaks
+      { if (!hasDefaultCase) { conditionCfg.fringe.withEdgeType(FalseEdge) } else { List() } } ++ bodyCfg.breaks
         .map((_, AlwaysEdge)) ++ bodyCfg.fringe
     )
   }
@@ -406,8 +406,8 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     val trueCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
     val falseCfg = node.start.whenFalse.headOption.map(cfgFor).getOrElse(Cfg.empty)
 
-    val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode) ++
-      edgesFromFringeTo(conditionCfg, falseCfg.entryNode)
+    val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode, TrueEdge) ++
+      edgesFromFringeTo(conditionCfg, falseCfg.entryNode, FalseEdge)
 
     val diffGraph = DiffGraph.newBuilder
     Cfg(
@@ -417,7 +417,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         if (falseCfg.entryNode.isDefined) {
           falseCfg.fringe
         } else {
-          conditionCfg.fringe
+          conditionCfg.fringe.withEdgeType(FalseEdge)
         }
       }
     )
