@@ -134,11 +134,10 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
     } else if (this == Cfg.empty) {
       other
     } else {
-      val diffGraphs = this.diffGraphs ++ other.diffGraphs ++
-        edgesFromFringeTo(this, other.entryNode)
       this.copy(
         fringe = other.fringe,
-        diffGraphs = diffGraphs,
+        diffGraphs = this.diffGraphs ++ other.diffGraphs ++
+          edgesFromFringeTo(this, other.entryNode),
         gotos = this.gotos ++ other.gotos,
         labeledNodes = this.labeledNodes ++ other.labeledNodes,
         breaks = this.breaks ++ other.breaks,
@@ -159,16 +158,12 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
       case (goto, label) =>
         labeledNodes.get(label) match {
           case Some(labeledNode) =>
-            diffGraph.addEdge(
-              goto,
-              labeledNode,
-              EdgeTypes.CFG
-            )
+            diffGraph.addEdge(goto, labeledNode, EdgeTypes.CFG)
           case None =>
             logger.info("Unable to wire goto statement. Missing label {}.", label)
         }
     }
-    this.copy(diffGraphs = diffGraphs ++ List(diffGraph))
+    this.copy(diffGraphs = this.diffGraphs ++ List(diffGraph))
   }
 
 }
@@ -193,6 +188,11 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     * */
   private val exitNode: nodes.MethodReturn = entryNode.methodReturn
 
+  /**
+    * We return the CFG as a sequence of Diff Graphs that is
+    * calculated by first obtaining the CFG for the method
+    * and then resolving gotos.
+    * */
   def run(): Iterator[DiffGraph] =
     cfgForMethod(entryNode)
       .withResolvedGotos()
@@ -266,12 +266,30 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         Cfg.empty
     }
 
+  /**
+    * The CFG for a break/continue statements contains only
+    * the break/continue statement as a single entry node.
+    * The fringe is empty, that is, appending
+    * another CFG to the break statement will
+    * not result in the creation of an edge from
+    * the break statement to the entry point
+    * of the other CFG.
+    * */
   private def cfgForBreakStatement(node: nodes.ControlStructure): Cfg =
     Cfg(Some(node), breaks = List(node))
 
   private def cfgForContinueStatement(node: nodes.ControlStructure): Cfg =
     Cfg(Some(node), continues = List(node))
 
+  /**
+    * Jump targets ("labels") are included in the CFG. As these
+    * should be connected to the next appended CFG, we specify
+    * that the label node is both the entry node and the only
+    * node in the fringe. This is achieved by calling `cfgForSingleNode`
+    * on the label node. Just like for breaks and continues, we record
+    * labels. We store case/default labels separately from other labels,
+    * but that is not a relevant implementation detail.
+    * */
   private def cfgForJumpTarget(n: nodes.JumpTarget): Cfg = {
     val labelName = n.name
     val cfg = cfgForSingleNode(n)
