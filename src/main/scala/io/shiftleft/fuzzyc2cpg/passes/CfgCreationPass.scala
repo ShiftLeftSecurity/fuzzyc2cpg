@@ -200,7 +200,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     if (labelName.startsWith("case") || labelName.startsWith("default")) {
       cfg.copy(caseLabels = List(n))
     } else {
-      cfg.copy(labeledNodes = cfg.labeledNodes + (labelName -> n))
+      cfg.copy(labeledNodes = Map(labelName -> n))
     }
   }
 
@@ -217,13 +217,15 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     cfgForChildren(actualRet) ++ Cfg(Some(actualRet), List(diffGraph), fringe = List())
   }
 
-  private def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode]): List[DiffGraph.Builder] = {
+  private def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode]): List[DiffGraph.Builder] =
+    edges(cfg.fringe.map(_._1), node)
+
+  private def edges(sources: List[nodes.CfgNode], dstNode: Option[nodes.CfgNode]) = {
     val diffGraph = DiffGraph.newBuilder
-    cfg.fringe.foreach {
-      case (l, _) =>
-        node.foreach { n =>
-          diffGraph.addEdge(l, n, EdgeTypes.CFG)
-        }
+    sources.foreach { l =>
+      dstNode.foreach { n =>
+        diffGraph.addEdge(l, n, EdgeTypes.CFG)
+      }
     }
     List(diffGraph)
   }
@@ -270,22 +272,17 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 
     val diffGraphs = edgesFromFringeTo(initExprCfg, innerCfg.entryNode) ++
       edgesFromFringeTo(innerCfg, innerCfg.entryNode) ++
-      edgesFromFringeTo(conditionCfg, bodyCfg.entryNode)
-
-    val diffGraph = DiffGraph.newBuilder
-    bodyCfg.continues.foreach { c =>
-      loopExprCfg.entryNode match {
-        case Some(e) => diffGraph.addEdge(c, e, EdgeTypes.CFG)
-        case None =>
-          innerCfg.entryNode.foreach { f =>
-            diffGraph.addEdge(c, f, EdgeTypes.CFG)
-          }
+      edgesFromFringeTo(conditionCfg, bodyCfg.entryNode) ++ {
+      if (loopExprCfg.entryNode.isDefined) {
+        edges(bodyCfg.continues, loopExprCfg.entryNode)
+      } else {
+        edges(bodyCfg.continues, innerCfg.entryNode)
       }
     }
 
     Cfg(
       entryNode,
-      diffGraphs = diffGraphs ++ List(diffGraph) ++ initExprCfg.diffGraphs ++ innerCfg.diffGraphs,
+      diffGraphs = diffGraphs ++ initExprCfg.diffGraphs ++ innerCfg.diffGraphs,
       fringe = conditionCfg.fringe ++ bodyCfg.breaks.map((_, AlwaysEdge))
     )
   }
