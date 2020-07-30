@@ -77,6 +77,16 @@ class CfgCreator(entryNode: nodes.Method) {
       .map(_.build)
       .iterator
 
+  /**
+    * Conversion of a method to a CFG, showing the decomposition
+    * of the control flow graph generation problem into that of
+    * translating sub trees according to the node type. In the
+    * particular case of a method, the CFG is obtained by
+    * creating a CFG containing the single method node and
+    * a fringe containing the node and an outgoing AlwaysEdge,
+    * to the CFG obtained by translating child CFGs one by
+    * one and appending them.
+    * */
   private def cfgForMethod(node: nodes.Method): Cfg =
     cfgForSingleNode(node) ++ cfgForChildren(node)
 
@@ -119,6 +129,11 @@ class CfgCreator(entryNode: nodes.Method) {
         cfgForChildren(node)
     }
 
+  /**
+    * A second layer of dispatching for control structures. This could
+    * as well be part of `cfgFor` and has only been placed into a
+    * separate function to increase readability.
+    * */
   private def cfgForControlStructure(node: nodes.ControlStructure): Cfg =
     node.parserTypeName match {
       case "BreakStatement" =>
@@ -177,6 +192,12 @@ class CfgCreator(entryNode: nodes.Method) {
     }
   }
 
+  /**
+    * A CFG for a goto statement is one containing the goto
+    * node as an entry node and an empty fringe. Moreover, we
+    * store the goto for dispatching with `withResolvedGotos`
+    * once the CFG for the entire method has been calculated.
+    * */
   private def cfgForGotoStatement(node: nodes.ControlStructure): Cfg = {
     // TODO: the goto node should contain a field for the target so that
     // we can avoid the brittle split/slice operation here
@@ -184,37 +205,71 @@ class CfgCreator(entryNode: nodes.Method) {
     target.map(t => Cfg(Some(node), gotos = List((node, t)))).getOrElse(Cfg.empty)
   }
 
+  /**
+    * Return statements may contain expressions as return values,
+    * and therefore, the CFG for a return statement consists of
+    * the CFG for calculation of that expression, appended to
+    * a CFG containing only the return node, connected with
+    * a single edge to the method exit node. The fringe is
+    * empty.
+    * */
   private def cfgForReturn(actualRet: nodes.Return): Cfg = {
     cfgForChildren(actualRet) ++
       Cfg(Some(actualRet), singleEdge(actualRet, exitNode), List())
   }
 
+  /**
+    * The right hand side of a logical AND expression is only evaluated
+    * if the left hand side is true as the entire expression can only
+    * be true if both expressions are true. This is encoded in the
+    * corresponding control flow graph by creating control flow graphs
+    * for the left and right hand expressions and appending the two,
+    * where the fringe edge type of the left CFG is `TrueEdge`.
+    * */
   def cfgForAndExpression(call: nodes.Call): Cfg = {
     val leftCfg = cfgFor(call.argument(1))
     val rightCfg = cfgFor(call.argument(2))
-    val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs
+    val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode, TrueEdge) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs
     Cfg(leftCfg.entryNode, diffGraphs, leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(call)
   }
 
+  /**
+    * Same construction recipe as for the AND expression, just that the fringe edge type
+    * of the left CFG is `FalseEdge`.
+    * */
   def cfgForOrExpression(call: nodes.Call): Cfg = {
     val leftCfg = cfgFor(call.argument(1))
     val rightCfg = cfgFor(call.argument(2))
-    val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs
+    val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode, FalseEdge) ++ leftCfg.diffGraphs ++ rightCfg.diffGraphs
     Cfg(leftCfg.entryNode, diffGraphs, leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(call)
   }
 
+  /**
+    * A conditional expression is of the form `condition ? trueExpr ; falseExpr`
+    * We create the corresponding CFGs by creating CFGs for the three expressions
+    * and adding edges between them. The new entry node is the condition entry
+    * node.
+    * */
   private def cfgForConditionalExpression(call: nodes.Call): Cfg = {
     val conditionCfg = cfgFor(call.argument(1))
     val trueCfg = cfgFor(call.argument(2))
     val falseCfg = cfgFor(call.argument(3))
-    val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode) ++
-      edgesFromFringeTo(conditionCfg, falseCfg.entryNode)
+    val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode, TrueEdge) ++
+      edgesFromFringeTo(conditionCfg, falseCfg.entryNode, FalseEdge)
 
     Cfg(conditionCfg.entryNode,
         conditionCfg.diffGraphs ++ trueCfg.diffGraphs ++ falseCfg.diffGraphs ++ diffGraphs,
         trueCfg.fringe ++ falseCfg.fringe) ++ cfgForSingleNode(call)
   }
 
+  /**
+    * A for statement is of the form `for(initExpr; condition; loopExpr) body`
+    * and all four components may be empty. The sequence
+    * (condition - body - loopExpr) form the inner part of the loop
+    * and we calculate the corresponding CFG `innerCfg` so that it is no longer
+    * relevant which of these three actually exist and we still have an entry
+    * node for the loop and a fringe.
+    * */
   private def cfgForForStatement(node: nodes.ControlStructure): Cfg = {
     val children = node.astChildren.l
     val initExprCfg = children.find(_.order == 1).map(cfgFor).getOrElse(Cfg.empty)
@@ -227,7 +282,7 @@ class CfgCreator(entryNode: nodes.Method) {
 
     val diffGraphs = edgesFromFringeTo(initExprCfg, innerCfg.entryNode) ++
       edgesFromFringeTo(innerCfg, innerCfg.entryNode) ++
-      edgesFromFringeTo(conditionCfg, bodyCfg.entryNode) ++ {
+      edgesFromFringeTo(conditionCfg, bodyCfg.entryNode, TrueEdge) ++ {
       if (loopExprCfg.entryNode.isDefined) {
         edges(bodyCfg.continues, loopExprCfg.entryNode)
       } else {
@@ -248,21 +303,15 @@ class CfgCreator(entryNode: nodes.Method) {
       edges(bodyCfg.continues, conditionCfg.entryNode) ++
         edgesFromFringeTo(bodyCfg, conditionCfg.entryNode) ++ {
         if (bodyCfg.entryNode.isDefined) {
-          edgesFromFringeTo(conditionCfg, bodyCfg.entryNode)
+          edgesFromFringeTo(conditionCfg, bodyCfg.entryNode, TrueEdge)
         } else {
-          edgesFromFringeTo(conditionCfg, conditionCfg.entryNode)
-        } ++ {
-          if (bodyCfg.entryNode.isDefined) {
-            edgesFromFringeTo(conditionCfg, bodyCfg.entryNode)
-          } else {
-            edgesFromFringeTo(conditionCfg, conditionCfg.entryNode)
-          }
+          edgesFromFringeTo(conditionCfg, conditionCfg.entryNode, TrueEdge)
         }
       }
     Cfg(
       if (bodyCfg != Cfg.empty) { bodyCfg.entryNode } else { conditionCfg.entryNode },
       diffGraphs ++ bodyCfg.diffGraphs ++ conditionCfg.diffGraphs,
-      conditionCfg.fringe ++ bodyCfg.breaks.map((_, AlwaysEdge))
+      conditionCfg.fringe.withEdgeType(FalseEdge) ++ bodyCfg.breaks.map((_, AlwaysEdge))
     )
   }
 

@@ -13,9 +13,15 @@ import org.slf4j.LoggerFactory
   *                   should attach itself to.
   * @param diffGraphs control flow edges between nodes of the
   *                   code property graph.
-  * @param fringe think of this as the control flow graph's last nodes,
-  *               that is, the nodes that should be connected to any
-  *               CFG that we append.
+  * @param fringe nodes of the CFG for which an outgoing edge type
+  *               is already known but the destination node is not.
+  *               These nodes are connected when another CFG is
+  *               appended to this CFG.
+  *
+  * In addition to these three core building blocks, we store labels
+  * and jump statements that have not been resolved and may be
+  * resolvable as parent sub trees or sibblings are translated.
+  *
   * @param labeledNodes labels contained in the abstract syntax tree
   *                     from which this CPG was generated
   * @param caseLabels labels beginning with "case"
@@ -23,15 +29,6 @@ import org.slf4j.LoggerFactory
   * @param continues unresolved continues collected along the way
   * @param gotos unresolved gotos collected along the way
   *
-  * In principle, sub trees of the abstract syntax tree
-  * can be translated to CFGs and these can be combined.
-  * However, a syntax tree may contain unstructured control
-  * flow elements such as `continues`, `breaks` or `gotos`
-  * that cannot be translated until parent sub trees are
-  * processed. During construction of the CFG, we therefore
-  * need a data structure that contains the CFG along with
-  * any jumps and labels that have not yet been translated,
-  * and `CFG` provides this data structure.
   * */
 case class Cfg(entryNode: Option[nodes.CfgNode] = None,
                diffGraphs: List[DiffGraph.Builder] = List(),
@@ -71,6 +68,10 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
         caseLabels = this.caseLabels ++ other.caseLabels
       )
     }
+  }
+
+  def withFringeEdgeType(cfgEdgeType: CfgEdgeType): Cfg = {
+    this.copy(fringe = fringe.map { case (x, _) => (x, cfgEdgeType) })
   }
 
   /**
@@ -124,6 +125,17 @@ object Cfg {
     edgesFromFringeTo(cfg.fringe, node)
   }
 
+  /**
+    * Create edges from all nodes of cfg's fringe to `node`, ignoring fringe edge types
+    * and using `cfgEdgeType` instead.
+    * */
+  def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[DiffGraph.Builder] = {
+    edges(cfg.fringe.map(_._1), node, cfgEdgeType)
+  }
+
+  /**
+    * Create edges from a list (node, cfgEdgeType) pairs to `node`
+    * */
   def edgesFromFringeTo(fringeElems: List[(nodes.CfgNode, CfgEdgeType)],
                         node: Option[nodes.CfgNode]): List[DiffGraph.Builder] = {
     // Note: the backend doesn't support Cfg edge types at the moment,
@@ -138,6 +150,9 @@ object Cfg {
     List(diffGraph)
   }
 
+  /**
+    * Create edges of given type from a list of source nodes to a destination node
+    * */
   def edges(sources: List[nodes.CfgNode],
             dstNode: Option[nodes.CfgNode],
             cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
@@ -151,7 +166,7 @@ object Cfg {
   }
 
   /**
-    * Create edges from all in `sources` to `node`.
+    * Create edges of given type from all nodes in `sources` to `node`.
     * */
   def edgesToMultiple(sources: List[nodes.CfgNode],
                       destinations: List[nodes.CfgNode],
