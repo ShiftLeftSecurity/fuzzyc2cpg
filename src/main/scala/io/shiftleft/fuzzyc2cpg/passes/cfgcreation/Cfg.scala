@@ -1,8 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.passes.cfgcreation
 
-import io.shiftleft.codepropertygraph.generated.{EdgeTypes, nodes}
+import io.shiftleft.codepropertygraph.generated.nodes
 import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.Cfg.CfgEdgeType
-import io.shiftleft.passes.DiffGraph
 import org.slf4j.LoggerFactory
 
 /**
@@ -11,8 +10,8 @@ import org.slf4j.LoggerFactory
   * @param entryNode  the control flow graph's first node, that is,
   *                   the node to which a CFG that appends this CFG
   *                   should attach itself to.
-  * @param diffGraphs control flow edges between nodes of the
-  *                   code property graph.
+  * @param edges control flow edges between nodes of the
+  *              code property graph.
   * @param fringe nodes of the CFG for which an outgoing edge type
   *               is already known but the destination node is not.
   *               These nodes are connected when another CFG is
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory
   *
   * */
 case class Cfg(entryNode: Option[nodes.CfgNode] = None,
-               diffGraphs: List[DiffGraph.Builder] = List(),
+               edges: List[CfgEdge] = List(),
                fringe: List[(nodes.CfgNode, CfgEdgeType)] = List(),
                labeledNodes: Map[String, nodes.CfgNode] = Map(),
                breaks: List[nodes.CfgNode] = List(),
@@ -59,7 +58,7 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
     } else {
       this.copy(
         fringe = other.fringe,
-        diffGraphs = this.diffGraphs ++ other.diffGraphs ++
+        edges = this.edges ++ other.edges ++
           edgesFromFringeTo(this, other.entryNode),
         gotos = this.gotos ++ other.gotos,
         labeledNodes = this.labeledNodes ++ other.labeledNodes,
@@ -80,22 +79,24 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
     * respective labels.
     * */
   def withResolvedGotos(): Cfg = {
-    val diffGraph = DiffGraph.newBuilder
-    gotos.foreach {
+    val edges = gotos.flatMap {
       case (goto, label) =>
         labeledNodes.get(label) match {
           case Some(labeledNode) =>
             // TODO set edge type of Always once the backend
             // supports it
-            diffGraph.addEdge(goto, labeledNode, EdgeTypes.CFG)
+            Some(CfgEdge(goto, labeledNode, AlwaysEdge))
           case None =>
             logger.info("Unable to wire goto statement. Missing label {}.", label)
+            None
         }
     }
-    this.copy(diffGraphs = this.diffGraphs ++ List(diffGraph))
+    this.copy(edges = this.edges ++ edges)
   }
 
 }
+
+case class CfgEdge(src: nodes.CfgNode, dst: nodes.CfgNode, edgeType: CfgEdgeType)
 
 object Cfg {
 
@@ -121,7 +122,7 @@ object Cfg {
   /**
     * Create edges from all nodes of cfg's fringe to `node`.
     * */
-  def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode]): List[DiffGraph.Builder] = {
+  def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode]): List[CfgEdge] = {
     edgesFromFringeTo(cfg.fringe, node)
   }
 
@@ -129,25 +130,20 @@ object Cfg {
     * Create edges from all nodes of cfg's fringe to `node`, ignoring fringe edge types
     * and using `cfgEdgeType` instead.
     * */
-  def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[DiffGraph.Builder] = {
+  def edgesFromFringeTo(cfg: Cfg, node: Option[nodes.CfgNode], cfgEdgeType: CfgEdgeType): List[CfgEdge] = {
     edges(cfg.fringe.map(_._1), node, cfgEdgeType)
   }
 
   /**
     * Create edges from a list (node, cfgEdgeType) pairs to `node`
     * */
-  def edgesFromFringeTo(fringeElems: List[(nodes.CfgNode, CfgEdgeType)],
-                        node: Option[nodes.CfgNode]): List[DiffGraph.Builder] = {
-    // Note: the backend doesn't support Cfg edge types at the moment,
-    // so we just ignore them for now.
-    val diffGraph = DiffGraph.newBuilder
-    fringeElems.foreach {
+  def edgesFromFringeTo(fringeElems: List[(nodes.CfgNode, CfgEdgeType)], node: Option[nodes.CfgNode]): List[CfgEdge] = {
+    fringeElems.flatMap {
       case (sourceNode, cfgEdgeType) =>
-        node.foreach { dstNode =>
-          diffGraph.addEdge(sourceNode, dstNode, EdgeTypes.CFG)
+        node.map { dstNode =>
+          CfgEdge(sourceNode, dstNode, cfgEdgeType)
         }
     }
-    List(diffGraph)
   }
 
   /**
@@ -155,13 +151,13 @@ object Cfg {
     * */
   def edges(sources: List[nodes.CfgNode],
             dstNode: Option[nodes.CfgNode],
-            cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
+            cfgEdgeType: CfgEdgeType = AlwaysEdge): List[CfgEdge] = {
     edgesToMultiple(sources, dstNode.toList, cfgEdgeType)
   }
 
   def singleEdge(source: nodes.CfgNode,
                  destination: nodes.CfgNode,
-                 cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
+                 cfgEdgeType: CfgEdgeType = AlwaysEdge): List[CfgEdge] = {
     edgesToMultiple(List(source), List(destination), cfgEdgeType)
   }
 
@@ -170,17 +166,13 @@ object Cfg {
     * */
   def edgesToMultiple(sources: List[nodes.CfgNode],
                       destinations: List[nodes.CfgNode],
-                      cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
-    // Note: the backend doesn't support Cfg edge types at the moment,
-    // so we just ignore them for now.
-    val diffGraph = DiffGraph.newBuilder
-    sources.foreach { l =>
-      destinations.foreach { n =>
-        // TODO set `cfgEdgeType` once backend supports it
-        diffGraph.addEdge(l, n, EdgeTypes.CFG)
+                      cfgEdgeType: CfgEdgeType = AlwaysEdge): List[CfgEdge] = {
+
+    sources.flatMap { l =>
+      destinations.map { n =>
+        CfgEdge(l, n, cfgEdgeType)
       }
     }
-    List(diffGraph)
   }
 
 }

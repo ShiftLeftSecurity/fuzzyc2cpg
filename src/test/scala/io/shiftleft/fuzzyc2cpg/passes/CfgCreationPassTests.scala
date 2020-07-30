@@ -293,12 +293,12 @@ class CfgCreationPassTests extends WordSpec with Matchers {
 
     "be correct with empty condition with empty block" in
       new CfgFixture("for (;;) ;") {
-        succOf("func ()") shouldBe expected()
+        succOf("func ()") shouldBe expected(("RET", AlwaysEdge))
       }
 
     "be correct when empty for-loop is skipped" in
       new CfgFixture("for (;;) {}; return;") {
-        succOf("func ()") shouldBe expected()
+        succOf("func ()") shouldBe expected(("return;", AlwaysEdge))
         succOf("return;") shouldBe expected(("RET", AlwaysEdge))
       }
 
