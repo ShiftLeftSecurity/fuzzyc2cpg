@@ -1,7 +1,6 @@
 package io.shiftleft.fuzzyc2cpg.passes
 
 import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.codepropertygraph.generated.nodes.CfgNode
 import io.shiftleft.passes.{DiffGraph, IntervalKeyPool, ParallelCpgPass}
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Operators, nodes}
 import io.shiftleft.fuzzyc2cpg.passes.CfgCreatorForMethod.{AlwaysEdge, CfgEdgeType}
@@ -36,20 +35,26 @@ import org.slf4j.LoggerFactory
   *               |t     f|
   *            [x +=1 ]   |
   *               |
-  * The semantics of if dictate that the first sub tree to the left
-  * is a condition, which is connected to the CFG of the second sub
-  * tree - the body of the if statement - via a control flow edge with
-  * the `true` label (indicated in the illustration by `t`), and to the CFG
-  * of any follow-up code via a `false` edge (indicated by `f`).
+  * For example, the semantics of `if`` dictate that the first sub tree
+  * from left to right is a condition, which is connected to the CFG of
+  * the second sub tree - the body of the if statement - via a control
+  * flow edge with the `true` label (shortened to `t` in the illustration),
+  * and to the CFG of any follow-up code via a `false` edge (indicated by `f`).
   *
   * A problem that becomes immediately apparent in the illustration is that
   * the result of translating a sub tree may leave us with edges for which
-  * a source node is known but the destination not depends on parent or
-  * siblings that were not considered in the translation. For example, we know
-  * that an outgoing edge from [x<10] must exist, but we do not yet know where
-  * it should lead. We refer to the set of nodes of the control flow graph with
-  * outgoing edges for which the destination node is yet to be determined as
-  * the "fringe" of the control flow graph.
+  * a source node is known but the destination depends on parent or
+  * siblings not yet considered in the translation. This is the case for
+  * the outgoing `false` edge (denoted by `f` in the illustration) from
+  * [x<10]: the semantics of `if` tell us that this edge must exist, but we
+  * do not yet know where it should lead. We refer to the set of nodes of the
+  * control flow graph with outgoing edges for which the destination node is
+  * yet to be determined as the "fringe" of the control flow graph.
+  *
+  * We calculate control flow graphs by mapping sub trees to control flow
+  * graphs and fringes and appending these objects with an append operation
+  * that connects its two operands by creating edges from all nodes of the
+  * first operands fringe to the entry node of the second operand.
   *
   * (2) Parallelization
   *
@@ -76,46 +81,6 @@ class CfgCreationPass(cpg: Cpg, keyPool: IntervalKeyPool)
 
   override def runOnPart(method: nodes.Method): Iterator[DiffGraph] =
     new CfgCreatorForMethod(method).run()
-
-}
-
-object Cfg {
-
-  /**
-    * The safe "null" Cfg.
-    * */
-  val empty: Cfg = new Cfg()
-
-  /**
-    * Create edges from all nodes of cfg's fringe to `node`.
-    * */
-  def edgesFromFringeTo(cfg: Cfg,
-                        node: Option[nodes.CfgNode],
-                        cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] =
-    edges(cfg.fringe.map(_._1), node, cfgEdgeType)
-
-  def edges(sources: List[nodes.CfgNode],
-            dstNode: Option[nodes.CfgNode],
-            cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
-    edgesToMultiple(sources, dstNode.toList, cfgEdgeType)
-  }
-
-  /**
-    * Create edges from all in `sources` to `node`.
-    * */
-  def edgesToMultiple(sources: List[nodes.CfgNode],
-                      destinations: List[nodes.CfgNode],
-                      cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
-    // Note: the backend doesn't support Cfg edge types at the moment,
-    // so we just ignore them for now.
-    val diffGraph = DiffGraph.newBuilder
-    sources.foreach { l =>
-      destinations.foreach { n =>
-        diffGraph.addEdge(l, n, EdgeTypes.CFG)
-      }
-    }
-    List(diffGraph)
-  }
 
 }
 
@@ -151,7 +116,7 @@ object Cfg {
   * */
 case class Cfg(entryNode: Option[nodes.CfgNode] = None,
                diffGraphs: List[DiffGraph.Builder] = List(),
-               fringe: List[(nodes.CfgNode, CfgEdgeType)] = List(),
+               fringe: List[nodes.CfgNode] = List(),
                labeledNodes: Map[String, nodes.CfgNode] = Map(),
                breaks: List[nodes.CfgNode] = List(),
                continues: List[nodes.CfgNode] = List(),
@@ -210,6 +175,45 @@ case class Cfg(entryNode: Option[nodes.CfgNode] = None,
 
 }
 
+object Cfg {
+
+  /**
+    * The safe "null" Cfg.
+    * */
+  val empty: Cfg = new Cfg()
+
+  /**
+    * Create edges from all nodes of cfg's fringe to `node`.
+    * */
+  def edgesFromFringeTo(cfg: Cfg,
+                        node: Option[nodes.CfgNode],
+                        cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] =
+    edges(cfg.fringe, node, cfgEdgeType)
+
+  def edges(sources: List[nodes.CfgNode],
+            dstNode: Option[nodes.CfgNode],
+            cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
+    edgesToMultiple(sources, dstNode.toList, cfgEdgeType)
+  }
+
+  /**
+    * Create edges from all in `sources` to `node`.
+    * */
+  def edgesToMultiple(sources: List[nodes.CfgNode],
+                      destinations: List[nodes.CfgNode],
+                      cfgEdgeType: CfgEdgeType = AlwaysEdge): List[DiffGraph.Builder] = {
+    // Note: the backend doesn't support Cfg edge types at the moment,
+    // so we just ignore them for now.
+    val diffGraph = DiffGraph.newBuilder
+    sources.foreach { l =>
+      destinations.foreach { n =>
+        diffGraph.addEdge(l, n, EdgeTypes.CFG)
+      }
+    }
+    List(diffGraph)
+  }
+}
+
 class CfgCreatorForMethod(entryNode: nodes.Method) {
 
   import Cfg._
@@ -251,7 +255,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     * the entry node and placing it in the fringe.
     * */
   private def cfgForSingleNode(node: nodes.CfgNode): Cfg =
-    Cfg(Some(node), fringe = List((node, AlwaysEdge)))
+    Cfg(Some(node), fringe = List(node))
 
   /**
     * The CFG for all children is obtained by translating
@@ -401,9 +405,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       }
     }
 
-    Cfg(entryNode,
-        diffGraphs ++ initExprCfg.diffGraphs ++ innerCfg.diffGraphs,
-        conditionCfg.fringe.withEdgeType(FalseEdge) ++ bodyCfg.breaks.map((_, AlwaysEdge)))
+    Cfg(entryNode, diffGraphs ++ initExprCfg.diffGraphs ++ innerCfg.diffGraphs, conditionCfg.fringe ++ bodyCfg.breaks)
   }
 
   private def cfgForDoStatement(node: nodes.ControlStructure): Cfg = {
@@ -428,7 +430,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     Cfg(
       if (bodyCfg != Cfg.empty) { bodyCfg.entryNode } else { conditionCfg.entryNode },
       diffGraphs ++ bodyCfg.diffGraphs ++ conditionCfg.diffGraphs,
-      conditionCfg.fringe ++ bodyCfg.breaks.map((_, AlwaysEdge))
+      conditionCfg.fringe ++ bodyCfg.breaks
     )
   }
 
@@ -442,22 +444,21 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     Cfg(
       conditionCfg.entryNode,
       diffGraphs ++ conditionCfg.diffGraphs ++ trueCfg.diffGraphs,
-      conditionCfg.fringe.withEdgeType(FalseEdge) ++ trueCfg.breaks.map((_, AlwaysEdge))
+      conditionCfg.fringe ++ trueCfg.breaks
     )
   }
 
   private def cfgForSwitchStatement(node: nodes.ControlStructure): Cfg = {
     val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
     val bodyCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
-    val diffGraphs = edgesToMultiple(conditionCfg.fringe.map(_._1), bodyCfg.caseLabels)
+    val diffGraphs = edgesToMultiple(conditionCfg.fringe, bodyCfg.caseLabels)
 
     val hasDefaultCase = bodyCfg.caseLabels.exists(x => x.asInstanceOf[nodes.JumpTarget].name == "default")
 
     Cfg(
       conditionCfg.entryNode,
       diffGraphs ++ conditionCfg.diffGraphs ++ bodyCfg.diffGraphs,
-      { if (!hasDefaultCase) { conditionCfg.fringe.withEdgeType(FalseEdge) } else { List() } } ++ bodyCfg.breaks
-        .map((_, AlwaysEdge)) ++ bodyCfg.fringe
+      { if (!hasDefaultCase) { conditionCfg.fringe } else { List() } } ++ bodyCfg.breaks ++ bodyCfg.fringe
     )
   }
 
@@ -477,7 +478,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
         if (falseCfg.entryNode.isDefined) {
           falseCfg.fringe
         } else {
-          conditionCfg.fringe.withEdgeType(FalseEdge)
+          conditionCfg.fringe
         }
       }
     )
@@ -486,14 +487,6 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
 }
 
 object CfgCreatorForMethod {
-
-  implicit class FringeWrapper(fringe: List[(nodes.CfgNode, CfgEdgeType)]) {
-
-    def withEdgeType(edgeType: CfgEdgeType): List[(CfgNode, CfgEdgeType)] = {
-      fringe.map { case (x, _) => (x, edgeType) }
-    }
-
-  }
 
   trait CfgEdgeType
   object TrueEdge extends CfgEdgeType {
