@@ -10,9 +10,9 @@ import io.shiftleft.semanticcpg.language._
   * Translation of abstract syntax trees into control flow graphs
   *
   * The problem of translating an abstract syntax tree into a corresponding
- * control flow graph can be formulated as a recursive problem in which
+  * control flow graph can be formulated as a recursive problem in which
   * sub trees of the syntax tree are translated and their corresponding
- * control flow graphs are connected according to the control flow
+  * control flow graphs are connected according to the control flow
   * semantics of the root node.
   * For example, consider the abstract syntax tree for an if-statement:
   *
@@ -38,7 +38,7 @@ import io.shiftleft.semanticcpg.language._
   *
   * A problem that becomes immediately apparent in the illustration is that
   * the result of translating a sub tree may leave us with edges for which
-  * a source node is known but the destination not depends on parent or
+  * a source node is known but the destination node depends on parents or
   * siblings that were not considered in the translation. For example, we know
   * that an outgoing edge from [x<10] must exist, but we do not yet know where
   * it should lead. We refer to the set of nodes of the control flow graph with
