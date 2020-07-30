@@ -12,7 +12,7 @@ import io.shiftleft.semanticcpg.language._
   * The problem of translating an abstract syntax tree into a corresponding
 control flow graph can be formulated as a recursive problem in which
   * sub trees of the syntax tree are translated and their corresponding
-  * control flow graphs and are connected according to the control flow
+control flow graphs are connected according to the control flow
   * semantics of the root node.
   * For example, consider the abstract syntax tree for an if-statement:
   *
