@@ -295,19 +295,21 @@ class CfgCreator(entryNode: nodes.Method) {
         conditionCfg.fringe.withEdgeType(FalseEdge) ++ bodyCfg.breaks.map((_, AlwaysEdge)))
   }
 
+  /**
+    * A Do-Statement is of the form `do body while(condition)` where body may be empty.
+    * We again first calculate the inner CFG as bodyCfg ++ conditionCfg and then connect
+    * edges according to the semantics of do-while.
+    * */
   private def cfgForDoStatement(node: nodes.ControlStructure): Cfg = {
     val bodyCfg = node.astChildren.filter(_.order(1)).headOption.map(cfgFor).getOrElse(Cfg.empty)
     val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val innerCfg = bodyCfg ++ conditionCfg
 
     val diffGraphs =
       edges(bodyCfg.continues, conditionCfg.entryNode) ++
-        edgesFromFringeTo(bodyCfg, conditionCfg.entryNode) ++ {
-        if (bodyCfg.entryNode.isDefined) {
-          edgesFromFringeTo(conditionCfg, bodyCfg.entryNode, TrueEdge)
-        } else {
-          edgesFromFringeTo(conditionCfg, conditionCfg.entryNode, TrueEdge)
-        }
-      }
+        edgesFromFringeTo(bodyCfg, conditionCfg.entryNode) ++
+        edgesFromFringeTo(conditionCfg, innerCfg.entryNode, TrueEdge)
+
     Cfg(
       if (bodyCfg != Cfg.empty) { bodyCfg.entryNode } else { conditionCfg.entryNode },
       diffGraphs ++ bodyCfg.diffGraphs ++ conditionCfg.diffGraphs,
