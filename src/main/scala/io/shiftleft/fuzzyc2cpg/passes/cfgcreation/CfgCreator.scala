@@ -317,6 +317,10 @@ class CfgCreator(entryNode: nodes.Method) {
     )
   }
 
+  /**
+    * CFG creation for while statements of the form `while(condition) body`
+    * where body is optional.
+    * */
   private def cfgForWhileStatement(node: nodes.ControlStructure): Cfg = {
     val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
     val trueCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
@@ -331,10 +335,13 @@ class CfgCreator(entryNode: nodes.Method) {
     )
   }
 
+  /**
+    * CFG creation for switch statements of the form `switch{ case $x: ... }`.
+    * */
   private def cfgForSwitchStatement(node: nodes.ControlStructure): Cfg = {
     val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
     val bodyCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
-    val diffGraphs = edgesToMultiple(conditionCfg.fringe.map(_._1), bodyCfg.caseLabels)
+    val diffGraphs = edgesToMultiple(conditionCfg.fringe.map(_._1), bodyCfg.caseLabels, CaseEdge)
 
     val hasDefaultCase = bodyCfg.caseLabels.exists(x => x.asInstanceOf[nodes.JumpTarget].name == "default")
 
@@ -346,6 +353,10 @@ class CfgCreator(entryNode: nodes.Method) {
     )
   }
 
+  /**
+    * CFG creation for if statements of the form `if(condition) body`, optionally
+    * followed by `else body2`.
+    * */
   private def cfgForIfStatement(node: nodes.ControlStructure): Cfg = {
     val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
     val trueCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
