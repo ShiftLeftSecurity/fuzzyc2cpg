@@ -1,7 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.passes
 
 import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Languages, nodes}
+import io.shiftleft.codepropertygraph.generated.{Languages, nodes}
 import io.shiftleft.fuzzyc2cpg.Defines
 import io.shiftleft.passes.{CpgPass, DiffGraph, KeyPool}
 
@@ -18,14 +18,11 @@ class CMetaDataPass(cpg: Cpg, keyPool: Option[KeyPool] = None) extends CpgPass(c
     }
 
     def addAnyNamespaceBlock(diffGraph: DiffGraph.Builder): Unit = {
-      val node = nodes.NewNamespaceBlock(
+      val namespaceBlockNode = nodes.NewNamespaceBlock(
         name = Defines.globalNamespaceName,
         fullName = CMetaDataPass.getGlobalNamespaceBlockFullName(None)
       )
-      val fileWithNoName = nodes.NewFile(name = "")
-      diffGraph.addNode(fileWithNoName)
-      diffGraph.addNode(node)
-      diffGraph.addEdge(node, fileWithNoName, EdgeTypes.SOURCE_FILE)
+      diffGraph.addNode(namespaceBlockNode)
     }
 
     val diffGraph = DiffGraph.newBuilder
