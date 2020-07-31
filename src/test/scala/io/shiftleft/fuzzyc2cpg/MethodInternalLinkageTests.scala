@@ -59,19 +59,20 @@ class MethodInternalLinkageTests extends WordSpec with Matchers with TraversalUt
       parameterX.checkForSingle(NodeTypes.METHOD_PARAMETER_IN, NodeKeys.NAME, "x")
     }
 
-    "be correct for all identifiers x, y in method3" in {
+    "be correct for all indentifiers x, y in method3" in {
       val method = getMethod("method3")
-      val outerIdentifierX = method.expandAst().expandAst().filterOrder(3).expandAst(NodeTypes.IDENTIFIER)
-      outerIdentifierX.checkForSingle(NodeKeys.NAME, "x")
-      val parameterX = outerIdentifierX.expandRef()
-      parameterX.checkForSingle(NodeTypes.METHOD_PARAMETER_IN, NodeKeys.NAME, "x")
-      val expectedParameterX = method.expandAst(NodeTypes.METHOD_PARAMETER_IN)
-      expectedParameterX.checkForSingle(NodeKeys.NAME, "x")
-      parameterX shouldBe expectedParameterX
 
-      val outerIdentifierY = method.expandAst().expandAst().filterOrder(4).expandAst(NodeTypes.IDENTIFIER)
-      outerIdentifierY.checkForSingle(NodeKeys.NAME, "y")
-      val outerLocalY = outerIdentifierY.expandRef()
+      val outerIndentifierX = method.expandAst().expandAst().filterOrder(2).expandAst(NodeTypes.IDENTIFIER)
+      outerIndentifierX.checkForSingle(NodeKeys.NAME, "x")
+      val parameterX = outerIndentifierX.expandRef()
+      parameterX.checkForSingle(NodeTypes.METHOD_PARAMETER_IN, NodeKeys.NAME, "x")
+      val expectedParamterX = method.expandAst(NodeTypes.METHOD_PARAMETER_IN)
+      expectedParamterX.checkForSingle(NodeKeys.NAME, "x")
+      parameterX shouldBe expectedParamterX
+
+      val outerIndentifierY = method.expandAst().expandAst().filterOrder(3).expandAst(NodeTypes.IDENTIFIER)
+      outerIndentifierY.checkForSingle(NodeKeys.NAME, "y")
+      val outerLocalY = outerIndentifierY.expandRef()
       outerLocalY.checkForSingle(NodeTypes.LOCAL, NodeKeys.NAME, "y")
       val expectedOuterLocalY = method.expandAst().expandAst(NodeTypes.LOCAL)
       expectedOuterLocalY.checkForSingle(NodeKeys.NAME, "y")
@@ -79,7 +80,7 @@ class MethodInternalLinkageTests extends WordSpec with Matchers with TraversalUt
 
       val nestedBlock = method.expandAst().expandAst(NodeTypes.BLOCK)
 
-      val nestedIdentifierX = nestedBlock.expandAst().filterOrder(3).expandAst(NodeTypes.IDENTIFIER)
+      val nestedIdentifierX = nestedBlock.expandAst().filterOrder(1).expandAst(NodeTypes.IDENTIFIER)
       nestedIdentifierX.checkForSingle(NodeKeys.NAME, "x")
       val nestedLocalX = nestedIdentifierX.expandRef()
       nestedLocalX.checkForSingle(NodeTypes.LOCAL, NodeKeys.NAME, "x")
@@ -87,7 +88,7 @@ class MethodInternalLinkageTests extends WordSpec with Matchers with TraversalUt
       expectedNestedLocalX.checkForSingle(NodeKeys.NAME, "x")
       nestedLocalX shouldBe expectedNestedLocalX
 
-      val nestedIdentifierY = nestedBlock.expandAst().filterOrder(4).expandAst(NodeTypes.IDENTIFIER)
+      val nestedIdentifierY = nestedBlock.expandAst().filterOrder(2).expandAst(NodeTypes.IDENTIFIER)
       nestedIdentifierY.checkForSingle(NodeKeys.NAME, "y")
       val nestedLocalY = nestedIdentifierY.expandRef()
       nestedLocalY.checkForSingle(NodeTypes.LOCAL, NodeKeys.NAME, "y")

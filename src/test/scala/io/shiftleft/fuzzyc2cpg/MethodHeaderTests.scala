@@ -14,7 +14,7 @@ class MethodHeaderTests extends WordSpec with Matchers {
       methods.size shouldBe 1
       methods.head.value2(NodeKeys.IS_EXTERNAL) shouldBe false
       methods.head.value2(NodeKeys.FULL_NAME) shouldBe "foo"
-      methods.head.value2(NodeKeys.SIGNATURE) shouldBe "int foo (int,int)"
+      methods.head.value2(NodeKeys.SIGNATURE) shouldBe "int(int,int)"
       methods.head.value2(NodeKeys.LINE_NUMBER) shouldBe 1
       methods.head.value2(NodeKeys.COLUMN_NUMBER) shouldBe 0
       methods.head.value2(NodeKeys.LINE_NUMBER_END) shouldBe 3

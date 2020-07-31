@@ -12,10 +12,6 @@ public class GotoStatement extends JumpStatement {
     return getChild(0).getEscapedCodeStr();
   }
 
-  public String getEscapedCodeStr() {
-    return "goto " + getTargetName() + ";";
-  }
-
   public void accept(ASTNodeVisitor visitor) {
     visitor.visit(this);
   }

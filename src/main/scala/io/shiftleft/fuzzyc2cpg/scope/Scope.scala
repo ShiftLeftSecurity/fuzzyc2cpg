@@ -1,4 +1,4 @@
-package io.shiftleft.fuzzyc2cpg.passes.astcreation
+package io.shiftleft.fuzzyc2cpg.scope
 
 /**
   * Handles the scope stack for tracking identifier to variable relation.

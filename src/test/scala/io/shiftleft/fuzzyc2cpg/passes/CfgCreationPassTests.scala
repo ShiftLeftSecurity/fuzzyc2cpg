@@ -2,6 +2,7 @@ package io.shiftleft.fuzzyc2cpg.passes
 
 import better.files.File
 import io.shiftleft.codepropertygraph.Cpg
+import io.shiftleft.fuzzyc2cpg.adapter.{AlwaysEdge, CaseEdge, CfgEdgeType, FalseEdge, TrueEdge}
 import io.shiftleft.passes.IntervalKeyPool
 import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.semanticcpg.language._
@@ -435,7 +436,7 @@ class CfgFixture(file1Code: String) {
 
   def expected(pairs: (String, CfgEdgeType)*): Set[String] = {
     pairs.map {
-      case (code, _) =>
+      case (code, cfgEdgeType) =>
         codeToNode(code).start.code.head
     }.toSet
   }

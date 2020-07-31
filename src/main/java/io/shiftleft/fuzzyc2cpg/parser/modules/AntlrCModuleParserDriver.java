@@ -1,42 +1,42 @@
-package io.shiftleft.fuzzyc2cpg.parser.functions;
+package io.shiftleft.fuzzyc2cpg.parser.modules;
 
-import io.shiftleft.fuzzyc2cpg.FunctionLexer;
-import io.shiftleft.fuzzyc2cpg.FunctionParser;
+import io.shiftleft.fuzzyc2cpg.ModuleLexer;
+import io.shiftleft.fuzzyc2cpg.ModuleParser;
 import io.shiftleft.fuzzyc2cpg.parser.AntlrParserDriver;
 import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class AntlrCFunctionParserDriver extends AntlrParserDriver {
+public class AntlrCModuleParserDriver extends AntlrParserDriver {
 
-  public AntlrCFunctionParserDriver() {
+  public AntlrCModuleParserDriver() {
     super();
-    setListener(new CFunctionParseTreeListener(this));
+    setListener(new CModuleParserTreeListener(this));
   }
 
   @Override
   public ParseTree parseTokenStreamImpl(TokenSubStream tokens) {
-    FunctionParser parser = new FunctionParser(tokens);
+    ModuleParser parser = new ModuleParser(tokens);
     setAntlrParser(parser);
     ParseTree tree = null;
 
     try {
       setSLLMode(parser);
-      tree = parser.statements();
+      tree = parser.code();
     } catch (RuntimeException ex) {
       if (isRecognitionException(ex)) {
         tokens.reset();
         setLLStarMode(parser);
-        tree = parser.statements();
+        tree = parser.code();
       }
-
     }
     return tree;
   }
 
   @Override
   public Lexer createLexer(CharStream input) {
-    return new FunctionLexer(input);
+    return new ModuleLexer(input);
   }
+
 }
