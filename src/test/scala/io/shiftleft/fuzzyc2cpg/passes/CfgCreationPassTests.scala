@@ -183,14 +183,6 @@ class CfgCreationPassTests extends WordSpec with Matchers {
         succOf("y") shouldBe expected(("x", TrueEdge), ("z", FalseEdge))
         succOf("z") shouldBe expected(("x", TrueEdge), ("RET", FalseEdge))
       }
-
-    "be correct for do-while-loop with empty body" in
-      new CfgFixture("do { } while(x > 1);") {
-        succOf("func ()") shouldBe expected(("x", AlwaysEdge))
-        succOf("1") shouldBe expected(("x > 1", AlwaysEdge))
-        succOf("x > 1") shouldBe expected(("x", TrueEdge), ("RET", FalseEdge))
-      }
-
   }
 
   "Cfg for for-loop" should {
@@ -308,28 +300,24 @@ class CfgCreationPassTests extends WordSpec with Matchers {
       new CfgFixture("x; goto l1; y; l1:") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("goto l1;", AlwaysEdge))
-        succOf("goto l1;") shouldBe expected(("l1:", AlwaysEdge))
-        succOf("l1:") shouldBe expected(("RET", AlwaysEdge))
-        succOf("y") shouldBe expected(("l1:", AlwaysEdge))
+        succOf("goto l1;") shouldBe expected(("RET", AlwaysEdge))
+        succOf("y") shouldBe expected(("RET", AlwaysEdge))
       }
 
     "be correct for multiple labels" in
       new CfgFixture("x;goto l1; l2: y; l1:") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("goto l1;", AlwaysEdge))
-        succOf("goto l1;") shouldBe expected(("l1:", AlwaysEdge))
-        succOf("y") shouldBe expected(("l1:", AlwaysEdge))
-        succOf("l1:") shouldBe expected(("RET", AlwaysEdge))
+        succOf("goto l1;") shouldBe expected(("RET", AlwaysEdge))
+        succOf("y") shouldBe expected(("RET", AlwaysEdge))
       }
 
     "be correct for multiple labels on same spot" in
       new CfgFixture("x;goto l2;y;l1:l2:") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
         succOf("x") shouldBe expected(("goto l2;", AlwaysEdge))
-        succOf("goto l2;") shouldBe expected(("l2:", AlwaysEdge))
-        succOf("y") shouldBe expected(("l1:", AlwaysEdge))
-        succOf("l1:") shouldBe expected(("l2:", AlwaysEdge))
-        succOf("l2:") shouldBe expected(("RET", AlwaysEdge))
+        succOf("goto l2;") shouldBe expected(("RET", AlwaysEdge))
+        succOf("y") shouldBe expected(("RET", AlwaysEdge))
       }
   }
 
@@ -337,69 +325,54 @@ class CfgCreationPassTests extends WordSpec with Matchers {
     "be correct with one case" in
       new CfgFixture("switch (x) { case 1: y; }") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("case 1:", CaseEdge), ("RET", CaseEdge))
-        succOf("case 1:") shouldBe expected(("y", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("RET", CaseEdge))
         succOf("y") shouldBe expected(("RET", AlwaysEdge))
       }
 
     "be correct with multiple cases" in
       new CfgFixture("switch (x) { case 1: y; case 2: z;}") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("case 1:", CaseEdge), ("case 2:", CaseEdge), ("RET", CaseEdge))
-        succOf("case 1:") shouldBe expected(("y", AlwaysEdge))
-        succOf("y") shouldBe expected(("case 2:", AlwaysEdge))
-        succOf("case 2:") shouldBe expected(("z", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("z", CaseEdge), ("RET", CaseEdge))
+        succOf("y") shouldBe expected(("z", AlwaysEdge))
         succOf("z") shouldBe expected(("RET", AlwaysEdge))
       }
 
     "be correct with multiple cases on same spot" in
       new CfgFixture("switch (x) { case 1: case 2: y; }") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("case 1:", CaseEdge), ("case 2:", CaseEdge), ("RET", CaseEdge))
-        succOf("case 1:") shouldBe expected(("case 2:", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("RET", CaseEdge))
         succOf("y") shouldBe expected(("RET", AlwaysEdge))
       }
 
     "be correct with multiple cases and multiple cases on same spot" in
       new CfgFixture("switch (x) { case 1: case 2: y; case 3: z;}") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("case 1:", CaseEdge),
-                                      ("case 2:", CaseEdge),
-                                      ("case 3:", CaseEdge),
-                                      ("RET", CaseEdge))
-        succOf("case 1:") shouldBe expected(("case 2:", AlwaysEdge))
-        succOf("case 2:") shouldBe expected(("y", AlwaysEdge))
-        succOf("y") shouldBe expected(("case 3:", AlwaysEdge))
-        succOf("case 3:") shouldBe expected(("z", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("z", CaseEdge), ("RET", CaseEdge))
+        succOf("y") shouldBe expected(("z", AlwaysEdge))
         succOf("z") shouldBe expected(("RET", AlwaysEdge))
       }
 
     "be correct with default case" in
       new CfgFixture("switch (x) { default: y; }") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("default:", CaseEdge))
-        succOf("default:") shouldBe expected(("y", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge))
         succOf("y") shouldBe expected(("RET", AlwaysEdge))
       }
 
     "be correct for case and default combined" in
       new CfgFixture("switch (x) { case 1: y; break; default: z;}") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("case 1:", CaseEdge), ("default:", CaseEdge))
-        succOf("case 1:") shouldBe expected(("y", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge), ("z", CaseEdge))
         succOf("y") shouldBe expected(("break;", AlwaysEdge))
         succOf("break;") shouldBe expected(("RET", AlwaysEdge))
-        succOf("default:") shouldBe expected(("z", AlwaysEdge))
         succOf("z") shouldBe expected(("RET", AlwaysEdge))
       }
 
     "be correct for nested switch" in
-      new CfgFixture("switch (x) { case 1: switch(y) { default: z; } }") {
+      new CfgFixture("switch (x) { default: switch(y) { default: z; } }") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("case 1:", CaseEdge), ("RET", CaseEdge))
-        succOf("case 1:") shouldBe expected(("y", AlwaysEdge))
-        succOf("y") shouldBe expected(("default:", CaseEdge))
-        succOf("default:") shouldBe expected(("z", AlwaysEdge))
+        succOf("x") shouldBe expected(("y", CaseEdge))
+        succOf("y") shouldBe expected(("z", CaseEdge))
         succOf("z") shouldBe expected(("RET", AlwaysEdge))
       }
   }

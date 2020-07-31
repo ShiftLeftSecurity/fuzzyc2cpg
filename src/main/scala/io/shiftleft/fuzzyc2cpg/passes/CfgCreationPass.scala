@@ -69,10 +69,12 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private var markerStack = List[Option[nodes.CfgNode]]()
   private case class FringeElement(node: nodes.CfgNode, cfgEdgeType: CfgEdgeType)
   private var labeledNodes = Map[String, nodes.CfgNode]()
+  private var pendingGotoLabels = List[String]()
+  private var pendingCaseLabels = List[String]()
   private var returns = List[nodes.CfgNode]()
   private val breakStack = new LayeredStack[nodes.CfgNode]()
   private val continueStack = new LayeredStack[nodes.CfgNode]()
-  private val caseStack = new LayeredStack[nodes.CfgNode]()
+  private val caseStack = new LayeredStack[(nodes.CfgNode, Boolean)]()
   private var gotos = List[(nodes.CfgNode, String)]()
 
   def run(): Iterator[DiffGraph] = {
@@ -164,16 +166,10 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
   private def handleJumpTarget(n: nodes.JumpTarget): Unit = {
     val labelName = n.name
     if (labelName.startsWith("case") || labelName.startsWith("default")) {
-      // Under normal conditions this is always true.
-      // But if the parser missed a switch statement, caseStack
-      // might be empty.
-      if (caseStack.numberOfLayers > 0) {
-        caseStack.store(n)
-      }
+      pendingCaseLabels = labelName :: pendingCaseLabels
     } else {
-      labeledNodes = labeledNodes + (labelName -> n)
+      pendingGotoLabels = labelName :: pendingGotoLabels
     }
-    extendCfg(n)
   }
 
   private def handleConditionalExpression(call: nodes.Call): Unit = {
@@ -216,7 +212,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     extendCfg(node)
     // Under normal conditions this is always true.
     // But if the parser missed a loop or switch statement, breakStack
-    // might be empty.
+    // might by empty.
     if (breakStack.numberOfLayers > 0) {
       fringe = Nil
       breakStack.store(node)
@@ -227,7 +223,7 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     extendCfg(node)
     // Under normal conditions this is always true.
     // But if the parser missed a loop statement, continueStack
-    // might be empty.
+    // might by empty.
     if (continueStack.numberOfLayers > 0) {
       fringe = Nil
       continueStack.store(node)
@@ -370,13 +366,15 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
     node.start.whenTrue.foreach(postOrderLeftToRightExpand)
     val switchFringe = fringe
 
-    caseStack.getTopElements.foreach { caseNode =>
-      fringe = conditionFringe
-      extendCfg(caseNode)
+    caseStack.getTopElements.foreach {
+      case (caseNode, _) =>
+        fringe = conditionFringe
+        extendCfg(caseNode)
     }
 
-    val hasDefaultCase = caseStack.getTopElements.exists { caseNode =>
-      caseNode.asInstanceOf[nodes.JumpTarget].name == "default"
+    val hasDefaultCase = caseStack.getTopElements.exists {
+      case (_, isDefault) =>
+        isDefault
     }
 
     fringe = switchFringe.add(breakStack.getTopElements, AlwaysEdge)
@@ -436,6 +434,25 @@ class CfgCreatorForMethod(entryNode: nodes.Method) {
       val leadingNoneLength = markerStack.segmentLength(_.isEmpty, 0)
       markerStack = List.fill(leadingNoneLength)(Some(dstNode)) ++ markerStack
         .drop(leadingNoneLength)
+    }
+
+    if (pendingGotoLabels.nonEmpty) {
+      pendingGotoLabels.foreach { label =>
+        labeledNodes = labeledNodes + (label -> dstNode)
+      }
+      pendingGotoLabels = List()
+    }
+
+    // TODO at the moment we discard the case labels
+    if (pendingCaseLabels.nonEmpty) {
+      // Under normal conditions this is always true.
+      // But if the parser missed a switch statement, caseStack
+      // might by empty.
+      if (caseStack.numberOfLayers > 0) {
+        val containsDefaultLabel = pendingCaseLabels.contains("default")
+        caseStack.store((dstNode, containsDefaultLabel))
+      }
+      pendingCaseLabels = List()
     }
   }
 
