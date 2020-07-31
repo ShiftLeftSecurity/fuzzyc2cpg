@@ -4,22 +4,24 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.passes.{DiffGraph, ParallelCpgPass}
 import io.shiftleft.semanticcpg.language._
 import io.shiftleft.codepropertygraph.generated.nodes
+import io.shiftleft.codepropertygraph.generated.nodes.Method
 
 /**
   * A pass that ensures that for any method m for which a body exists,
   * there are no more method stubs for corresponding declarations.
   * */
 class StubRemovalPass(cpg: Cpg) extends ParallelCpgPass[nodes.Method](cpg) {
-  override def partIterator: Iterator[nodes.Method] =
-    cpg.method.isNotStub.iterator
 
-  override def runOnPart(method: nodes.Method): Iterator[DiffGraph] = {
+  private val sigToMethodWithDef = cpg.method.isNotStub.map(m => (m.signature -> true)).toMap
+
+  override def partIterator: Iterator[Method] =
+    cpg.method.isStub.toList
+      .filter(m => sigToMethodWithDef.contains(m.signature))
+      .iterator
+
+  override def runOnPart(stub: Method): Iterator[DiffGraph] = {
     val diffGraph = DiffGraph.newBuilder
-    cpg.method.isStub.where(m => m.signature == method.signature).foreach { stubMethod =>
-      stubMethod.ast.l.foreach { node =>
-        diffGraph.removeNode(node.id2())
-      }
-    }
+    stub.ast.foreach(diffGraph.removeNode)
     Iterator(diffGraph.build)
   }
 }
