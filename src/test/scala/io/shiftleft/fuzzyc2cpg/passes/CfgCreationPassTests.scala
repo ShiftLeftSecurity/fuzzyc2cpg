@@ -8,17 +8,10 @@ import io.shiftleft.semanticcpg.language._
 
 import scala.jdk.CollectionConverters._
 import io.shiftleft.codepropertygraph.generated.nodes
-import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.Cfg.{AlwaysEdge, CaseEdge, CfgEdgeType, FalseEdge, TrueEdge}
 
 class CfgCreationPassTests extends WordSpec with Matchers {
 
   "Cfg" should {
-
-    "contain an entry and exit node at least" in new CfgFixture("") {
-      succOf("func ()") shouldBe expected(("RET", AlwaysEdge))
-      succOf("RET") shouldBe expected()
-    }
-
     "be correct for decl statement with assignment" in
       new CfgFixture("int x = 1;") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
@@ -293,12 +286,12 @@ class CfgCreationPassTests extends WordSpec with Matchers {
 
     "be correct with empty condition with empty block" in
       new CfgFixture("for (;;) ;") {
-        succOf("func ()") shouldBe expected(("RET", AlwaysEdge))
+        succOf("func ()") shouldBe expected()
       }
 
     "be correct when empty for-loop is skipped" in
       new CfgFixture("for (;;) {}; return;") {
-        succOf("func ()") shouldBe expected(("return;", AlwaysEdge))
+        succOf("func ()") shouldBe expected()
         succOf("return;") shouldBe expected(("RET", AlwaysEdge))
       }
 
