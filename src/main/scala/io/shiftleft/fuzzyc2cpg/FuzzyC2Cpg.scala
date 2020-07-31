@@ -23,8 +23,7 @@ class FuzzyC2Cpg() {
                                    includePaths: Set[String],
                                    defines: Set[String],
                                    undefines: Set[String],
-                                   preprocessorExecutable: String,
-                                   optionalOutputPath: Option[String] = None): Unit = {
+                                   preprocessorExecutable: String): Unit = {
     // Create temp dir to store preprocessed source.
     val preprocessedPath = Files.createTempDirectory("fuzzyc2cpg_preprocessed_")
     logger.info(s"Writing preprocessed files to [$preprocessedPath]")
@@ -55,7 +54,7 @@ class FuzzyC2Cpg() {
 
     if (exitCode == 0) {
       logger.info(s"Preprocessing complete, files written to [$preprocessedPath], starting CPG generation...")
-      val cpg = runAndOutput(Set(preprocessedPath.toString), sourceFileExtensions, optionalOutputPath)
+      val cpg = runAndOutput(Set(preprocessedPath.toString), sourceFileExtensions)
       cpg.close()
     } else {
       logger.error(
@@ -82,10 +81,6 @@ class FuzzyC2Cpg() {
     cpg
   }
 
-  /**
-    * Create an empty CPG, backed by the file at `optionalOutputPath` or
-    * in-memory if `optionalOutputPath` is empty.
-    * */
   private def initCpg(optionalOutputPath: Option[String]): Cpg = {
     val odbConfig = optionalOutputPath
       .map { outputPath =>
@@ -118,16 +113,13 @@ object FuzzyC2Cpg {
         val fuzzyc = new FuzzyC2Cpg()
 
         if (config.usePreprocessor) {
-          fuzzyc.runWithPreprocessorAndOutput(
-            config.inputPaths,
-            config.sourceFileExtensions,
-            config.includeFiles,
-            config.includePaths,
-            config.defines,
-            config.undefines,
-            config.preprocessorExecutable,
-            Some(config.outputPath)
-          )
+          fuzzyc.runWithPreprocessorAndOutput(config.inputPaths,
+                                              config.sourceFileExtensions,
+                                              config.includeFiles,
+                                              config.includePaths,
+                                              config.defines,
+                                              config.undefines,
+                                              config.preprocessorExecutable)
         } else {
           val cpg = fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(config.outputPath))
           cpg.close()
