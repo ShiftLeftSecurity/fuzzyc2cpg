@@ -31,7 +31,6 @@ class AstCreationPass(filenames: List[String], cpg: Cpg, keyPool: IntervalKeyPoo
     )
     diffGraph.addNode(fileNode)
     diffGraph.addNode(namespaceBlock)
-    diffGraph.addEdge(namespaceBlock, fileNode, EdgeTypes.SOURCE_FILE)
     diffGraph.addEdge(fileNode, namespaceBlock, EdgeTypes.AST)
 
     val driver = createDriver(fileNode, namespaceBlock)
