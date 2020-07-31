@@ -22,10 +22,7 @@ class CMetaDataPass(cpg: Cpg, keyPool: Option[KeyPool] = None) extends CpgPass(c
         name = Defines.globalNamespaceName,
         fullName = CMetaDataPass.getGlobalNamespaceBlockFullName(None)
       )
-      val fileWithNoName = nodes.NewFile(name = "")
-      diffGraph.addNode(fileWithNoName)
       diffGraph.addNode(node)
-      diffGraph.addEdge(node, fileWithNoName, EdgeTypes.SOURCE_FILE)
     }
 
     val diffGraph = DiffGraph.newBuilder
