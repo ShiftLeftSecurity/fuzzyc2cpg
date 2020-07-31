@@ -1,6 +1,5 @@
 package io.shiftleft.fuzzyc2cpg.parsetreetoast;
 
-import io.shiftleft.fuzzyc2cpg.passes.astcreation.AntlrCModuleParserDriver;
 import java.util.List;
 
 import org.antlr.v4.runtime.CharStream;
@@ -17,6 +16,7 @@ import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.Parameter;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.ParameterType;
 import io.shiftleft.fuzzyc2cpg.ast.statements.IdentifierDeclStatement;
 import io.shiftleft.fuzzyc2cpg.parser.TokenSubStream;
+import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver;
 
 import static org.junit.Assert.*;
 

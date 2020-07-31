@@ -1,21 +1,35 @@
 package io.shiftleft.fuzzyc2cpg
 
 import org.slf4j.LoggerFactory
-import java.nio.file.Files
-import java.util.concurrent.ConcurrentHashMap
-import better.files.File
-import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.fuzzyc2cpg.passes.{AstCreationPass, CMetaDataPass, CfgCreationPass, StubRemovalPass, TypeNodePass}
-import io.shiftleft.passes.IntervalKeyPool
-import overflowdb.{OdbConfig, OdbGraph}
+import io.shiftleft.codepropertygraph.generated.Languages
+import io.shiftleft.fuzzyc2cpg.Utils.{getGlobalNamespaceBlockFullName, newEdge, newNode, _}
+import io.shiftleft.fuzzyc2cpg.output.CpgOutputModuleFactory
+import io.shiftleft.fuzzyc2cpg.output.protobuf.OutputModuleFactory
+import io.shiftleft.fuzzyc2cpg.parser.modules.AntlrCModuleParserDriver
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Edge.EdgeType
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node
+import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
+import io.shiftleft.proto.cpg.Cpg.{CpgStruct, NodePropertyName}
+import java.nio.file.{Files, Path}
+import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
+
+import io.shiftleft.passes.KeyPool
+
 import scala.collection.mutable.ListBuffer
+import scala.collection.parallel.CollectionConverters._
 import scala.util.control.NonFatal
 import scala.jdk.CollectionConverters._
 
 case class Global(usedTypes: ConcurrentHashMap[String, Boolean] = new ConcurrentHashMap[String, Boolean]())
 
-class FuzzyC2Cpg() {
+class FuzzyC2Cpg(outputModuleFactory: CpgOutputModuleFactory) {
   import FuzzyC2Cpg.logger
+
+  def this(outputPath: String) = {
+    this(new OutputModuleFactory(outputPath, true).asInstanceOf[CpgOutputModuleFactory])
+  }
+
+  private val cache = new FuzzyC2CpgCache
 
   def runWithPreprocessorAndOutput(sourcePaths: Set[String],
                                    sourceFileExtensions: Set[String],
@@ -23,8 +37,7 @@ class FuzzyC2Cpg() {
                                    includePaths: Set[String],
                                    defines: Set[String],
                                    undefines: Set[String],
-                                   preprocessorExecutable: String,
-                                   optionalOutputPath: Option[String] = None): Unit = {
+                                   preprocessorExecutable: String): Unit = {
     // Create temp dir to store preprocessed source.
     val preprocessedPath = Files.createTempDirectory("fuzzyc2cpg_preprocessed_")
     logger.info(s"Writing preprocessed files to [$preprocessedPath]")
@@ -55,55 +68,161 @@ class FuzzyC2Cpg() {
 
     if (exitCode == 0) {
       logger.info(s"Preprocessing complete, files written to [$preprocessedPath], starting CPG generation...")
-      val cpg = runAndOutput(Set(preprocessedPath.toString), sourceFileExtensions, optionalOutputPath)
-      cpg.close()
+      runAndOutput(Set(preprocessedPath.toString), sourceFileExtensions)
     } else {
       logger.error(
         s"Error occurred whilst running preprocessor. Log written to [$preprocessorLogFile]. Exit code [$exitCode].")
     }
   }
 
-  def runAndOutput(sourcePaths: Set[String],
-                   sourceFileExtensions: Set[String],
-                   optionalOutputPath: Option[String] = None): Cpg = {
-    val metaDataKeyPool = new IntervalKeyPool(1, 100)
-    val typesKeyPool = new IntervalKeyPool(100, 1000100)
-    val functionKeyPools = KeyPools.obtain(2, 1000101)
-
-    val cpg = initCpg(optionalOutputPath)
+  def runAndOutput(sourcePaths: Set[String], sourceFileExtensions: Set[String]): Unit = {
     val sourceFileNames = SourceFiles.determine(sourcePaths, sourceFileExtensions)
+    val keyPools = KeyPools.obtain(sourceFileNames.size.toLong + 2)
 
-    new CMetaDataPass(cpg, Some(metaDataKeyPool)).createAndApply()
-    val astCreator = new AstCreationPass(sourceFileNames, cpg, functionKeyPools.head)
-    astCreator.createAndApply()
-    new CfgCreationPass(cpg, functionKeyPools.last).createAndApply()
-    new StubRemovalPass(cpg).createAndApply()
-    new TypeNodePass(astCreator.global.usedTypes.keys().asScala.toList, cpg, Some(typesKeyPool)).createAndApply()
-    cpg
+    val fileAndNamespaceKeyPool = keyPools.head
+    val typesKeyPool = keyPools(1)
+    val compilationUnitKeyPools = keyPools.slice(2, keyPools.size)
+
+    addFilesAndNamespaces(fileAndNamespaceKeyPool)
+    val global = addCompilationUnits(sourceFileNames, compilationUnitKeyPools)
+    addFunctionDeclarations(cache)
+    addTypeNodes(global.usedTypes, typesKeyPool)
+    outputModuleFactory.persist()
   }
 
-  /**
-    * Create an empty CPG, backed by the file at `optionalOutputPath` or
-    * in-memory if `optionalOutputPath` is empty.
-    * */
-  private def initCpg(optionalOutputPath: Option[String]): Cpg = {
-    val odbConfig = optionalOutputPath
-      .map { outputPath =>
-        val outFile = File(outputPath)
-        if (outputPath != "" && outFile.exists) {
-          logger.info("Output file exists, removing: " + outputPath)
-          outFile.delete()
-        }
-        OdbConfig.withDefaults.withStorageLocation(outputPath)
-      }
-      .getOrElse {
-        OdbConfig.withDefaults()
-      }
+  private def addFilesAndNamespaces(keyPool: KeyPool): Unit = {
+    val fileAndNamespaceCpg = CpgStruct.newBuilder()
+    createStructuralCpg(keyPool, fileAndNamespaceCpg)
+    val outputModule = outputModuleFactory.create()
+    outputModule.setOutputIdentifier("__structural__")
+    outputModule.persistCpg(fileAndNamespaceCpg)
+  }
 
-    val graph = OdbGraph.open(odbConfig,
-                              io.shiftleft.codepropertygraph.generated.nodes.Factories.allAsJava,
-                              io.shiftleft.codepropertygraph.generated.edges.Factories.allAsJava)
-    new Cpg(graph)
+  // TODO improve fuzzyc2cpg namespace support. Currently, everything
+  // is in the same global namespace so the code below is correct.
+  private def addCompilationUnits(sourceFileNames: List[String], keyPools: List[KeyPool]): Global = {
+    val global = Global()
+    sourceFileNames.zipWithIndex
+      .map { case (filename, i) => (filename, keyPools(i)) }
+      .par
+      .foreach { case (filename, keyPool) => createCpgForCompilationUnit(filename, keyPool, global) }
+    global
+  }
+
+  private def addFunctionDeclarations(cache: FuzzyC2CpgCache): Unit = {
+    cache.sortedSignatures.par.foreach { signature =>
+      cache.getDeclarations(signature).foreach {
+        case (outputIdentifier, bodyCpg) =>
+          val outputModule = outputModuleFactory.create()
+          outputModule.setOutputIdentifier(outputIdentifier)
+          outputModule.persistCpg(bodyCpg)
+      }
+    }
+  }
+
+  private def addTypeNodes(usedTypes: ConcurrentHashMap[String, Boolean], keyPool: KeyPool): Unit = {
+    val cpg = CpgStruct.newBuilder()
+    val outputModule = outputModuleFactory.create()
+    outputModule.setOutputIdentifier("__types__")
+    createTypeNodes(usedTypes, keyPool, cpg)
+    outputModule.persistCpg(cpg)
+  }
+
+  private def fileAndNamespaceGraph(filename: String, keyPool: KeyPool): (Node, Node) = {
+
+    def createFileNode(pathToFile: Path, keyPool: KeyPool): Node = {
+      newNode(NodeType.FILE)
+        .setKey(keyPool.next)
+        .addStringProperty(NodePropertyName.NAME, pathToFile.toAbsolutePath.normalize.toString)
+        .build()
+    }
+
+    val cpg = CpgStruct.newBuilder()
+    val outputModule = outputModuleFactory.create()
+    outputModule.setOutputIdentifier(filename + " fileAndNamespace")
+
+    val pathToFile = new java.io.File(filename).toPath
+    val fileNode = createFileNode(pathToFile, keyPool)
+    val namespaceBlock = createNamespaceBlockNode(Some(pathToFile), keyPool)
+    cpg.addNode(fileNode)
+    cpg.addNode(namespaceBlock)
+    cpg.addEdge(newEdge(EdgeType.AST, namespaceBlock, fileNode))
+    outputModule.persistCpg(cpg)
+    (fileNode, namespaceBlock)
+  }
+
+  private def createNamespaceBlockNode(filePath: Option[Path], keyPool: KeyPool): Node = {
+    newNode(NodeType.NAMESPACE_BLOCK)
+      .setKey(keyPool.next)
+      .addStringProperty(NodePropertyName.NAME, Defines.globalNamespaceName)
+      .addStringProperty(NodePropertyName.FULL_NAME, getGlobalNamespaceBlockFullName(filePath.map(_.toString)))
+      .build
+  }
+
+  private def createTypeNodes(usedTypes: ConcurrentHashMap[String, Boolean],
+                              keyPool: KeyPool,
+                              cpg: CpgStruct.Builder): Unit = {
+    usedTypes
+      .keys()
+      .asScala
+      .toList
+      .sorted
+      .foreach { typeName =>
+        val node = newNode(NodeType.TYPE)
+          .setKey(keyPool.next)
+          .addStringProperty(NodePropertyName.NAME, typeName)
+          .addStringProperty(NodePropertyName.FULL_NAME, typeName)
+          .addStringProperty(NodePropertyName.TYPE_DECL_FULL_NAME, typeName)
+          .build
+        cpg.addNode(node)
+      }
+  }
+
+  private def createStructuralCpg(keyPool: KeyPool, cpg: CpgStruct.Builder): Unit = {
+
+    def addMetaDataNode(cpg: CpgStruct.Builder): Unit = {
+      val metaNode = newNode(NodeType.META_DATA)
+        .setKey(keyPool.next)
+        .addStringProperty(NodePropertyName.LANGUAGE, Languages.C)
+        .build
+      cpg.addNode(metaNode)
+    }
+
+    def addAnyTypeAndNamespaceBlock(cpg: CpgStruct.Builder): Unit = {
+      val globalNamespaceBlockNotInFileNode = createNamespaceBlockNode(None, keyPool)
+      cpg.addNode(globalNamespaceBlockNotInFileNode)
+    }
+
+    addMetaDataNode(cpg)
+    addAnyTypeAndNamespaceBlock(cpg)
+  }
+
+  private def createCpgForCompilationUnit(filename: String, keyPool: KeyPool, global: Global): Unit = {
+    val (fileNode, namespaceBlock) = fileAndNamespaceGraph(filename, keyPool)
+
+    // We call the module parser here and register the `astVisitor` to
+    // receive callbacks as we walk the tree. The method body parser
+    // will the invoked by `astVisitor` as we walk the tree
+
+    val driver = new AntlrCModuleParserDriver()
+    val astVisitor =
+      new AstVisitor(outputModuleFactory, namespaceBlock, keyPool, cache, global)
+    driver.addObserver(astVisitor)
+    driver.setKeyPool(keyPool)
+    driver.setOutputModuleFactory(outputModuleFactory)
+    driver.setFileNode(fileNode)
+
+    try {
+      driver.parseAndWalkFile(filename)
+    } catch {
+      case ex: RuntimeException => {
+        logger.warn("Cannot parse module: " + filename + ", skipping")
+        logger.warn("Complete exception: ", ex)
+      }
+      case _: StackOverflowError => {
+        logger.warn("Cannot parse module: " + filename + ", skipping, StackOverflow")
+      }
+    }
   }
 
 }
@@ -115,22 +234,27 @@ object FuzzyC2Cpg {
   def main(args: Array[String]): Unit = {
     parseConfig(args).foreach { config =>
       try {
-        val fuzzyc = new FuzzyC2Cpg()
+
+        val factory = if (!config.overflowDb) {
+          new OutputModuleFactory(config.outputPath, true)
+            .asInstanceOf[CpgOutputModuleFactory]
+        } else {
+          val queue = new LinkedBlockingQueue[CpgStruct.Builder]()
+          new io.shiftleft.fuzzyc2cpg.output.overflowdb.OutputModuleFactory(config.outputPath, queue)
+        }
+
+        val fuzzyc = new FuzzyC2Cpg(factory)
 
         if (config.usePreprocessor) {
-          fuzzyc.runWithPreprocessorAndOutput(
-            config.inputPaths,
-            config.sourceFileExtensions,
-            config.includeFiles,
-            config.includePaths,
-            config.defines,
-            config.undefines,
-            config.preprocessorExecutable,
-            Some(config.outputPath)
-          )
+          fuzzyc.runWithPreprocessorAndOutput(config.inputPaths,
+                                              config.sourceFileExtensions,
+                                              config.includeFiles,
+                                              config.includePaths,
+                                              config.defines,
+                                              config.undefines,
+                                              config.preprocessorExecutable)
         } else {
-          val cpg = fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(config.outputPath))
-          cpg.close()
+          fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions)
         }
 
       } catch {

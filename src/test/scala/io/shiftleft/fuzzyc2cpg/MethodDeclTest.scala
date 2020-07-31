@@ -16,7 +16,7 @@ class MethodDeclTest extends WordSpec with Matchers {
 
       result.size shouldBe 1
       val signature = result.head.property[String](NodeKeys.SIGNATURE.name).value
-      signature shouldBe "int add (int,int)"
+      signature shouldBe "int(int,int)"
     }
   }
 }
