@@ -1,7 +1,7 @@
 package io.shiftleft.fuzzyc2cpg.passes
 
 import io.shiftleft.codepropertygraph.Cpg
-import io.shiftleft.codepropertygraph.generated.{EdgeTypes, Languages, nodes}
+import io.shiftleft.codepropertygraph.generated.{Languages, nodes}
 import io.shiftleft.fuzzyc2cpg.Defines
 import io.shiftleft.passes.{CpgPass, DiffGraph, KeyPool}
 

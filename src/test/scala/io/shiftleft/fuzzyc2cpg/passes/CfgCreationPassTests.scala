@@ -338,6 +338,13 @@ class CfgCreationPassTests extends WordSpec with Matchers {
         succOf("l1:") shouldBe expected(("l2:", AlwaysEdge))
         succOf("l2:") shouldBe expected(("RET", AlwaysEdge))
       }
+
+    "work correctly with if block" in
+      new CfgFixture("if(foo) goto end; if(bar) { f(x); } end:") {
+        succOf("func ()") shouldBe expected(("foo", AlwaysEdge))
+        succOf("goto end;") shouldBe expected(("end:", AlwaysEdge))
+      }
+
   }
 
   "Cfg for switch" should {
@@ -403,7 +410,7 @@ class CfgCreationPassTests extends WordSpec with Matchers {
     "be correct for nested switch" in
       new CfgFixture("switch (x) { case 1: switch(y) { default: z; } }") {
         succOf("func ()") shouldBe expected(("x", AlwaysEdge))
-        succOf("x") shouldBe expected(("case 1:", CaseEdge), ("RET", CaseEdge))
+        succOf("x") shouldBe expected(("case 1:", CaseEdge), ("default:", CaseEdge))
         succOf("case 1:") shouldBe expected(("y", AlwaysEdge))
         succOf("y") shouldBe expected(("default:", CaseEdge))
         succOf("default:") shouldBe expected(("z", AlwaysEdge))

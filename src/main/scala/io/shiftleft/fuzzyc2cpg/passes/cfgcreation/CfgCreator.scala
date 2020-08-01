@@ -237,7 +237,9 @@ class CfgCreator(entryNode: nodes.Method) {
     val leftCfg = cfgFor(call.argument(1))
     val rightCfg = cfgFor(call.argument(2))
     val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode, TrueEdge) ++ leftCfg.edges ++ rightCfg.edges
-    Cfg(entryNode = leftCfg.entryNode, edges = diffGraphs, fringe = leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(
+    Cfg
+      .from(leftCfg, rightCfg)
+      .copy(entryNode = leftCfg.entryNode, edges = diffGraphs, fringe = leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(
       call)
   }
 
@@ -249,7 +251,9 @@ class CfgCreator(entryNode: nodes.Method) {
     val leftCfg = cfgFor(call.argument(1))
     val rightCfg = cfgFor(call.argument(2))
     val diffGraphs = edgesFromFringeTo(leftCfg, rightCfg.entryNode, FalseEdge) ++ leftCfg.edges ++ rightCfg.edges
-    Cfg(entryNode = leftCfg.entryNode, edges = diffGraphs, fringe = leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(
+    Cfg
+      .from(leftCfg, rightCfg)
+      .copy(entryNode = leftCfg.entryNode, edges = diffGraphs, fringe = leftCfg.fringe ++ rightCfg.fringe) ++ cfgForSingleNode(
       call)
   }
 
@@ -266,11 +270,13 @@ class CfgCreator(entryNode: nodes.Method) {
     val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode, TrueEdge) ++
       edgesFromFringeTo(conditionCfg, falseCfg.entryNode, FalseEdge)
 
-    Cfg(
-      entryNode = conditionCfg.entryNode,
-      edges = conditionCfg.edges ++ trueCfg.edges ++ falseCfg.edges ++ diffGraphs,
-      fringe = trueCfg.fringe ++ falseCfg.fringe
-    ) ++ cfgForSingleNode(call)
+    Cfg
+      .from(conditionCfg, trueCfg, falseCfg)
+      .copy(
+        entryNode = conditionCfg.entryNode,
+        edges = conditionCfg.edges ++ trueCfg.edges ++ falseCfg.edges ++ diffGraphs,
+        fringe = trueCfg.fringe ++ falseCfg.fringe
+      ) ++ cfgForSingleNode(call)
   }
 
   /**
@@ -301,11 +307,13 @@ class CfgCreator(entryNode: nodes.Method) {
       }
     }
 
-    Cfg(
-      entryNode = entryNode,
-      edges = newEdges ++ initExprCfg.edges ++ innerCfg.edges,
-      fringe = conditionCfg.fringe.withEdgeType(FalseEdge) ++ bodyCfg.breaks.map((_, AlwaysEdge))
-    )
+    Cfg
+      .from(initExprCfg, conditionCfg, loopExprCfg, bodyCfg)
+      .copy(
+        entryNode = entryNode,
+        edges = newEdges ++ initExprCfg.edges ++ innerCfg.edges,
+        fringe = conditionCfg.fringe.withEdgeType(FalseEdge) ++ bodyCfg.breaks.map((_, AlwaysEdge))
+      )
   }
 
   /**
@@ -323,11 +331,13 @@ class CfgCreator(entryNode: nodes.Method) {
         edgesFromFringeTo(bodyCfg, conditionCfg.entryNode) ++
         edgesFromFringeTo(conditionCfg, innerCfg.entryNode, TrueEdge)
 
-    Cfg(
-      entryNode = if (bodyCfg != Cfg.empty) { bodyCfg.entryNode } else { conditionCfg.entryNode },
-      edges = diffGraphs ++ bodyCfg.edges ++ conditionCfg.edges,
-      fringe = conditionCfg.fringe.withEdgeType(FalseEdge) ++ bodyCfg.breaks.map((_, AlwaysEdge))
-    )
+    Cfg
+      .from(bodyCfg, conditionCfg, innerCfg)
+      .copy(
+        entryNode = if (bodyCfg != Cfg.empty) { bodyCfg.entryNode } else { conditionCfg.entryNode },
+        edges = diffGraphs ++ bodyCfg.edges ++ conditionCfg.edges,
+        fringe = conditionCfg.fringe.withEdgeType(FalseEdge) ++ bodyCfg.breaks.map((_, AlwaysEdge))
+      )
   }
 
   /**
@@ -341,11 +351,13 @@ class CfgCreator(entryNode: nodes.Method) {
       edgesFromFringeTo(trueCfg, conditionCfg.entryNode) ++
       edges(trueCfg.continues, conditionCfg.entryNode)
 
-    Cfg(
-      entryNode = conditionCfg.entryNode,
-      edges = diffGraphs ++ conditionCfg.edges ++ trueCfg.edges,
-      fringe = conditionCfg.fringe.withEdgeType(FalseEdge) ++ trueCfg.breaks.map((_, AlwaysEdge))
-    )
+    Cfg
+      .from(conditionCfg, trueCfg)
+      .copy(
+        entryNode = conditionCfg.entryNode,
+        edges = diffGraphs ++ conditionCfg.edges ++ trueCfg.edges,
+        fringe = conditionCfg.fringe.withEdgeType(FalseEdge) ++ trueCfg.breaks.map((_, AlwaysEdge))
+      )
   }
 
   /**
@@ -358,12 +370,14 @@ class CfgCreator(entryNode: nodes.Method) {
 
     val hasDefaultCase = bodyCfg.caseLabels.exists(x => x.asInstanceOf[nodes.JumpTarget].name == "default")
 
-    Cfg(
-      entryNode = conditionCfg.entryNode,
-      edges = diffGraphs ++ conditionCfg.edges ++ bodyCfg.edges,
-      fringe = { if (!hasDefaultCase) { conditionCfg.fringe.withEdgeType(FalseEdge) } else { List() } } ++ bodyCfg.breaks
-        .map((_, AlwaysEdge)) ++ bodyCfg.fringe
-    )
+    Cfg
+      .from(conditionCfg, bodyCfg)
+      .copy(
+        entryNode = conditionCfg.entryNode,
+        edges = diffGraphs ++ conditionCfg.edges ++ bodyCfg.edges,
+        fringe = { if (!hasDefaultCase) { conditionCfg.fringe.withEdgeType(FalseEdge) } else { List() } } ++ bodyCfg.breaks
+          .map((_, AlwaysEdge)) ++ bodyCfg.fringe
+      )
   }
 
   /**
@@ -378,17 +392,19 @@ class CfgCreator(entryNode: nodes.Method) {
     val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode) ++
       edgesFromFringeTo(conditionCfg, falseCfg.entryNode)
 
-    Cfg(
-      entryNode = conditionCfg.entryNode,
-      edges = diffGraphs ++ conditionCfg.edges ++ trueCfg.edges ++ falseCfg.edges,
-      fringe = trueCfg.fringe ++ {
-        if (falseCfg.entryNode.isDefined) {
-          falseCfg.fringe
-        } else {
-          conditionCfg.fringe.withEdgeType(FalseEdge)
+    Cfg
+      .from(conditionCfg, trueCfg, falseCfg)
+      .copy(
+        entryNode = conditionCfg.entryNode,
+        edges = diffGraphs ++ conditionCfg.edges ++ trueCfg.edges ++ falseCfg.edges,
+        fringe = trueCfg.fringe ++ {
+          if (falseCfg.entryNode.isDefined) {
+            falseCfg.fringe
+          } else {
+            conditionCfg.fringe.withEdgeType(FalseEdge)
+          }
         }
-      }
-    )
+      )
   }
 
 }

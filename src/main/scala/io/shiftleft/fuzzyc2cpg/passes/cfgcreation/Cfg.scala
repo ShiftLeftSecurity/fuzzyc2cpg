@@ -100,6 +100,16 @@ case class CfgEdge(src: nodes.CfgNode, dst: nodes.CfgNode, edgeType: CfgEdgeType
 
 object Cfg {
 
+  def from(cfgs: Cfg*): Cfg = {
+    Cfg(
+      gotos = cfgs.map(_.gotos).reduceOption((x, y) => x ++ y).getOrElse(List()),
+      breaks = cfgs.map(_.breaks).reduceOption((x, y) => x ++ y).getOrElse(List()),
+      continues = cfgs.map(_.continues).reduceOption((x, y) => x ++ y).getOrElse(List()),
+      caseLabels = cfgs.map(_.caseLabels).reduceOption((x, y) => x ++ y).getOrElse(List()),
+      labeledNodes = cfgs.map(_.labeledNodes).reduceOption((x, y) => x ++ y).getOrElse(Map())
+    )
+  }
+
   /**
     * The safe "null" Cfg.
     * */

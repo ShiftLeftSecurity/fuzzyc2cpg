@@ -29,10 +29,6 @@ class AstCreationPassTests extends WordSpec with Matchers {
         cpg.namespaceBlock.fullName.toSet shouldBe expectedNamespaceFullNames
       }
 
-      "create SOURCE_FILE edges from File to NamespaceBlocks" in {
-        cpg.file.l.size shouldBe 2
-        cpg.file.l.flatMap(f => f.start.namespaceBlock.l.map((f, _))).size shouldBe 2
-      }
     }
   }
 
