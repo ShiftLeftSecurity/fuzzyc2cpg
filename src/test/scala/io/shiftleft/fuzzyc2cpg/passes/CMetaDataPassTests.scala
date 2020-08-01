@@ -28,5 +28,6 @@ class CMetaDataPassTests extends WordSpec with Matchers {
     "create a '<global>' NamespaceBlock" in {
       cpg.namespaceBlock.name.l shouldBe List(Defines.globalNamespaceName)
     }
+
   }
 }

@@ -1,12 +1,8 @@
 package io.shiftleft.fuzzyc2cpg.parser.modules.builder;
 
-import java.util.Stack;
-
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import io.shiftleft.fuzzyc2cpg.ModuleParser.*;
-import io.shiftleft.fuzzyc2cpg.ast.AstNode;
-import io.shiftleft.fuzzyc2cpg.ast.AstNodeBuilder;
 import io.shiftleft.fuzzyc2cpg.ast.expressions.Identifier;
 import io.shiftleft.fuzzyc2cpg.ast.functionDef.ReturnType;
 import io.shiftleft.fuzzyc2cpg.ast.langc.functiondef.FunctionDef;
