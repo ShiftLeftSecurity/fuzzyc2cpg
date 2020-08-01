@@ -289,10 +289,11 @@ class CfgCreator(entryNode: nodes.Method) {
     * */
   private def cfgForForStatement(node: nodes.ControlStructure): Cfg = {
     val children = node.astChildren.l
-    val initExprCfg = children.find(_.order == 1).map(cfgFor).getOrElse(Cfg.empty)
-    val conditionCfg = children.find(_.order == 2).map(cfgFor).getOrElse(Cfg.empty)
-    val loopExprCfg = children.find(_.order == 3).map(cfgFor).getOrElse(Cfg.empty)
-    val bodyCfg = children.find(_.order == 4).map(cfgFor).getOrElse(Cfg.empty)
+    val nLocals = children.count(_.isLocal)
+    val initExprCfg = children.find(_.order == nLocals + 1).map(cfgFor).getOrElse(Cfg.empty)
+    val conditionCfg = children.find(_.order == nLocals + 2).map(cfgFor).getOrElse(Cfg.empty)
+    val loopExprCfg = children.find(_.order == nLocals + 3).map(cfgFor).getOrElse(Cfg.empty)
+    val bodyCfg = children.find(_.order == nLocals + 4).map(cfgFor).getOrElse(Cfg.empty)
 
     val innerCfg = conditionCfg ++ bodyCfg ++ loopExprCfg
     val entryNode = (initExprCfg ++ innerCfg).entryNode
