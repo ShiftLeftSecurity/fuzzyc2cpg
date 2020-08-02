@@ -60,6 +60,12 @@ jobs:
     name: Tag release
     script: sbt ciReleaseTagNextVersion
   - stage: release
+    name: Release to shiftleft artifactory
+    script: sbt 'set publishTo := Some("releases"
+      at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")' "set credentials
+      += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\", \"$JFROG_USER\",
+      \"$JFROG_PASS\")" ciRelease
+  - stage: release
     name: Release to sonatype
     script: sbt ciReleaseSonatype
   - stage: release
