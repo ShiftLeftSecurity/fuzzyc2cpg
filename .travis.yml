@@ -7,8 +7,8 @@ branches:
   - master
 env:
   global:
-  - secure: QRQImE4dgKHqT3dKsUUd8NbrSQLfem0CuY92UkDy6qTuFrLg+1ancbmMglzvUQhCYnVqdRZ9BnbHKNHc+t7sJIY4vqpq610sYaxHilMTYUyKkyt1CCgZoX4OP+g/Xx/veSY+TfKsz1EfsXnTFRbVhGDWUJ5iBnz0uN3ZdqOmivyCLshJ37rygciDW5R7AC7ona/qjkTDme/FgREeH6GZswaQSDWDB/hXJ52Fl68vzsDJtiTkAtczGkmbsP5T9BRNX1PLBPkn1ZIk4sRzul+O4Jy4hbApzV47A9urjo4Ch0hP0N/6HGgQ4sePezd4GlYfhh+6B4Pw4K2gIcyizmZPjBBEwEDwK+mcblvxtWzb90b2ZrLprRE3Vb45JOd8yaDMuSzpL3rUuSZm7obJ2DxtuI2TAjwTezzLTKYyR4rQ3fg9QBX+GnEsm9Dol18A+Dv+4PdxqdPx5iOZo7YUl5JIW2HnRG+DOqngudLBGuL9clBR5a4Y5uuq9+FJKqdkh5rMrcSVsGXr+ORCWbUlkedNDNQDZPhGDKP8LVw4sUuSUfladLjz9zXpIGv/RqbGCwLt2FyoOJCrqR7hzfYZeiXd0XQkntsb2xT1mlkLzWh6Xy+hylzVM/X7fRazZzdwi40nOOAslzQ29ltA3bAOrP32cFeu0KslggEvPWaGZn7Elho=
-  - secure: fjPmhJeIZaydeabQyirtKVshrqdLuFUa8wpJ4r9IDigsvRWqH3TfDBoDATYW6XlT+go7V6TbgqQquJgCa3r16Di67I+ybU/YQajcEOaC27VL0xHLGIc/4U0+qGciKXUxKaKkS8Jt1FGuFSXBsfVRj05f6Y5rL4+Pb2BPOm8qCgsofjjLUZjbult66xBCzhrlakTMkaC/Lno3vO9zzl99RiDobnjE7p0bku2z26WH+C8jEleiouixxzpC0BUwmwSeNru2hTc5J4Np58dS2eihCIWhAQCCtyKQjNqg4ZaCNMbWfZsbLCihSwpQ/raPPOd4E6kSax52siffhukFx6zieh0VO/TKu2EhueCRt8TjLXMfJR6c1gQobDfh+bzVR1Pwh6VB2I11ZmLCGYryqK7x0aMkE2lO/iyYwROavVVIRpRpMuDyc7mHjTMHIvrdeuZy9VElFPn/GQNlTRJXxIZuMgCocNKtFu0Ve68pLylWfLQQ+V9vzqAxpV9tpPgI9CDLByeC7vscOF+OLEqYKRdV1sqU6cbij5YtH5t7+4N4tAcb1toBLxkjvDUsL5kEi9fxlNDDe2r8rKef/deM/OZpKpYQObjEb8hzC21Op1CkkQ2IYZSopgqMywRto5Sw7Nkgw4teI4m3LOjMocOR+kSCSYdfdgiTCGFDeM8lRfHQt9A=
+  - secure: FsZhMotDkax3SKDhqoMQT4iN/SKJYaC8i2+HPZldWwKOwmZ2M9giPoeelUC2pCsdGyJUy21WREzYQqqjQFM9K8MY9ewOvDLrX9MJ65e4tRPNm7IpmctCkST5s0cMS8je+FRz0xYaXc8QVkYl3mxX8+ZTb2KIhCTRNmD25C2tTTld2dhAgwr39UQn1FCPVr8FEpBk7ZdQxUaKICMAFwIR8MP7/+p+S/VhAI8cA3CZKhxBYgxbYD4N8221gqvbh/PLpwDGODGQYkqdtViOe18WH6IcxytsVz68zy4+UvuYdoYpISRQVBnWezAUSYpYjr3UTY5PwpWJQElWIzt6szvacg+KUs2+ZnW+BJYv6NwLJZnO5/oSHTyEnP+8HcmIyPFW5opFnpREcZx3pqfKYhLyv1rRY3jEvfAX5wqueY0yBcZBOhZoUU0PuWkTSZ5HKJMzjxD8BXiisqF+IZSaS+TRwuF4nuBTOBh1JXRbnS7vfsB8GFN/ROgmsXBzj3iM4PGZpMf6M4NKuVBHPBtGrUkg9eNkaw0WzQKDMwcOuagfa8opvkcvpLATD4dYClW1vjZ4yUjVGaxt/OZvoq8UEvdrGgEZgtVOohfB/9cjU7ChpsGQ0mE3AdWY8VXIFkh43a9jiYlwWvrDBsd17P6TygZlybRfxHVpDgH4KUWqy5w2LYo=
+  - secure: LQBAfci8rjfwf6hWctFeutPj3k9voYbU4C9RBOo3jOketKYYyhDtWKZ/elA+RwvLztsnUTJRW5GHZMWTdyPvQxB2/WbtCy/L5f23o4P0Gd5MHJgGAPQpVV+C1g7iaMLn+rjsOyNnNcNesVOOQsVaDW/MQ4Jvl/9NyH0VuNTjtIH1x1XzmYEgD6/S6yxz01stAJslcPL6Qt9GnRyL6/sR0PGOI0w51ETwtcy+nO/ZTlvSCd3wBbH1iQ0A/X2YSDxYPtq1I6D5eRsmVs2Yzp0cAau1pFSBePqgKDkGqiDmbc/8y0KkJUGzQWi/AL8ts4gVz5gJhzH8ovoswgEX8CgqfQj5bBQdCR4QzwDjWKeumdaO8WP65SAnVVMTjgykzdrsFZrXi9ZoSV5Eve6gKOmumkGRXxqETYqWcchhXaiNaMUw40ZGzjIRVBDCWroHxy4crzm0jqfmmvh4bxW8bpO9Br8ZN5duI5HMojvL8WKt8tBAMkd5HJKBQqRbKdJwl1hd8LpJAXVg8EYVgnz3ui+IeyGnazg5k33qulVtkfjmaAexzM6KBcQz8hHr9pfyK23VzEGRSY24oNkatBEOLRH1X+AcNlGrzdXIQGA/+e4Rs3+Y6N8n7chn4Pti2rqwmDrmzjo+6FYbM1kKIZtwm4x1wto3Ofb4HQoHJFJ5k6f/WRY=
 before_install:
 - git fetch --tags
 - if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_EVENT_TYPE" == "push" ]]; then openssl
@@ -43,8 +43,7 @@ jobs:
   - stage: test
     name: Build and test Windows preprocessor
     os: windows
-    env:
-      YARN_GPG=no # GPG causes Travis to hang in Windows.
+    env: YARN_GPG=no
     language: cpp
     script:
     - cmake -G "Visual Studio 15 2017" -A "x64" ./fuzzypp
@@ -55,16 +54,15 @@ jobs:
     - ps -Wla | sort
     - gpgconf --kill gpg-agent
     - ps -Wla | sort
-    - echo $$  
+    - echo $$
   - stage: tag-release
     name: Tag release
     script: sbt ciReleaseTagNextVersion
   - stage: release
     name: Release to shiftleft artifactory
-    script: sbt 'set publishTo := Some("releases"
-      at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")' "set credentials
-      += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\", \"$JFROG_USER\",
-      \"$JFROG_PASS\")" ciRelease
+    script: sbt 'set publishTo := Some("releases" at "https://shiftleft.jfrog.io/shiftleft/libs-release-local")'
+      "set credentials += Credentials(\"Artifactory Realm\", \"shiftleft.jfrog.io\",
+      \"$JFROG_USER\", \"$JFROG_PASS\")" ciRelease
   - stage: release
     name: Release to sonatype
     script: sbt ciReleaseSonatype
@@ -79,17 +77,16 @@ jobs:
       token: "$GITHUB_TOKEN"
       target_commitish: "$TRAVIS_COMMIT"
       file:
-        - "./fuzzyppcli.zip"
+      - "./fuzzyppcli.zip"
   - stage: release
     name: Release Windows preprocessor
     os: windows
-    env:
-      YARN_GPG=no # GPG causes Travis to hang in Windows.
+    env: YARN_GPG=no
     language: cpp
     script: skip
-    before_deploy: 
-      - export TRAVIS_TAG=$(git describe --tags --abbrev=0)
-      - 7z a -r -tzip ./fuzzyppcli-win.zip ./fuzzypp/bin/Release/fuzzyppcli.exe
+    before_deploy:
+    - export TRAVIS_TAG=$(git describe --tags --abbrev=0)
+    - 7z a -r -tzip ./fuzzyppcli-win.zip ./fuzzypp/bin/Release/fuzzyppcli.exe
     deploy:
       edge: true
       provider: releases
@@ -98,7 +95,7 @@ jobs:
       tag_name: "$TRAVIS_TAG"
       target_commitish: "$TRAVIS_COMMIT"
       file:
-        - "./fuzzyppcli-win.zip"
+      - "./fuzzyppcli-win.zip"
     after_deploy: gpgconf --kill gpg-agent
 cache:
   directories:
