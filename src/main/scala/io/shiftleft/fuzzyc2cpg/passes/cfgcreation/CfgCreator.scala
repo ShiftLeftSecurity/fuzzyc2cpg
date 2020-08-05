@@ -5,6 +5,7 @@ import io.shiftleft.codepropertygraph.generated.nodes.CfgNode
 import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.Cfg.CfgEdgeType
 import io.shiftleft.passes.DiffGraph
 import io.shiftleft.semanticcpg.language._
+import overflowdb.traversal.Traversal
 
 /**
   * Translation of abstract syntax trees into control flow graphs
@@ -323,8 +324,8 @@ class CfgCreator(entryNode: nodes.Method) {
     * edges according to the semantics of do-while.
     * */
   private def cfgForDoStatement(node: nodes.ControlStructure): Cfg = {
-    val bodyCfg = node.astChildren.filter(_.order(1)).headOption.map(cfgFor).getOrElse(Cfg.empty)
-    val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val bodyCfg = node.astChildren.where(_.order(1)).headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val conditionCfg = Traversal.fromSingle(node).condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
     val innerCfg = bodyCfg ++ conditionCfg
 
     val diffGraphs =
@@ -346,8 +347,8 @@ class CfgCreator(entryNode: nodes.Method) {
     * where body is optional.
     * */
   private def cfgForWhileStatement(node: nodes.ControlStructure): Cfg = {
-    val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
-    val trueCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val conditionCfg = Traversal.fromSingle(node).condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val trueCfg = Traversal.fromSingle(node).whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
     val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode) ++
       edgesFromFringeTo(trueCfg, conditionCfg.entryNode) ++
       edges(trueCfg.continues, conditionCfg.entryNode)
@@ -365,8 +366,8 @@ class CfgCreator(entryNode: nodes.Method) {
     * CFG creation for switch statements of the form `switch{ case $x: ... }`.
     * */
   private def cfgForSwitchStatement(node: nodes.ControlStructure): Cfg = {
-    val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
-    val bodyCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val conditionCfg = Traversal.fromSingle(node).condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val bodyCfg = Traversal.fromSingle(node).whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
     val diffGraphs = edgesToMultiple(conditionCfg.fringe.map(_._1), bodyCfg.caseLabels, CaseEdge)
 
     val hasDefaultCase = bodyCfg.caseLabels.exists(x => x.asInstanceOf[nodes.JumpTarget].name == "default")
@@ -386,9 +387,9 @@ class CfgCreator(entryNode: nodes.Method) {
     * followed by `else body2`.
     * */
   private def cfgForIfStatement(node: nodes.ControlStructure): Cfg = {
-    val conditionCfg = node.start.condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
-    val trueCfg = node.start.whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
-    val falseCfg = node.start.whenFalse.headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val conditionCfg = Traversal.fromSingle(node).condition.headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val trueCfg = Traversal.fromSingle(node).whenTrue.headOption.map(cfgFor).getOrElse(Cfg.empty)
+    val falseCfg = Traversal.fromSingle(node).whenFalse.headOption.map(cfgFor).getOrElse(Cfg.empty)
 
     val diffGraphs = edgesFromFringeTo(conditionCfg, trueCfg.entryNode) ++
       edgesFromFringeTo(conditionCfg, falseCfg.entryNode)
