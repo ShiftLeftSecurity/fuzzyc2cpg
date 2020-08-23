@@ -6,6 +6,7 @@ import io.shiftleft.passes.IntervalKeyPool
 import io.shiftleft.semanticcpg.language._
 import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.codepropertygraph.generated.{Operators, nodes}
+import overflowdb.traversal._
 
 class AstCreationPassTests extends WordSpec with Matchers {
 
