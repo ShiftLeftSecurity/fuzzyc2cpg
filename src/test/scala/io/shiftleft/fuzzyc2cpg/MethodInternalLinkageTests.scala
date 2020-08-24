@@ -1,42 +1,44 @@
 package io.shiftleft.fuzzyc2cpg
 
-import gremlin.scala._
-import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes}
+import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeysOdb, NodeTypes}
 import org.scalatest.{Matchers, WordSpec}
+import overflowdb.traversal._
+import overflowdb.{Node, PropertyKey}
+
 
 class MethodInternalLinkageTests extends WordSpec with Matchers with TraversalUtils {
   val fixture = CpgTestFixture("methodinternallinkage")
 
-  implicit class VertexListWrapper(vertexList: List[Vertex]) {
-    def expandAst(filterLabels: String*): List[Vertex] = {
+  implicit class VertexListWrapper(vertexList: List[Node]) {
+    def expandAst(filterLabels: String*): List[Node] = {
       if (filterLabels.nonEmpty) {
-        vertexList.flatMap(_.start.out(EdgeTypes.AST).hasLabel(filterLabels.head, filterLabels.tail: _*).l)
+        vertexList.flatMap(_.start.out(EdgeTypes.AST).hasLabel(filterLabels: _*).l)
       } else {
         vertexList.flatMap(_.start.out(EdgeTypes.AST).l)
       }
     }
 
-    def expandRef(): List[Vertex] = {
+    def expandRef(): List[Node] = {
       vertexList.flatMap(_.start.out(EdgeTypes.REF).l)
     }
 
-    def filterOrder(order: Int): List[Vertex] = {
-      vertexList.filter(_.valueOption(NodeKeys.ORDER).getOrElse(-1) == order)
+    def filterOrder(order: Int): List[Node] = {
+        vertexList.to(Traversal).has(NodeKeysOdb.ORDER -> order).l
     }
 
-    def filterName(name: String): List[Vertex] = {
-      vertexList.filter(_.valueOption(NodeKeys.NAME).getOrElse("") == name)
+    def filterName(name: String): List[Node] = {
+      vertexList.to(Traversal).has(NodeKeysOdb.NAME -> name).l
     }
 
-    def checkForSingle[T](label: String, propertyName: Key[T], value: T): Unit = {
+    def checkForSingle[T](label: String, propertyKey: PropertyKey[T], value: T): Unit = {
       vertexList.size shouldBe 1
       vertexList.head.label() shouldBe label
-      vertexList.head.value2(propertyName) shouldBe value
+      vertexList.head.property2[T](propertyKey.name) shouldBe value
     }
 
-    def checkForSingle[T](propertyName: Key[T], value: T): Unit = {
+    def checkForSingle[T](propertyKey: PropertyKey[T], value: T): Unit = {
       vertexList.size shouldBe 1
-      vertexList.head.value2(propertyName) shouldBe value
+      vertexList.head.property2[T](propertyKey.name) shouldBe value
     }
   }
 
@@ -44,55 +46,55 @@ class MethodInternalLinkageTests extends WordSpec with Matchers with TraversalUt
     "be correct for local x in method1" in {
       val method = getMethod("method1")
       val indentifierX = method.expandAst().expandAst().expandAst(NodeTypes.IDENTIFIER)
-      indentifierX.checkForSingle(NodeKeys.NAME, "x")
+      indentifierX.checkForSingle(NodeKeysOdb.NAME, "x")
 
       val localX = indentifierX.expandRef()
-      localX.checkForSingle(NodeTypes.LOCAL, NodeKeys.NAME, "x")
+      localX.checkForSingle(NodeTypes.LOCAL, NodeKeysOdb.NAME, "x")
     }
 
     "be correct for parameter x in method2" in {
       val method = getMethod("method2")
       val indentifierX = method.expandAst().expandAst().expandAst(NodeTypes.IDENTIFIER)
-      indentifierX.checkForSingle(NodeKeys.NAME, "x")
+      indentifierX.checkForSingle(NodeKeysOdb.NAME, "x")
 
       val parameterX = indentifierX.expandRef()
-      parameterX.checkForSingle(NodeTypes.METHOD_PARAMETER_IN, NodeKeys.NAME, "x")
+      parameterX.checkForSingle(NodeTypes.METHOD_PARAMETER_IN, NodeKeysOdb.NAME, "x")
     }
 
     "be correct for all identifiers x, y in method3" in {
       val method = getMethod("method3")
       val outerIdentifierX = method.expandAst().expandAst().filterOrder(3).expandAst(NodeTypes.IDENTIFIER)
-      outerIdentifierX.checkForSingle(NodeKeys.NAME, "x")
+      outerIdentifierX.checkForSingle(NodeKeysOdb.NAME, "x")
       val parameterX = outerIdentifierX.expandRef()
-      parameterX.checkForSingle(NodeTypes.METHOD_PARAMETER_IN, NodeKeys.NAME, "x")
+      parameterX.checkForSingle(NodeTypes.METHOD_PARAMETER_IN, NodeKeysOdb.NAME, "x")
       val expectedParameterX = method.expandAst(NodeTypes.METHOD_PARAMETER_IN)
-      expectedParameterX.checkForSingle(NodeKeys.NAME, "x")
+      expectedParameterX.checkForSingle(NodeKeysOdb.NAME, "x")
       parameterX shouldBe expectedParameterX
 
       val outerIdentifierY = method.expandAst().expandAst().filterOrder(4).expandAst(NodeTypes.IDENTIFIER)
-      outerIdentifierY.checkForSingle(NodeKeys.NAME, "y")
+      outerIdentifierY.checkForSingle(NodeKeysOdb.NAME, "y")
       val outerLocalY = outerIdentifierY.expandRef()
-      outerLocalY.checkForSingle(NodeTypes.LOCAL, NodeKeys.NAME, "y")
+      outerLocalY.checkForSingle(NodeTypes.LOCAL, NodeKeysOdb.NAME, "y")
       val expectedOuterLocalY = method.expandAst().expandAst(NodeTypes.LOCAL)
-      expectedOuterLocalY.checkForSingle(NodeKeys.NAME, "y")
+      expectedOuterLocalY.checkForSingle(NodeKeysOdb.NAME, "y")
       outerLocalY shouldBe expectedOuterLocalY
 
       val nestedBlock = method.expandAst().expandAst(NodeTypes.BLOCK)
 
       val nestedIdentifierX = nestedBlock.expandAst().filterOrder(3).expandAst(NodeTypes.IDENTIFIER)
-      nestedIdentifierX.checkForSingle(NodeKeys.NAME, "x")
+      nestedIdentifierX.checkForSingle(NodeKeysOdb.NAME, "x")
       val nestedLocalX = nestedIdentifierX.expandRef()
-      nestedLocalX.checkForSingle(NodeTypes.LOCAL, NodeKeys.NAME, "x")
+      nestedLocalX.checkForSingle(NodeTypes.LOCAL, NodeKeysOdb.NAME, "x")
       val expectedNestedLocalX = nestedBlock.expandAst(NodeTypes.LOCAL).filterName("x")
-      expectedNestedLocalX.checkForSingle(NodeKeys.NAME, "x")
+      expectedNestedLocalX.checkForSingle(NodeKeysOdb.NAME, "x")
       nestedLocalX shouldBe expectedNestedLocalX
 
       val nestedIdentifierY = nestedBlock.expandAst().filterOrder(4).expandAst(NodeTypes.IDENTIFIER)
-      nestedIdentifierY.checkForSingle(NodeKeys.NAME, "y")
+      nestedIdentifierY.checkForSingle(NodeKeysOdb.NAME, "y")
       val nestedLocalY = nestedIdentifierY.expandRef()
-      nestedLocalY.checkForSingle(NodeTypes.LOCAL, NodeKeys.NAME, "y")
+      nestedLocalY.checkForSingle(NodeTypes.LOCAL, NodeKeysOdb.NAME, "y")
       val expectedNestedLocalY = nestedBlock.expandAst(NodeTypes.LOCAL).filterName("y")
-      expectedNestedLocalY.checkForSingle(NodeKeys.NAME, "y")
+      expectedNestedLocalY.checkForSingle(NodeKeysOdb.NAME, "y")
       nestedLocalY shouldBe expectedNestedLocalY
     }
   }

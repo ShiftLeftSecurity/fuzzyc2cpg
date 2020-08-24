@@ -1,8 +1,7 @@
 package io.shiftleft.fuzzyc2cpg
 
+import io.shiftleft.codepropertygraph.generated.{NodeKeysOdb, NodeTypes}
 import org.scalatest.{Matchers, WordSpec}
-
-import io.shiftleft.codepropertygraph.generated.{NodeKeys, NodeTypes}
 
 class MethodDeclTest extends WordSpec with Matchers {
 
@@ -10,12 +9,12 @@ class MethodDeclTest extends WordSpec with Matchers {
 
   "MethodDeclTest" should {
     "omit the method declaration in presence of a definition" in {
-      val result = fixture.V
-        .hasLabel(NodeTypes.METHOD)
+      val result = fixture.traversalSource
+        .label(NodeTypes.METHOD)
         .l
 
       result.size shouldBe 1
-      val signature = result.head.property[String](NodeKeys.SIGNATURE.name).value
+      val signature = result.head.property2[String](NodeKeysOdb.SIGNATURE.name)
       signature shouldBe "int add (int,int)"
     }
   }
