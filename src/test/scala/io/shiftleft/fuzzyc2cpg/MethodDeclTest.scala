@@ -1,6 +1,6 @@
 package io.shiftleft.fuzzyc2cpg
 
-import io.shiftleft.codepropertygraph.generated.{NodeKeysOdb, NodeTypes}
+import io.shiftleft.codepropertygraph.generated.{NodeKeys, NodeTypes}
 import org.scalatest.{Matchers, WordSpec}
 
 class MethodDeclTest extends WordSpec with Matchers {
@@ -14,7 +14,7 @@ class MethodDeclTest extends WordSpec with Matchers {
         .l
 
       result.size shouldBe 1
-      val signature = result.head.property2[String](NodeKeysOdb.SIGNATURE.name)
+      val signature = result.head.property(NodeKeys.SIGNATURE)
       signature shouldBe "int add (int,int)"
     }
   }

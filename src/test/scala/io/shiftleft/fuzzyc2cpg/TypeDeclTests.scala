@@ -1,8 +1,9 @@
 package io.shiftleft.fuzzyc2cpg
 
-import io.shiftleft.codepropertygraph.generated.{NodeKeys, NodeKeysOdb}
+import io.shiftleft.codepropertygraph.generated.NodeKeys
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.scalatest.{Matchers, WordSpec}
+import overflowdb._
 
 class TypeDeclTests extends WordSpec with Matchers {
   val fixture = CpgTestFixture("typedecl")
@@ -12,10 +13,10 @@ class TypeDeclTests extends WordSpec with Matchers {
       val typeDeclNodes = fixture
         .traversalSource
         .label(NodeType.TYPE_DECL.toString)
-        .has(NodeKeysOdb.NAME -> "Foo")
+        .has(NodeKeys.NAME -> "Foo")
         .l
       typeDeclNodes.size shouldBe 1
-      typeDeclNodes.head.value[Boolean](NodeKeys.IS_EXTERNAL.name) shouldBe false
+      typeDeclNodes.head.property(NodeKeys.IS_EXTERNAL) shouldBe false
     }
 
     "contain three member nodes" in {
@@ -33,9 +34,7 @@ class TypeDeclTests extends WordSpec with Matchers {
     }
 
     "contain correct code fields for all members" in {
-      val members = fixture.traversalSource.label(NodeType.MEMBER.toString).l
-      members.map(_.value[String]("CODE")).toSet shouldBe
-        Set("x", "y", "*foo")
+      fixture.traversalSource.label(NodeType.MEMBER.toString).property(NodeKeys.CODE).toSet shouldBe Set("x", "y", "*foo")
     }
 
   }

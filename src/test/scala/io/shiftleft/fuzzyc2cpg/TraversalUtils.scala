@@ -1,8 +1,8 @@
 package io.shiftleft.fuzzyc2cpg
 
-import io.shiftleft.codepropertygraph.generated.{NodeKeysOdb, NodeTypes}
+import io.shiftleft.codepropertygraph.generated.{NodeKeys, NodeTypes}
 import org.scalatest.Matchers
-import overflowdb.Node
+import overflowdb._
 
 trait TraversalUtils extends Matchers {
   val fixture: CpgTestFixture
@@ -12,7 +12,7 @@ trait TraversalUtils extends Matchers {
       fixture
         .traversalSource
         .label(NodeTypes.METHOD)
-        .has(NodeKeysOdb.NAME -> name)
+        .has(NodeKeys.NAME -> name)
         .l
 
     result.size shouldBe 1

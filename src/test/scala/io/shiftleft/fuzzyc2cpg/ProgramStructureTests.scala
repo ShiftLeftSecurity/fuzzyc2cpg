@@ -2,9 +2,10 @@ package io.shiftleft.fuzzyc2cpg
 
 import java.nio.file.Paths
 
-import io.shiftleft.codepropertygraph.generated.NodeKeysOdb
+import io.shiftleft.codepropertygraph.generated.NodeKeys
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.scalatest.{Matchers, WordSpec}
+import overflowdb._
 
 class ProgramStructureTests extends WordSpec with Matchers {
   val fixture = CpgTestFixture("structure")
@@ -16,7 +17,7 @@ class ProgramStructureTests extends WordSpec with Matchers {
         fixture
           .traversalSource
           .label(NodeType.NAMESPACE_BLOCK.toString)
-          .has(NodeKeysOdb.FULL_NAME -> Defines.globalNamespaceName)
+          .has(NodeKeys.FULL_NAME -> Defines.globalNamespaceName)
           .l
 
       namespaceBlocks.size shouldBe 1
@@ -26,7 +27,7 @@ class ProgramStructureTests extends WordSpec with Matchers {
       val fileName = fixture
         .traversalSource
         .label(NodeType.FILE.toString)
-        .property(NodeKeysOdb.NAME)
+        .property(NodeKeys.NAME)
         .headOption
       fileName.isDefined shouldBe true
       fileName.head should not contain ".."
