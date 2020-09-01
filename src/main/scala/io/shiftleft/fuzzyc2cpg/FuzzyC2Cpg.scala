@@ -3,11 +3,14 @@ package io.shiftleft.fuzzyc2cpg
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
+
 import better.files.File
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.passes.{AstCreationPass, CMetaDataPass, CfgCreationPass, StubRemovalPass, TypeNodePass}
 import io.shiftleft.passes.IntervalKeyPool
+import io.shiftleft.x2cpg.SourceFiles
 import overflowdb.{OdbConfig, OdbGraph}
+
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import scala.jdk.CollectionConverters._
