@@ -120,6 +120,6 @@ developers := List(
     url("https://github.com/julianthome")
   )
 )
-// publishTo := sonatypePublishToBundle.value
+publishTo := sonatypePublishToBundle.value
 Global / useGpg := false
 Global / onChangedBuildSource := ReloadOnSourceChanges
