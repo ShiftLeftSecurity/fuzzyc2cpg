@@ -9,6 +9,7 @@ import io.shiftleft.semanticcpg.language._
 import scala.jdk.CollectionConverters._
 import io.shiftleft.codepropertygraph.generated.nodes
 import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.Cfg.{AlwaysEdge, CaseEdge, CfgEdgeType, FalseEdge, TrueEdge}
+import overflowdb.traversal._
 
 class CfgCreationPassTests extends WordSpec with Matchers {
 

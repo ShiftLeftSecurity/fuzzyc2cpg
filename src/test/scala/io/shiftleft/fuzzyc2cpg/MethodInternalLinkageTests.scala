@@ -1,42 +1,44 @@
 package io.shiftleft.fuzzyc2cpg
 
-import gremlin.scala._
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes}
 import org.scalatest.{Matchers, WordSpec}
+import overflowdb._
+import overflowdb.traversal._
+
 
 class MethodInternalLinkageTests extends WordSpec with Matchers with TraversalUtils {
   val fixture = CpgTestFixture("methodinternallinkage")
 
-  implicit class VertexListWrapper(vertexList: List[Vertex]) {
-    def expandAst(filterLabels: String*): List[Vertex] = {
+  implicit class VertexListWrapper(vertexList: List[Node]) {
+    def expandAst(filterLabels: String*): List[Node] = {
       if (filterLabels.nonEmpty) {
-        vertexList.flatMap(_.start.out(EdgeTypes.AST).hasLabel(filterLabels.head, filterLabels.tail: _*).l)
+        vertexList.flatMap(_.start.out(EdgeTypes.AST).hasLabel(filterLabels: _*).l)
       } else {
         vertexList.flatMap(_.start.out(EdgeTypes.AST).l)
       }
     }
 
-    def expandRef(): List[Vertex] = {
+    def expandRef(): List[Node] = {
       vertexList.flatMap(_.start.out(EdgeTypes.REF).l)
     }
 
-    def filterOrder(order: Int): List[Vertex] = {
-      vertexList.filter(_.valueOption(NodeKeys.ORDER).getOrElse(-1) == order)
+    def filterOrder(order: Int): List[Node] = {
+        vertexList.to(Traversal).has(NodeKeys.ORDER -> order).l
     }
 
-    def filterName(name: String): List[Vertex] = {
-      vertexList.filter(_.valueOption(NodeKeys.NAME).getOrElse("") == name)
+    def filterName(name: String): List[Node] = {
+      vertexList.to(Traversal).has(NodeKeys.NAME -> name).l
     }
 
-    def checkForSingle[T](label: String, propertyName: Key[T], value: T): Unit = {
+    def checkForSingle[T](label: String, propertyKey: PropertyKey[T], value: T): Unit = {
       vertexList.size shouldBe 1
       vertexList.head.label() shouldBe label
-      vertexList.head.value2(propertyName) shouldBe value
+      vertexList.head.property(propertyKey) shouldBe value
     }
 
-    def checkForSingle[T](propertyName: Key[T], value: T): Unit = {
+    def checkForSingle[T](propertyKey: PropertyKey[T], value: T): Unit = {
       vertexList.size shouldBe 1
-      vertexList.head.value2(propertyName) shouldBe value
+      vertexList.head.property(propertyKey) shouldBe value
     }
   }
 

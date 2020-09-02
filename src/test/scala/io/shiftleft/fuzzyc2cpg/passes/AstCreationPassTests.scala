@@ -6,6 +6,7 @@ import io.shiftleft.passes.IntervalKeyPool
 import io.shiftleft.semanticcpg.language._
 import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.codepropertygraph.generated.{Operators, nodes}
+import overflowdb.traversal._
 
 class AstCreationPassTests extends WordSpec with Matchers {
 
@@ -94,7 +95,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
         // are created by a backend pass in semanticcpg
         // construction.
 
-        cpg.local.orderBy(_.order).l match {
+        cpg.local.l.sortBy(_.order) match {
           case List(local1, local2) =>
             local1.name shouldBe "local"
             local1.typeFullName shouldBe "int"
@@ -103,7 +104,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
           case _ => fail
         }
 
-        cpg.assignment.orderBy(_.order).l match {
+        cpg.assignment.l.sortBy(_.order) match {
           case List(a1, a2) =>
             List(a1.target.code, a1.source.code) shouldBe List("local", "x")
             List(a2.target.code, a2.source.code) shouldBe List("local2", "y")
@@ -120,7 +121,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
         |  x = y + z;
         |}
       """.stripMargin) { cpg =>
-      cpg.local.orderBy(_.order).name.l shouldBe List("x", "y", "z")
+      cpg.local.l.sortBy(_.order).map(_.name) shouldBe List("x", "y", "z")
 
       cpg.method.assignments.l match {
         case List(assignment) =>
@@ -453,7 +454,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
         .member
         .code("x")
         .name("x")
-        .where(_.typeFullName == "int")
+        .filter(_.typeFullName == "int")
         .size shouldBe 1
     }
 
@@ -504,7 +505,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
       // TODO requires .aliasTypeFullName accessor missing
       cpg.typeDecl
         .name("abc")
-        .where(_.aliasTypeFullName.contains("foo"))
+        .filter(_.aliasTypeFullName.contains("foo"))
         .size shouldBe 1
     }
 
@@ -520,7 +521,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
     ) { cpg =>
       cpg.typeDecl
         .name("Derived")
-        .where(_.inheritsFromTypeFullName == List("Base"))
+        .filter(_.inheritsFromTypeFullName == List("Base"))
         .size shouldBe 1
     }
 

@@ -9,8 +9,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.fuzzyc2cpg.passes.{AstCreationPass, CMetaDataPass, CfgCreationPass, StubRemovalPass, TypeNodePass}
 import io.shiftleft.passes.IntervalKeyPool
 import io.shiftleft.x2cpg.SourceFiles
-import overflowdb.{OdbConfig, OdbGraph}
-
+import overflowdb.{Config, Graph}
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import scala.jdk.CollectionConverters._
@@ -97,15 +96,15 @@ class FuzzyC2Cpg() {
           logger.info("Output file exists, removing: " + outputPath)
           outFile.delete()
         }
-        OdbConfig.withDefaults.withStorageLocation(outputPath)
+        Config.withDefaults.withStorageLocation(outputPath)
       }
       .getOrElse {
-        OdbConfig.withDefaults()
+        Config.withDefaults()
       }
 
-    val graph = OdbGraph.open(odbConfig,
-                              io.shiftleft.codepropertygraph.generated.nodes.Factories.allAsJava,
-                              io.shiftleft.codepropertygraph.generated.edges.Factories.allAsJava)
+    val graph = Graph.open(odbConfig,
+                           io.shiftleft.codepropertygraph.generated.nodes.Factories.allAsJava,
+                           io.shiftleft.codepropertygraph.generated.edges.Factories.allAsJava)
     new Cpg(graph)
   }
 

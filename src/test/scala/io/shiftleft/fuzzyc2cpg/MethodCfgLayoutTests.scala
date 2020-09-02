@@ -1,21 +1,22 @@
 package io.shiftleft.fuzzyc2cpg
 
-import gremlin.scala._
 import io.shiftleft.codepropertygraph.generated.{EdgeTypes, NodeKeys, NodeTypes, Operators}
 import org.scalatest.{Matchers, WordSpec}
+import overflowdb.traversal._
+import overflowdb.{Node, PropertyKey}
 
 class MethodCfgLayoutTests extends WordSpec with Matchers with TraversalUtils {
   val fixture = CpgTestFixture("methodcfglayout")
 
-  implicit class VertexListWrapper(vertexList: List[Vertex]) {
-    def expandCfg(): List[Vertex] = {
+  implicit class VertexListWrapper(vertexList: List[Node]) {
+    def expandCfg(): List[Node] = {
       vertexList.flatMap(_.start.out(EdgeTypes.CFG).l)
     }
 
-    def checkForSingleProperty(label: String, property: Key[String], value: String): Unit = {
+    def checkForSingleProperty(label: String, propertyKey: PropertyKey[String], value: String): Unit = {
       vertexList.size shouldBe 1
       vertexList.head.label shouldBe label
-      vertexList.head.value2(property) shouldBe value
+      vertexList.head.property(propertyKey) shouldBe value
     }
 
     def checkForSingle(label: String): Unit = {

@@ -5,6 +5,7 @@ import java.nio.file.Paths
 import io.shiftleft.codepropertygraph.generated.NodeKeys
 import io.shiftleft.proto.cpg.Cpg.CpgStruct.Node.NodeType
 import org.scalatest.{Matchers, WordSpec}
+import overflowdb._
 
 class ProgramStructureTests extends WordSpec with Matchers {
   val fixture = CpgTestFixture("structure")
@@ -13,8 +14,9 @@ class ProgramStructureTests extends WordSpec with Matchers {
 
     "contain <global> namespace block node" in {
       val namespaceBlocks =
-        fixture.V
-          .hasLabel(NodeType.NAMESPACE_BLOCK.toString)
+        fixture
+          .traversalSource
+          .label(NodeType.NAMESPACE_BLOCK.toString)
           .has(NodeKeys.FULL_NAME -> Defines.globalNamespaceName)
           .l
 
@@ -22,9 +24,10 @@ class ProgramStructureTests extends WordSpec with Matchers {
     }
 
     "contain one file node" in {
-      val fileName = fixture.V
-        .hasLabel(NodeType.FILE.toString)
-        .value(NodeKeys.NAME)
+      val fileName = fixture
+        .traversalSource
+        .label(NodeType.FILE.toString)
+        .property(NodeKeys.NAME)
         .headOption
       fileName.isDefined shouldBe true
       fileName.head should not contain ".."
@@ -34,13 +37,14 @@ class ProgramStructureTests extends WordSpec with Matchers {
         .get("src", "test", "resources", "testcode", "structure", "structure.c")
         .toString
 
-      fileName.head should not be path.toString
-      fileName.head should endWith(path.toString)
+      fileName.head should not be path
+      fileName.head should endWith(path)
     }
 
     "contain AST edge from file node to namespace block" in {
-      val nodes = fixture.V
-        .hasLabel(NodeType.FILE.toString)
+      val nodes = fixture
+        .traversalSource
+        .label(NodeType.FILE.toString)
         .out("AST")
         .hasLabel(NodeType.NAMESPACE_BLOCK.toString)
         .l
@@ -48,7 +52,7 @@ class ProgramStructureTests extends WordSpec with Matchers {
     }
 
     "contain type-decl node" in {
-      val nodes = fixture.V.hasLabel(NodeType.TYPE_DECL.toString).l
+      val nodes = fixture.traversalSource.label(NodeType.TYPE_DECL.toString).l
       nodes.size should be > 0
     }
 
