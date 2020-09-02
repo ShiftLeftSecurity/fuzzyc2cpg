@@ -5,6 +5,8 @@
 /project/project/
 /project/target/
 /target
+/foo.c
+/woo.c
 
 private-key.pem
 
