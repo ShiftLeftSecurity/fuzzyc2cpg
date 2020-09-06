@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   "io.shiftleft"         %% "codepropertygraph"        % cpgVersion,
   "io.shiftleft"         %% "codepropertygraph-protos" % cpgVersion,
   "io.shiftleft"         %% "semanticcpg"              % cpgVersion,
+  "org.apache.commons"   %  "commons-lang3"            % "3.5",
 
   "commons-cli"          %  "commons-cli"              % "1.4",
   "com.github.pathikrit" %% "better-files"             % "3.8.0",
