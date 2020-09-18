@@ -3,7 +3,7 @@ organization := "io.shiftleft"
 scalaVersion := "2.13.1"
 enablePlugins(GitVersioning)
 
-val cpgVersion = "0.12.1"
+val cpgVersion = "0.12.28"
 val antlrVersion = "4.7.2"
 
 libraryDependencies ++= Seq(
@@ -121,6 +121,6 @@ developers := List(
     url("https://github.com/julianthome")
   )
 )
-publishTo := sonatypePublishToBundle.value
+// publishTo := sonatypePublishToBundle.value
 Global / useGpg := false
 Global / onChangedBuildSource := ReloadOnSourceChanges
