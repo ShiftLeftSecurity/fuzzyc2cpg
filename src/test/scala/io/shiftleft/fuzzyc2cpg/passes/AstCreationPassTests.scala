@@ -382,7 +382,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
         .argument(1)
         .isIdentifier
         .name("a")
-        .argIndex(1)
+        .argumentIndex(1)
         .size shouldBe 1
     }
 
@@ -402,7 +402,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
         .argument(1)
         .isIdentifier
         .name("a")
-        .argIndex(1)
+        .argumentIndex(1)
         .size shouldBe 1
     }
 
@@ -421,7 +421,7 @@ class AstCreationPassTests extends WordSpec with Matchers {
         .argument(1)
         .isIdentifier
         .name("int")
-        .argIndex(1)
+        .argumentIndex(1)
         .size shouldBe 1
     }
   }
