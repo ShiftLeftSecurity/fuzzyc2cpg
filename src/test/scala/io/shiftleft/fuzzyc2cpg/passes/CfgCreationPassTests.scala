@@ -8,7 +8,8 @@ import io.shiftleft.semanticcpg.language._
 
 import scala.jdk.CollectionConverters._
 import io.shiftleft.codepropertygraph.generated.nodes
-import io.shiftleft.fuzzyc2cpg.passes.cfgcreation.Cfg.{AlwaysEdge, CaseEdge, CfgEdgeType, FalseEdge, TrueEdge}
+import io.shiftleft.semanticcpg.passes.CfgCreationPass
+import io.shiftleft.semanticcpg.passes.cfgcreation.Cfg.{AlwaysEdge, CaseEdge, CfgEdgeType, FalseEdge, TrueEdge}
 import overflowdb.traversal._
 
 class CfgCreationPassTests extends WordSpec with Matchers {
@@ -461,7 +462,7 @@ class CfgFixture(file1Code: String) {
   val cpg: Cpg = Cpg.emptyCpg
 
   File.usingTemporaryDirectory("fuzzyctest") { dir =>
-    val file1 = (dir / "file1.c")
+    val file1 = dir / "file1.c"
     file1.write(s"int func() { $file1Code }")
     val keyPoolFile1 = new IntervalKeyPool(1001, 2000)
     val cfgKeyPool = new IntervalKeyPool(2001, 3000)

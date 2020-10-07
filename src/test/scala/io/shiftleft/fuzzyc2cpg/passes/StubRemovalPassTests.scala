@@ -5,6 +5,7 @@ import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.passes.IntervalKeyPool
 import org.scalatest.{Matchers, WordSpec}
 import io.shiftleft.semanticcpg.language._
+import io.shiftleft.semanticcpg.passes.CfgCreationPass
 
 class StubRemovalPassTests extends WordSpec with Matchers {
 
