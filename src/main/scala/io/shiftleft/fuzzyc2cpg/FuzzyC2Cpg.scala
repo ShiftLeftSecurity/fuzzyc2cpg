@@ -117,30 +117,34 @@ object FuzzyC2Cpg {
   private val logger = LoggerFactory.getLogger(classOf[FuzzyC2Cpg])
 
   def main(args: Array[String]): Unit = {
-    parseConfig(args).foreach { config =>
-      try {
-        val fuzzyc = new FuzzyC2Cpg()
+    parseConfig(args) match {
+      case Some(config) =>
+        try {
+          val fuzzyc = new FuzzyC2Cpg()
 
-        if (config.usePreprocessor) {
-          fuzzyc.runWithPreprocessorAndOutput(
-            config.inputPaths,
-            config.sourceFileExtensions,
-            config.includeFiles,
-            config.includePaths,
-            config.defines,
-            config.undefines,
-            config.preprocessorExecutable,
-            Some(config.outputPath)
-          )
-        } else {
-          val cpg = fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(config.outputPath))
-          cpg.close()
+          if (config.usePreprocessor) {
+            fuzzyc.runWithPreprocessorAndOutput(
+              config.inputPaths,
+              config.sourceFileExtensions,
+              config.includeFiles,
+              config.includePaths,
+              config.defines,
+              config.undefines,
+              config.preprocessorExecutable,
+              Some(config.outputPath)
+            )
+          } else {
+            val cpg = fuzzyc.runAndOutput(config.inputPaths, config.sourceFileExtensions, Some(config.outputPath))
+            cpg.close()
+          }
+
+        } catch {
+          case NonFatal(ex) =>
+            logger.error("Failed to generate CPG.", ex)
+            System.exit(1)
         }
-
-      } catch {
-        case NonFatal(ex) =>
-          logger.error("Failed to generate CPG.", ex)
-      }
+      case _ =>
+        System.exit(1)
     }
   }
 
